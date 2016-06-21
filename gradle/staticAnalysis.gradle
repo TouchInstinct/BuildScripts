@@ -151,7 +151,6 @@ appendError = { report, number, analyzer, file, line, errorId, errorLink, descri
 
     report.append("\n\t\t<td>" + analyzer + "</td>")
 
-    //TODO: file fb
     report.append("\n\t\t<td>")
     if (!analyzer.equals("Lint")) {
         report.append("\n\t\t\t<a target='_blank' href='" + errorLink + "'>" + description + " (" + errorId + ")</a>")
