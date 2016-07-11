@@ -18,6 +18,21 @@
             <property name="maxmethods" value="20"/>
         </properties>
     </rule>
+    <rule ref="rulesets/java/codesize.xml/CyclomaticComplexity">
+        <properties>
+            <property name="showClassesComplexity" value="false"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/java/codesize.xml/StdCyclomaticComplexity">
+        <properties>
+            <property name="showClassesComplexity" value="false"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/java/codesize.xml/ModifiedCyclomaticComplexity">
+        <properties>
+            <property name="showClassesComplexity" value="false"/>
+        </properties>
+    </rule>
     <rule ref="rulesets/java/comments.xml">
         <exclude name="CommentSize"/>
         <exclude name="CommentRequired"/>
