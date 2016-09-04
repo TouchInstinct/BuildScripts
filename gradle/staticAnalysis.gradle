@@ -136,6 +136,9 @@ task optimizePng {
         for (def file : fileTree(dir: "${rootDir}", include: '**/src/**/res/drawable**/*.png')) {
             jarArgs.add(file.absolutePath.substring(relatedPathIndex))
         }
+        for (def file : fileTree(dir: "${rootDir}", include: '**/src/**/res/mipmap**/*.png')) {
+            jarArgs.add(file.absolutePath.substring(relatedPathIndex))
+        }
         javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
     }
 }
