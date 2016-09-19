@@ -21,16 +21,24 @@
     <rule ref="rulesets/java/codesize.xml/CyclomaticComplexity">
         <properties>
             <property name="showClassesComplexity" value="false"/>
+            <property name="violationSuppressXPath" value="./MethodDeclarator[@Image='hashCode' or @Image='equals']"/>
         </properties>
     </rule>
     <rule ref="rulesets/java/codesize.xml/StdCyclomaticComplexity">
         <properties>
             <property name="showClassesComplexity" value="false"/>
+            <property name="violationSuppressXPath" value="./MethodDeclarator[@Image='hashCode' or @Image='equals']"/>
         </properties>
     </rule>
     <rule ref="rulesets/java/codesize.xml/ModifiedCyclomaticComplexity">
         <properties>
             <property name="showClassesComplexity" value="false"/>
+            <property name="violationSuppressXPath" value="./MethodDeclarator[@Image='hashCode' or @Image='equals']"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/java/codesize.xml/NPathComplexity">
+        <properties>
+            <property name="violationSuppressXPath" value="./MethodDeclarator[@Image='hashCode' or @Image='equals']"/>
         </properties>
     </rule>
     <rule ref="rulesets/java/comments.xml">
