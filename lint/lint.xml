@@ -4,19 +4,19 @@
     <issue id="InvalidPackage" severity="error">
         <ignore regexp="Invalid package reference in library.*not included in Android.*java.*"/>
     </issue>
-    <!-- todo: use new versions of fresco when problem with fbcore not found -->
-    <issue id="NewerVersionAvailable" severity="error">
-        <ignore regexp="A newer version of com.facebook.fresco:fresco than .+ is available: .+"/>
-    </issue>
-    <issue id="NewerVersionAvailable" severity="error">
-        <ignore regexp="A newer version of io.socket:socket.io-client than .+ is available: .+"/>
-    </issue>
     <issue id="NewerVersionAvailable" severity="error">
         <ignore regexp="A newer version of de.ruedigermoeller:fst than .+ is available: .+"/>
     </issue>
+    <!-- todo: lint bug? -->
+    <issue id="MissingRegistered" severity="error">
+        <ignore
+            regexp="Class referenced in the layout file, `ru.touchin.roboswag.components.views.TypefacedTextView`, was not found in the project or the libraries"/>
+    </issue>
+    <!-- todo: lint bug? -->
+    <issue id="MissingPermission" severity="ignore"/>
 
     <issue id="AdapterViewChildren" severity="error"/>
-    <issue id="AddJavascriptInterface" severity="info"/>
+    <issue id="AddJavascriptInterface" severity="warning"/>
     <issue id="AllowBackup" severity="error"/>
     <issue id="AlwaysShowAction" severity="error"/>
     <issue id="AppCompatMethod" severity="error"/>
