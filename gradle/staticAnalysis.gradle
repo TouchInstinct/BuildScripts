@@ -33,7 +33,7 @@ dependencies {
     pmd 'net.sourceforge.pmd:pmd-core:5.5.1'
     pmd 'net.sourceforge.pmd:pmd-java:5.5.1'
 
-    checkstyle 'ru.touchin:checkstyle:6.15-fork'
+    checkstyle 'ru.touchin:checkstyle:7.2-fork'
 
     pngtastic 'com.github.depsypher:pngtastic:1.2'
 }
