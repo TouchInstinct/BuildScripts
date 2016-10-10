@@ -13,6 +13,8 @@
             regexp="Class referenced in the layout file, `ru.touchin.roboswag.components.views.TypefacedTextView`, was not found in the project or the libraries"/>
         <ignore
             regexp="Class referenced in the layout file, `ru.touchin.roboswag.components.views.TypefacedEditText`, was not found in the project or the libraries"/>
+        <ignore
+            regexp="Class referenced in the layout file, `ru.touchin.roboswag.components.views.AspectRatioFrameLayout`, was not found in the project or the libraries"/>
     </issue>
     <!-- todo: lint bug? -->
     <issue id="MissingPermission" severity="ignore"/>
