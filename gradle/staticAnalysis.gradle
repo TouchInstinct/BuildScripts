@@ -359,7 +359,7 @@ getCheckstyleTask = { sources ->
         ignoreFailures = true
         showViolations = false
         source files(sources)
-        configFile file("${rootDir}/libraries/BuildScripts/checkstyle/configuration/google_checks.xml")
+        configFile file("${rootDir}/libraries/BuildScripts/checkstyle/configuration/touchin_checkstyle.xml")
         checkstyleClasspath = configurations.checkstyle.asFileTree
         classpath = files(System.getenv("ANDROID_HOME") + "/platforms/" + android.compileSdkVersion + "/android.jar") +
                 files(System.properties.'java.home' + "/lib/rt.jar") +
