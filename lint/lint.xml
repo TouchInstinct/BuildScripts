@@ -60,7 +60,7 @@
     <issue id="HardcodedDebugMode" severity="error"/>
     <issue id="IconExpectedSize" severity="error"/>
     <issue id="IncludeLayoutParam" severity="error"/>
-    <issue id="TrustAllX509TrustManager" severity="error"/>
+    <issue id="TrustAllX509TrustManager" severity="warning"/>
     <issue id="DefaultLocale" severity="error"/>
     <issue id="InvalidResourceFolder" severity="error"/>
     <issue id="LongLogTag" severity="error"/>
