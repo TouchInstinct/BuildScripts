@@ -34,7 +34,7 @@
     <issue id="UniqueConstants" severity="error"/>
     <issue id="InlinedApi" severity="error"/>
     <issue id="Override" severity="error"/>
-    <issue id="UnusedAttribute" severity="error"/>
+    <issue id="UnusedAttribute" severity="warning"/>
     <issue id="AppCompatResource" severity="error"/>
     <issue id="BadHostnameVerifier" severity="error"/>
     <issue id="EnforceUTF8" severity="error"/>
