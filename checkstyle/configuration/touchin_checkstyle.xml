@@ -13,6 +13,23 @@
     </module>
 
     <module name="TreeWalker">
+        <!-- CUSTOM CHECKS START-->
+        <module name="NullAnnotationsCheck"/>
+        <module name="CustomDeclarationOrder">
+            <property name="customDeclarationOrder"
+                      value="Field(static final)
+                      ### Field(static)
+                      ### Ctor(static)
+                      ### Method(static)
+                      ### Field(.*)
+                      ### Ctor(.*)
+                      ### Method(.*)
+                      ### InnerEnum(.*)
+                      ### InnerInterface(.*)
+                      ### InnerClass(.*)"/>
+        </module>
+        <!-- CUSTOM CHECKS END-->
+
         <module name="AbbreviationAsWordInName">
             <property name="ignoreFinal" value="false"/>
             <property name="allowedAbbreviationLength" value="1"/>
