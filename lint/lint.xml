@@ -121,6 +121,8 @@
     <issue id="ButtonStyle" severity="ignore"/>
     <issue id="ContentDescription" severity="ignore"/>
     <issue id="ExportedPreferenceActivity" severity="ignore"/>
+    <!-- remove when facebook will update support library in sdk -->
+    <issue id="GradleCompatible" severity="ignore"/>
     <issue id="IconLauncherShape" severity="ignore"/>
     <issue id="IconMissingDensityFolder" severity="ignore"/>
     <issue id="InconsistentLayout" severity="ignore"/>
