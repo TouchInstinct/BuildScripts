@@ -30,10 +30,10 @@ configurations {
 
 dependencies {
 
-    pmd 'net.sourceforge.pmd:pmd-core:5.5.1'
-    pmd 'net.sourceforge.pmd:pmd-java:5.5.1'
+    pmd 'net.sourceforge.pmd:pmd-core:5.5.3'
+    pmd 'net.sourceforge.pmd:pmd-java:5.5.3'
 
-    checkstyle 'ru.touchin:checkstyle:7.2-fork'
+    checkstyle 'ru.touchin:checkstyle:7.6.2-fork'
 
     pngtastic 'com.github.depsypher:pngtastic:1.2'
 }
@@ -357,7 +357,7 @@ getCheckstyleTask = { sources ->
         ignoreFailures = true
         showViolations = false
         source files(sources)
-        configFile file("${rootDir}/libraries/BuildScripts/checkstyle/configuration/google_checks.xml")
+        configFile file("${rootDir}/libraries/BuildScripts/checkstyle/configuration/touchin_checkstyle.xml")
         checkstyleClasspath = configurations.checkstyle.asFileTree
         classpath = files(System.getenv("ANDROID_HOME") + "/platforms/" + android.compileSdkVersion + "/android.jar") +
                 files(System.properties.'java.home' + "/lib/rt.jar") +

@@ -20,8 +20,120 @@
     </issue>
     <!-- todo: lint bug? -->
     <issue id="MissingPermission" severity="ignore"/>
+    <!-- todo: lint bug? -->
+    <issue id="MissingSuperCall" severity="ignore"/>
 
+    <issue id="AllowAllHostnameVerifier" severity="error"/>
+    <issue id="InvalidUsesTagAttribute" severity="error"/>
+    <issue id="MissingIntentFilterForMediaSearch" severity="error"/>
+    <issue id="MissingMediaBrowserServiceIntentFilter" severity="error"/>
+    <issue id="MissingOnPlayFromSearch" severity="error"/>
+    <issue id="ShiftFlags" severity="error"/>
+    <issue id="LocalSuppress" severity="error"/>
+    <issue id="SwitchIntDef" severity="error"/>
+    <issue id="UniqueConstants" severity="error"/>
+    <issue id="InlinedApi" severity="error"/>
+    <issue id="Override" severity="error"/>
+    <issue id="UnusedAttribute" severity="warning"/>
+    <issue id="AppCompatResource" severity="error"/>
+    <issue id="BadHostnameVerifier" severity="error"/>
+    <issue id="EnforceUTF8" severity="error"/>
+    <issue id="ByteOrderMark" severity="error"/>
+    <issue id="StopShip" severity="error"/>
+    <issue id="MissingPrefix" severity="error"/>
+    <issue id="MangledCRLF" severity="error"/>
+    <issue id="DuplicateIds" severity="error"/>
+    <issue id="DuplicateDefinition" severity="error"/>
+    <issue id="ReferenceType" severity="error"/>
+    <issue id="UnsafeDynamicallyLoadedCode" severity="error"/>
+    <issue id="UnsafeNativeCodeLocation" severity="error"/>
+    <issue id="FullBackupContent" severity="error"/>
+    <issue id="ValidFragment" severity="error"/>
+    <issue id="GradleCompatible" severity="error"/>
+    <issue id="GradlePluginVersion" severity="error"/>
+    <issue id="GradleGetter" severity="error"/>
+    <issue id="GradleIdeError" severity="error"/>
+    <issue id="NotInterpolated" severity="error"/>
+    <issue id="StringShouldBeInt" severity="error"/>
+    <issue id="AccidentalOctal" severity="error"/>
+    <issue id="GridLayout" severity="error"/>
+    <issue id="HardcodedDebugMode" severity="error"/>
+    <issue id="IconExpectedSize" severity="error"/>
+    <issue id="IncludeLayoutParam" severity="error"/>
+    <issue id="TrustAllX509TrustManager" severity="warning"/>
+    <issue id="DefaultLocale" severity="error"/>
+    <issue id="InvalidResourceFolder" severity="error"/>
+    <issue id="LongLogTag" severity="error"/>
+    <issue id="LogTagMismatch" severity="error"/>
+    <issue id="DuplicateActivity" severity="error"/>
+    <issue id="MockLocation" severity="error"/>
+    <issue id="MultipleUsesSdk" severity="error"/>
+    <issue id="UniquePermission" severity="error"/>
+    <issue id="WrongManifestParent" severity="error"/>
+    <issue id="ManifestResource" severity="error"/>
+    <issue id="ManifestTypo" severity="error"/>
+    <issue id="FloatMath" severity="error"/>
+    <issue id="Instantiatable" severity="error"/>
+    <issue id="LibraryCustomView" severity="error"/>
+    <issue id="ResAuto" severity="error"/>
+    <issue id="NamespaceTypo" severity="error"/>
+    <issue id="UnusedNamespace" severity="error"/>
+    <issue id="NfcTechWhitespace" severity="error"/>
+    <issue id="OnClick" severity="error"/>
+    <issue id="DalvikOverride" severity="error"/>
+    <issue id="OverrideAbstract" severity="error"/>
+    <issue id="ParcelCreator" severity="error"/>
+    <issue id="PackagedPrivateKey" severity="error"/>
+    <issue id="Proguard" severity="error"/>
+    <issue id="PropertyEscape" severity="error"/>
+    <issue id="ParcelClassLoader" severity="error"/>
+    <issue id="RecyclerView" severity="error"/>
+    <issue id="RequiredSize" severity="error"/>
+    <issue id="AaptCrash" severity="error"/>
+    <issue id="ResourceCycle" severity="error"/>
+    <issue id="ResourceName" severity="error"/>
+    <issue id="ValidRestrictions" severity="error"/>
+    <issue id="RtlCompat" severity="error"/>
+    <issue id="ScrollViewSize" severity="error"/>
+    <issue id="SecureRandom" severity="error"/>
+    <issue id="SetWorldReadable" severity="error"/>
+    <issue id="SetWorldWritable" severity="error"/>
+    <issue id="ServiceCast" severity="error"/>
+    <issue id="SSLCertificateSocketFactoryCreateSocket" severity="error"/>
+    <issue id="SSLCertificateSocketFactoryGetInsecure" severity="error"/>
+    <issue id="StringFormatMatches" severity="error"/>
+    <issue id="StringFormatInvalid" severity="error"/>
+    <issue id="UseCheckPermission" severity="error"/>
+    <issue id="CheckResult" severity="warning"/>
+    <issue id="ResourceAsColor" severity="error"/>
+    <issue id="Range" severity="error"/>
+    <issue id="ResourceType" severity="error"/>
+    <issue id="WrongThread" severity="error"/>
+    <issue id="WrongConstant" severity="error"/>
+    <issue id="ProtectedPermissions" severity="error"/>
+    <issue id="MenuTitle" severity="error"/>
+    <issue id="ExtraTranslation" severity="error"/>
+    <issue id="MissingLeanbackLauncher" severity="error"/>
+    <issue id="MissingLeanbackSupport" severity="error"/>
+    <issue id="PermissionImpliesUnsupportedHardware" severity="error"/>
+    <issue id="UnsupportedTvHardware" severity="error"/>
+    <issue id="MissingTvBanner" severity="error"/>
+    <issue id="TypographyOther" severity="error"/>
+    <issue id="TypographyQuotes" severity="error"/>
+    <issue id="UnsafeProtectedBroadcastReceiver" severity="error"/>
+    <issue id="UnprotectedSMSBroadcastReceiver" severity="error"/>
+    <issue id="VectorRaster" severity="error"/>
+    <issue id="ViewTag" severity="error"/>
+    <issue id="WrongViewCast" severity="error"/>
+    <issue id="Wakelock" severity="error"/>
+    <issue id="WrongCall" severity="error"/>
+    <issue id="WrongCase" severity="error"/>
+    <issue id="InvalidId" severity="error"/>
+    <issue id="NotSibling" severity="error"/>
+    <issue id="UnknownIdInLayout" severity="error"/>
+    <issue id="WrongFolder" severity="error"/>
     <issue id="AdapterViewChildren" severity="error"/>
+    <issue id="SetJavaScriptEnabled" severity="warning"/>
     <issue id="AddJavascriptInterface" severity="warning"/>
     <issue id="AllowBackup" severity="error"/>
     <issue id="AlwaysShowAction" severity="error"/>
@@ -115,6 +227,23 @@
     <issue id="WrongRegion" severity="warning"/>
 
     <!-- DISABLE RULES BELOW -->
+    <issue id="GoogleAppIndexingApiWarning" severity="ignore"/>
+    <issue id="GoogleAppIndexingUrlError" severity="ignore"/>
+    <issue id="GoogleAppIndexingWarning" severity="ignore"/>
+    <issue id="AppLinksAutoVerifyError" severity="ignore"/>
+    <issue id="AppLinksAutoVerifyWarning" severity="ignore"/>
+    <issue id="ClickableViewAccessibility" severity="ignore"/>
+    <issue id="SetTextI18n" severity="ignore"/>
+    <issue id="EasterEgg" severity="ignore"/>
+    <issue id="BackButton" severity="ignore"/>
+    <issue id="FieldGetter" severity="ignore"/>
+    <issue id="Orientation" severity="ignore"/>
+    <issue id="Suspicious0dp" severity="ignore"/>
+    <issue id="NegativeMargin" severity="ignore"/>
+    <issue id="MissingQuantity" severity="ignore"/>
+    <issue id="ImpliedQuantity" severity="ignore"/>
+    <issue id="TrulyRandom" severity="ignore"/>
+    <issue id="SelectableText" severity="ignore"/>
     <issue id="UnusedIds" severity="ignore"/>
     <issue id="ButtonCase" severity="ignore"/>
     <issue id="ButtonOrder" severity="ignore"/>
