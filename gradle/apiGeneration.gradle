@@ -1,0 +1,168 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.squareup:javapoet:1.8.0'
+    }
+}
+
+import com.squareup.javapoet.*
+
+import javax.lang.model.element.Modifier
+
+interface SchemeObject {
+
+    void writeToFile(File directory)
+
+    void readLine(String line)
+
+}
+
+class EnumObject implements SchemeObject {
+
+    enum Type {
+        STRING, NUMBER, BOOLEAN
+    }
+
+    static final String SIGNATURE = "enum"
+
+    final String name
+    Type type
+
+    Map<String, Object> values = new HashMap<>()
+
+    EnumObject(String firstLine) {
+        name = firstLine.substring(SIGNATURE.length()).trim()
+    }
+
+    @Override
+    void writeToFile(File directory) {
+        TypeSpec.Builder enumBuilder = TypeSpec.enumBuilder(name)
+                .addModifiers(Modifier.PUBLIC)
+                .addSuperinterface(ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareEnum"))
+
+        enumBuilder.addField(FieldSpec.builder(ClassName.get(String.class), "valueName",
+                Modifier.PRIVATE,
+                Modifier.FINAL)
+                .addAnnotation(ClassName.bestGuess("android.support.annotation.NonNull"))
+                .build())
+
+        enumBuilder.addMethod(MethodSpec.constructorBuilder()
+                .addParameter(ClassName.get(String.class), "valueName", Modifier.FINAL)
+                .addStatement("this.valueName = valueName")
+                .build())
+
+        enumBuilder.addMethod(MethodSpec.methodBuilder("getValueName")
+                .returns(ClassName.get(String.class))
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(ClassName.get(Override.class))
+                .addAnnotation(ClassName.bestGuess("android.support.annotation.NonNull"))
+                .addStatement("return valueName")
+                .build())
+
+        enumBuilder.addType(TypeSpec.classBuilder("LoganSquareConverter")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .superclass(ParameterizedTypeName.get(ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareEnumConverter"), ClassName.bestGuess(name)))
+                .addMethod(MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .addStatement("super(values())")
+                .build())
+                .build())
+
+        for (Map.Entry<String, Object> entry : values) {
+            enumBuilder.addEnumConstant(entry.key, TypeSpec.anonymousClassBuilder(entry.value.toString()).build())
+        }
+
+        JavaFile.builder("com.touchin.sberinkas", enumBuilder.build()).build().writeTo(directory);
+    }
+
+    Type typeOf(String value) {
+        if (value.equals("true") || value.equals("false")) {
+            return Type.BOOLEAN
+        } else if (value.startsWith('"') && value.endsWith('"')) {
+            return Type.STRING
+        }
+        try {
+            Integer.parseInt(value)
+            return Type.NUMBER
+        } catch (NumberFormatException ignored) {
+            throw new Exception("Can't define type of value: " + value)
+        }
+    }
+
+    @Override
+    void readLine(final String line) {
+        String[] parts = line.split(':')
+        String name = parts[0].trim();
+        if (name.isEmpty()) {
+            throw new Exception("Name of enum is empty")
+        }
+        if (values.containsKey(name)) {
+            throw new Exception("Name '" + value + "' already added to enum")
+        }
+        String value = parts[1].trim();
+        Type type = typeOf(value)
+        if (this.type == null) {
+            this.type = type
+        } else if (this.type != type) {
+            throw new Exception("Type of value '" + value + "' conflicts with previous value type: " + this.type)
+        }
+        values.put(name, value)
+    }
+
+}
+
+class ClassObject implements SchemeObject {
+
+    static final String SIGNATURE = "class"
+
+    final String name
+
+    ClassObject(String firstLine) {
+        name = firstLine.substring(SIGNATURE.length()).trim()
+    }
+
+    @Override
+    void writeToFile(File directory) {
+
+    }
+
+    @Override
+    void readLine(final String line) {
+    }
+
+}
+
+android.applicationVariants.all { variant ->
+    File generatedModels = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
+    File schemeFile = new File("${project.projectDir}/src/main/res/raw/scheme.txt")
+
+    def apiModelsGenerationTask = tasks.create("apiModelsGeneration${variant.name}") << {
+
+        BufferedReader reader = new BufferedReader(new FileReader(schemeFile))
+        String line
+        List<SchemeObject> schemeObjects = new ArrayList<>()
+        SchemeObject currentSchemeObject = null
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith(EnumObject.SIGNATURE)) {
+                currentSchemeObject = new EnumObject(line)
+                schemeObjects.add(currentSchemeObject)
+            } else if (line.startsWith(ClassObject.SIGNATURE)) {
+                currentSchemeObject = new EnumObject(line)
+                schemeObjects.add(currentSchemeObject)
+            } else if (currentSchemeObject != null) {
+                currentSchemeObject.readLine(line)
+            } else if (!line.trim().isEmpty()) {
+                throw new Exception("No objects in scheme")
+            }
+        }
+
+        for (SchemeObject schemeObject : schemeObjects) {
+            schemeObject.writeToFile(generatedModels)
+        }
+    }
+
+    apiModelsGenerationTask.description = 'Generates API models'
+    variant.registerJavaGeneratingTask apiModelsGenerationTask, generatedModels
+}
