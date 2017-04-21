@@ -71,7 +71,11 @@ class EnumObject implements SchemeObject {
                 .build())
 
         for (Map.Entry<String, Object> entry : values) {
-            enumBuilder.addEnumConstant(entry.key, TypeSpec.anonymousClassBuilder(entry.value.toString()).build())
+            if (type == Type.STRING) {
+                enumBuilder.addEnumConstant(entry.key, TypeSpec.anonymousClassBuilder("\$S", entry.value).build())
+            } else {
+                enumBuilder.addEnumConstant(entry.key, TypeSpec.anonymousClassBuilder("\$L", entry.value).build())
+            }
         }
 
         JavaFile.builder("com.touchin.sberinkas", enumBuilder.build()).build().writeTo(directory);
@@ -80,14 +84,13 @@ class EnumObject implements SchemeObject {
     Type typeOf(String value) {
         if (value.equals("true") || value.equals("false")) {
             return Type.BOOLEAN
-        } else if (value.startsWith('"') && value.endsWith('"')) {
-            return Type.STRING
-        }
-        try {
-            Integer.parseInt(value)
-            return Type.NUMBER
-        } catch (NumberFormatException ignored) {
-            throw new Exception("Can't define type of value: " + value)
+        } else {
+            try {
+                Integer.parseInt(value)
+                return Type.NUMBER
+            } catch (NumberFormatException ignored) {
+                return Type.STRING
+            }
         }
     }
 
@@ -113,11 +116,111 @@ class EnumObject implements SchemeObject {
 
 }
 
+enum FieldType {
+
+    BOOLEAN(TypeName.BOOLEAN), INT(TypeName.INT), LONG(TypeName.LONG), FLOAT(TypeName.FLOAT), CUSTOM(null);
+
+    final TypeName typeName;
+
+    FieldType(final TypeName typeName) {
+        this.typeName = typeName
+    }
+
+    static FieldType get(String typeString) {
+        switch (typeString) {
+            case "boolean": return BOOLEAN
+            case "int": return INT
+            case "long": return LONG
+            case "float": return FLOAT
+            default: return CUSTOM
+        }
+    }
+
+}
+
+class FieldInfo {
+
+    static upperStartName(String name) {
+        if (name.isEmpty()) {
+            throw new Exception("Empty name of field")
+        }
+        if (name.length() == 1) {
+            return name.charAt(0).toUpperCase()
+        }
+        return name.charAt(0).toUpperCase().toString() + name.substring(1)
+    }
+
+    final String apiName
+    final boolean nullable
+    final boolean required
+    final FieldType fieldType
+    final TypeName typeName
+
+    FieldInfo(String apiName, String typeString) {
+        this.apiName = apiName
+        required = typeString.endsWith('*')
+        if (required) {
+            typeString = typeString.substring(0, typeString.length() - 1)
+        }
+        nullable = typeString.endsWith('?')
+        if (nullable) {
+            typeString = typeString.substring(0, typeString.length() - 1)
+        }
+        fieldType = FieldType.get(typeString);
+        if (fieldType != FieldType.CUSTOM) {
+            typeName = fieldType.typeName
+        } else if (typeString == "string") {
+            typeName = ClassName.get(String.class)
+        } else {
+            typeName = ClassName.bestGuess(typeString)
+        }
+    }
+
+    FieldSpec createField(String name) {
+        return FieldSpec.builder(typeName, name, Modifier.PRIVATE)
+                .addAnnotation(AnnotationSpec.builder(ClassName.bestGuess("com.bluelinelabs.logansquare.annotation.JsonField"))
+                .addMember("name", "\$S", apiName)
+                .build())
+                .build()
+    }
+
+    MethodSpec createGetter(String name) {
+        final MethodSpec.Builder builder = MethodSpec.methodBuilder("get" + upperStartName(name))
+                .returns(typeName)
+                .addModifiers(Modifier.PUBLIC)
+                .addStatement("return " + name)
+        if (!typeName.isPrimitive()) {
+            builder.addAnnotation(AnnotationSpec.builder(nullable
+                    ? ClassName.bestGuess("android.support.annotation.Nullable")
+                    : ClassName.bestGuess("android.support.annotation.NonNull"))
+                    .build());
+        }
+        return builder.build()
+    }
+
+    MethodSpec createSetter(String name) {
+        final ParameterSpec.Builder parameterBuilder = ParameterSpec.builder(typeName, name, Modifier.FINAL)
+        if (!typeName.isPrimitive()) {
+            parameterBuilder.addAnnotation(AnnotationSpec.builder(nullable
+                    ? ClassName.bestGuess("android.support.annotation.Nullable")
+                    : ClassName.bestGuess("android.support.annotation.NonNull"))
+                    .build());
+        }
+        final MethodSpec.Builder builder = MethodSpec.methodBuilder("set" + upperStartName(name))
+                .addParameter(parameterBuilder.build())
+                .addModifiers(Modifier.PUBLIC)
+                .addStatement("this." + name + " = " + name)
+        return builder.build()
+    }
+
+}
+
 class ClassObject implements SchemeObject {
 
     static final String SIGNATURE = "class"
 
     final String name
+    final Map<String, FieldInfo> fieldsInfo = new HashMap<>()
 
     ClassObject(String firstLine) {
         name = firstLine.substring(SIGNATURE.length()).trim()
@@ -125,44 +228,103 @@ class ClassObject implements SchemeObject {
 
     @Override
     void writeToFile(File directory) {
+        TypeSpec.Builder classBuilder = TypeSpec.classBuilder(name)
+                .addModifiers(Modifier.PUBLIC)
+                .superclass(ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareJsonModel"))
+                .addAnnotation(AnnotationSpec.builder(ClassName.bestGuess("com.bluelinelabs.logansquare.annotation.JsonObject"))
+                .build())
+        classBuilder.addMethod(MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .build())
 
+        MethodSpec.Builder equalsMethod = MethodSpec.methodBuilder("equals")
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
+                .returns(TypeName.BOOLEAN)
+                .addParameter(ParameterSpec.builder(ClassName.get(Object.class), "object", Modifier.FINAL)
+                .addAnnotation(ClassName.bestGuess("android.support.annotation.Nullable"))
+                .build())
+                .addStatement("if (this == object) return true")
+                .addStatement("if (object == null || getClass() != object.getClass()) return false")
+                .addStatement("final \$T that = (\$T) object", ClassName.bestGuess(name), ClassName.bestGuess(name))
+
+        MethodSpec.Builder hashCodeMethod = MethodSpec.methodBuilder("hashCode")
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Override.class)
+                .returns(TypeName.INT)
+
+        boolean first = true
+        CodeBlock.Builder equalsStatement = CodeBlock.builder()
+        CodeBlock.Builder hashCodeStatement = CodeBlock.builder()
+        for (Map.Entry<String, FieldInfo> entry : fieldsInfo) {
+            classBuilder.addField(entry.value.createField(entry.key))
+            classBuilder.addMethod(entry.value.createGetter(entry.key))
+            classBuilder.addMethod(entry.value.createSetter(entry.key))
+            if (first) {
+                equalsStatement.add("return \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                        entry.key, entry.key)
+                hashCodeStatement.add("return \$T.hashCode(\$L", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"), entry.key)
+            } else {
+                equalsStatement.add("\n&& \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                        entry.key, entry.key)
+                hashCodeStatement.add(", \$L", entry.key)
+            }
+            first = false
+        }
+        equalsStatement.add(";")
+        hashCodeStatement.add(");")
+
+        classBuilder.addMethod(equalsMethod.addCode(equalsStatement.build()).build())
+        classBuilder.addMethod(hashCodeMethod.addCode(hashCodeStatement.build()).build())
+
+        JavaFile.builder("com.touchin.sberinkas", classBuilder.build()).build().writeTo(directory);
     }
 
     @Override
     void readLine(final String line) {
+        String[] parts = line.split(':')
+        String fieldName = parts[0].trim();
+        String apiName = parts[1].trim();
+        String type = parts[2].trim();
+
+        if (fieldsInfo.containsKey(fieldName)) {
+            throw new Exception("Field of '" + name + "' already added: " + fieldName)
+        }
+        fieldsInfo.put(fieldName, new FieldInfo(apiName, type))
     }
 
 }
 
-android.applicationVariants.all { variant ->
-    File generatedModels = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
-    File schemeFile = new File("${project.projectDir}/src/main/res/raw/scheme.txt")
+android.applicationVariants.all {
+    variant ->
+        File generatedModels = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
+        File schemeFile = new File("${project.projectDir}/src/main/res/raw/scheme.txt")
 
-    def apiModelsGenerationTask = tasks.create("apiModelsGeneration${variant.name}") << {
+        def apiModelsGenerationTask = tasks.create("apiModelsGeneration${variant.name}") << {
 
-        BufferedReader reader = new BufferedReader(new FileReader(schemeFile))
-        String line
-        List<SchemeObject> schemeObjects = new ArrayList<>()
-        SchemeObject currentSchemeObject = null
-        while ((line = reader.readLine()) != null) {
-            if (line.startsWith(EnumObject.SIGNATURE)) {
-                currentSchemeObject = new EnumObject(line)
-                schemeObjects.add(currentSchemeObject)
-            } else if (line.startsWith(ClassObject.SIGNATURE)) {
-                currentSchemeObject = new EnumObject(line)
-                schemeObjects.add(currentSchemeObject)
-            } else if (currentSchemeObject != null) {
-                currentSchemeObject.readLine(line)
-            } else if (!line.trim().isEmpty()) {
-                throw new Exception("No objects in scheme")
+            BufferedReader reader = new BufferedReader(new FileReader(schemeFile))
+            String line
+            List<SchemeObject> schemeObjects = new ArrayList<>()
+            SchemeObject currentSchemeObject = null
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith(EnumObject.SIGNATURE)) {
+                    currentSchemeObject = new EnumObject(line)
+                    schemeObjects.add(currentSchemeObject)
+                } else if (line.startsWith(ClassObject.SIGNATURE)) {
+                    currentSchemeObject = new ClassObject(line)
+                    schemeObjects.add(currentSchemeObject)
+                } else if (currentSchemeObject != null) {
+                    currentSchemeObject.readLine(line)
+                } else if (!line.trim().isEmpty()) {
+                    throw new Exception("No objects in scheme")
+                }
+            }
+
+            for (SchemeObject schemeObject : schemeObjects) {
+                schemeObject.writeToFile(generatedModels)
             }
         }
 
-        for (SchemeObject schemeObject : schemeObjects) {
-            schemeObject.writeToFile(generatedModels)
-        }
-    }
-
-    apiModelsGenerationTask.description = 'Generates API models'
-    variant.registerJavaGeneratingTask apiModelsGenerationTask, generatedModels
+        apiModelsGenerationTask.description = 'Generates API models'
+        variant.registerJavaGeneratingTask apiModelsGenerationTask, generatedModels
 }
