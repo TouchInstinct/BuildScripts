@@ -8,18 +8,45 @@ buildscript {
 }
 
 import com.squareup.javapoet.*
+import javafx.util.Pair
 
 import javax.lang.model.element.Modifier
 
-interface SchemeObject {
+abstract class SchemeObject {
 
-    void writeToFile(File directory)
+    List<String> lines = new ArrayList<>();
 
-    void readLine(String line)
+    abstract void writeToFile(File directory, Map<String, SchemeObject> objects)
+
+    abstract void readLine(String line, Map<String, SchemeObject> objects)
 
 }
 
-class EnumObject implements SchemeObject {
+class ImportObject extends SchemeObject {
+
+    static final String SIGNATURE = "import"
+
+    final String name
+    final String fullName
+
+    ImportObject(String firstLine) {
+        fullName = firstLine.substring(SIGNATURE.length()).trim()
+        name = fullName.substring(fullName.lastIndexOf('.') + 1)
+    }
+
+    @Override
+    void writeToFile(final File directory, Map<String, SchemeObject> objects) {
+        //do nothing - imports are for other objects
+    }
+
+    @Override
+    void readLine(final String line, Map<String, SchemeObject> objects) {
+        throw new Exception("Line is not forimport object: '" + line + "'")
+    }
+
+}
+
+class EnumObject extends SchemeObject {
 
     enum Type {
         STRING, NUMBER, BOOLEAN
@@ -37,7 +64,7 @@ class EnumObject implements SchemeObject {
     }
 
     @Override
-    void writeToFile(File directory) {
+    void writeToFile(File directory, Map<String, SchemeObject> objects) {
         TypeSpec.Builder enumBuilder = TypeSpec.enumBuilder(name)
                 .addModifiers(Modifier.PUBLIC)
                 .addSuperinterface(ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareEnum"))
@@ -95,7 +122,7 @@ class EnumObject implements SchemeObject {
     }
 
     @Override
-    void readLine(final String line) {
+    void readLine(final String line, Map<String, SchemeObject> objects) {
         String[] parts = line.split(':')
         String name = parts[0].trim();
         if (name.isEmpty()) {
@@ -118,21 +145,31 @@ class EnumObject implements SchemeObject {
 
 enum FieldType {
 
-    BOOLEAN(TypeName.BOOLEAN), INT(TypeName.INT), LONG(TypeName.LONG), FLOAT(TypeName.FLOAT), CUSTOM(null);
+    BOOLEAN(TypeName.BOOLEAN), INT(TypeName.INT), LONG(TypeName.LONG), FLOAT(TypeName.FLOAT),
+    STRING(ClassName.get(String.class)),
+    ENUM(null), MODEL(null), GENERIC(null)
 
-    final TypeName typeName;
+    final TypeName typeName
 
     FieldType(final TypeName typeName) {
         this.typeName = typeName
     }
 
-    static FieldType get(String typeString) {
+    static FieldType get(String typeString, Map<String, SchemeObject> objects) {
         switch (typeString) {
-            case "boolean": return BOOLEAN
+            case "string": return STRING
             case "int": return INT
+            case "boolean": return BOOLEAN
             case "long": return LONG
             case "float": return FLOAT
-            default: return CUSTOM
+            default:
+                if (objects.get(typeString) instanceof EnumObject) {
+                    return ENUM
+                }
+                if (objects.get(typeString) != null) {
+                    return MODEL
+                }
+                return GENERIC
         }
     }
 
@@ -150,13 +187,24 @@ class FieldInfo {
         return name.charAt(0).toUpperCase().toString() + name.substring(1)
     }
 
+    static String getTypeSimpleName(String typeString) {
+        String result = typeString.trim()
+        if (result.indexOf('.') > 0) {
+            result = result.substring(result.lastIndexOf('.') + 1)
+        }
+        if (result.indexOf('<') > 0) {
+            result = result.substring(0, result.indexOf('<'))
+        }
+        return result;
+    }
+
     final String apiName
     final boolean nullable
     final boolean required
     final FieldType fieldType
     final TypeName typeName
 
-    FieldInfo(String apiName, String typeString) {
+    FieldInfo(String apiName, String typeString, Map<String, SchemeObject> objects) {
         this.apiName = apiName
         required = typeString.endsWith('*')
         if (required) {
@@ -166,14 +214,71 @@ class FieldInfo {
         if (nullable) {
             typeString = typeString.substring(0, typeString.length() - 1)
         }
-        fieldType = FieldType.get(typeString);
-        if (fieldType != FieldType.CUSTOM) {
+        String genericsSuffix = typeString.indexOf("<") > 0 ? typeString.substring(typeString.indexOf("<")) : null
+        typeString = getTypeSimpleName(typeString);
+        fieldType = FieldType.get(typeString, objects);
+        if (fieldType.typeName != null) {
             typeName = fieldType.typeName
-        } else if (typeString == "string") {
-            typeName = ClassName.get(String.class)
+        } else if (fieldType != FieldType.GENERIC) {
+            SchemeObject schemeObject = objects.get(typeString)
+            if (schemeObject instanceof ImportObject) {
+                if (genericsSuffix != null) {
+                    typeName = getTypeNameWithArguments(ClassName.bestGuess(schemeObject.fullName), genericsSuffix.substring(1), objects).value
+                } else {
+                    typeName = ClassName.bestGuess(schemeObject.fullName)
+                }
+            } else {
+                if (genericsSuffix != null) {
+                    typeName = getTypeNameWithArguments(ClassName.bestGuess(typeString), genericsSuffix.substring(1), objects)
+                } else {
+                    typeName = ClassName.bestGuess(typeString)
+                }
+            }
         } else {
+            // generic
             typeName = ClassName.bestGuess(typeString)
         }
+    }
+
+    TypeName resolveType(String string, Map<String, SchemeObject> objects) {
+        String argumentName = getTypeSimpleName(string)
+        SchemeObject schemeObject = objects.get(argumentName)
+        if (schemeObject instanceof ImportObject) {
+            return ClassName.bestGuess(schemeObject.fullName)
+        } else {
+            return ClassName.bestGuess(argumentName)
+        }
+    }
+
+    Pair<String, TypeName> getTypeNameWithArguments(TypeName parentTypeName, String genericString, Map<String, SchemeObject> objects) {
+        List<TypeName> arguments = new ArrayList<>()
+        genericString = genericString.replace(" ", "")
+        while (!genericString.isEmpty()) {
+            println "proc " + genericString
+            int nextComma = genericString.indexOf(',')
+            int nextLeft = genericString.indexOf('<')
+            int nextRight = genericString.indexOf('>')
+            if (nextComma > 0 && nextComma < nextRight && (nextLeft == -1 || nextComma < nextLeft)) {
+                arguments.add(resolveType(genericString.substring(0, nextComma), objects))
+                genericString = genericString.substring(nextComma + 1)
+                continue
+            }
+            if (nextRight == -1) {
+                arguments.add(resolveType(genericString), objects)
+                break
+            }
+            if (nextLeft == -1 || nextRight < nextLeft) {
+                arguments.add(resolveType(genericString.substring(0, nextRight), objects))
+                genericString = nextRight < genericString.length() - 1 ? genericString.substring(nextRight + 1) : ""
+                break
+            }
+            TypeName innerType = resolveType(genericString.substring(0, nextLeft), objects)
+            genericString = genericString.substring(nextLeft + 1)
+            Pair<String, TypeName> innerArgs = getTypeNameWithArguments(innerType, genericString, objects)
+            genericString = innerArgs.key.substring(1)
+            arguments.add(innerArgs.value)
+        }
+        return new Pair<String, TypeName>(genericString, ParameterizedTypeName.get(parentTypeName, (TypeName[]) arguments.toArray()))
     }
 
     FieldSpec createField(String name) {
@@ -215,7 +320,7 @@ class FieldInfo {
 
 }
 
-class ClassObject implements SchemeObject {
+class ClassObject extends SchemeObject {
 
     static final String SIGNATURE = "class"
 
@@ -227,7 +332,7 @@ class ClassObject implements SchemeObject {
     }
 
     @Override
-    void writeToFile(File directory) {
+    void writeToFile(File directory, Map<String, SchemeObject> objects) {
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(name)
                 .addModifiers(Modifier.PUBLIC)
                 .superclass(ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareJsonModel"))
@@ -256,6 +361,7 @@ class ClassObject implements SchemeObject {
         boolean first = true
         CodeBlock.Builder equalsStatement = CodeBlock.builder()
         CodeBlock.Builder hashCodeStatement = CodeBlock.builder()
+
         for (Map.Entry<String, FieldInfo> entry : fieldsInfo) {
             classBuilder.addField(entry.value.createField(entry.key))
             classBuilder.addMethod(entry.value.createGetter(entry.key))
@@ -277,11 +383,12 @@ class ClassObject implements SchemeObject {
         classBuilder.addMethod(equalsMethod.addCode(equalsStatement.build()).build())
         classBuilder.addMethod(hashCodeMethod.addCode(hashCodeStatement.build()).build())
 
-        JavaFile.builder("com.touchin.sberinkas", classBuilder.build()).build().writeTo(directory);
+        JavaFile.builder("com.touchin.sberinkas", classBuilder.build())
+                .build().writeTo(directory);
     }
 
     @Override
-    void readLine(final String line) {
+    void readLine(final String line, Map<String, SchemeObject> objects) {
         String[] parts = line.split(':')
         String fieldName = parts[0].trim();
         String apiName = parts[1].trim();
@@ -290,7 +397,7 @@ class ClassObject implements SchemeObject {
         if (fieldsInfo.containsKey(fieldName)) {
             throw new Exception("Field of '" + name + "' already added: " + fieldName)
         }
-        fieldsInfo.put(fieldName, new FieldInfo(apiName, type))
+        fieldsInfo.put(fieldName, new FieldInfo(apiName, type, objects))
     }
 
 }
@@ -304,24 +411,32 @@ android.applicationVariants.all {
 
             BufferedReader reader = new BufferedReader(new FileReader(schemeFile))
             String line
-            List<SchemeObject> schemeObjects = new ArrayList<>()
+            Map<String, SchemeObject> schemeObjects = new HashMap<>()
+            schemeObjects.put("List", new ImportObject("import java.util.List"))
+            schemeObjects.put("Map", new ImportObject("import java.util.Map"))
             SchemeObject currentSchemeObject = null
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith(EnumObject.SIGNATURE)) {
                     currentSchemeObject = new EnumObject(line)
-                    schemeObjects.add(currentSchemeObject)
+                    schemeObjects.put(currentSchemeObject.name, currentSchemeObject)
                 } else if (line.startsWith(ClassObject.SIGNATURE)) {
                     currentSchemeObject = new ClassObject(line)
-                    schemeObjects.add(currentSchemeObject)
+                    schemeObjects.put(currentSchemeObject.name, currentSchemeObject)
+                } else if (line.startsWith(ImportObject.SIGNATURE)) {
+                    currentSchemeObject = new ImportObject(line)
+                    schemeObjects.put(currentSchemeObject.name, currentSchemeObject)
                 } else if (currentSchemeObject != null) {
-                    currentSchemeObject.readLine(line)
+                    currentSchemeObject.lines.add(line)
                 } else if (!line.trim().isEmpty()) {
                     throw new Exception("No objects in scheme")
                 }
             }
 
-            for (SchemeObject schemeObject : schemeObjects) {
-                schemeObject.writeToFile(generatedModels)
+            for (SchemeObject schemeObject : schemeObjects.values()) {
+                for (String objectLine : schemeObject.lines) {
+                    schemeObject.readLine(objectLine, schemeObjects)
+                }
+                schemeObject.writeToFile(generatedModels, schemeObjects)
             }
         }
 
