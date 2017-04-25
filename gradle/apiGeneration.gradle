@@ -21,7 +21,7 @@ abstract class SchemeObject {
     abstract void readLine(String line, Map<String, SchemeObject> objects)
 
 }
-
+//TODO: collection/equals collection/map/equals map/validation/check for useless types/YAML
 class ImportObject extends SchemeObject {
 
     static final String SIGNATURE = "import"
@@ -175,6 +175,69 @@ enum FieldType {
 
 }
 
+class TypeNameUtils {
+
+    static TypeName resolveType(String string, Map<String, SchemeObject> objects) {
+        String argumentName = FieldInfo.getTypeSimpleName(string)
+        SchemeObject schemeObject = objects.get(argumentName)
+        if (schemeObject instanceof ImportObject) {
+            return ClassName.bestGuess(schemeObject.fullName)
+        } else {
+            return ClassName.bestGuess(argumentName)
+        }
+    }
+
+    static Pair<String, TypeName> getTypeNameWithArguments(TypeName parentTypeName, String genericString, Map<String, SchemeObject> objects) {
+        List<TypeName> arguments = new ArrayList<>()
+        genericString = genericString.replace(" ", "")
+        while (!genericString.isEmpty()) {
+            int nextComma = genericString.indexOf(',')
+            int nextLeft = genericString.indexOf('<')
+            int nextRight = genericString.indexOf('>')
+            if (nextComma > 0 && nextComma < nextRight && (nextLeft == -1 || nextComma < nextLeft)) {
+                arguments.add(resolveType(genericString.substring(0, nextComma), objects))
+                genericString = genericString.substring(nextComma + 1)
+                continue
+            }
+            if (nextRight == -1) {
+                arguments.add(resolveType(genericString), objects)
+                break
+            }
+            if (nextLeft == -1 || nextRight < nextLeft) {
+                arguments.add(resolveType(genericString.substring(0, nextRight), objects))
+                genericString = nextRight < genericString.length() - 1 ? genericString.substring(nextRight + 1) : ""
+                break
+            }
+            TypeName innerType = resolveType(genericString.substring(0, nextLeft), objects)
+            genericString = genericString.substring(nextLeft + 1)
+            Pair<String, TypeName> innerArgs = getTypeNameWithArguments(innerType, genericString, objects)
+            genericString = innerArgs.key.substring(1)
+            arguments.add(innerArgs.value)
+        }
+        return new Pair<String, TypeName>(genericString, ParameterizedTypeName.get(parentTypeName, (TypeName[]) arguments.toArray()))
+    }
+
+    static TypeName resolveTypeName(String typeString, Map<String, SchemeObject> objects) {
+        String simpleName = FieldInfo.getTypeSimpleName(typeString)
+        String genericsSuffix = typeString.indexOf("<") > 0 ? typeString.substring(typeString.indexOf("<")) : null
+        SchemeObject schemeObject = objects.get(simpleName)
+        if (schemeObject instanceof ImportObject) {
+            if (genericsSuffix != null) {
+                return getTypeNameWithArguments(ClassName.bestGuess(schemeObject.fullName), genericsSuffix.substring(1), objects).value
+            } else {
+                return ClassName.bestGuess(schemeObject.fullName)
+            }
+        } else {
+            if (genericsSuffix != null) {
+                return getTypeNameWithArguments(ClassName.bestGuess(simpleName), genericsSuffix.substring(1), objects)
+            } else {
+                return ClassName.bestGuess(simpleName)
+            }
+        }
+    }
+
+}
+
 class FieldInfo {
 
     static upperStartName(String name) {
@@ -214,71 +277,17 @@ class FieldInfo {
         if (nullable) {
             typeString = typeString.substring(0, typeString.length() - 1)
         }
-        String genericsSuffix = typeString.indexOf("<") > 0 ? typeString.substring(typeString.indexOf("<")) : null
+        String original = typeString
         typeString = getTypeSimpleName(typeString);
         fieldType = FieldType.get(typeString, objects);
         if (fieldType.typeName != null) {
             typeName = fieldType.typeName
         } else if (fieldType != FieldType.GENERIC) {
-            SchemeObject schemeObject = objects.get(typeString)
-            if (schemeObject instanceof ImportObject) {
-                if (genericsSuffix != null) {
-                    typeName = getTypeNameWithArguments(ClassName.bestGuess(schemeObject.fullName), genericsSuffix.substring(1), objects).value
-                } else {
-                    typeName = ClassName.bestGuess(schemeObject.fullName)
-                }
-            } else {
-                if (genericsSuffix != null) {
-                    typeName = getTypeNameWithArguments(ClassName.bestGuess(typeString), genericsSuffix.substring(1), objects)
-                } else {
-                    typeName = ClassName.bestGuess(typeString)
-                }
-            }
+            typeName = TypeNameUtils.resolveTypeName(original, objects)
         } else {
             // generic
             typeName = ClassName.bestGuess(typeString)
         }
-    }
-
-    TypeName resolveType(String string, Map<String, SchemeObject> objects) {
-        String argumentName = getTypeSimpleName(string)
-        SchemeObject schemeObject = objects.get(argumentName)
-        if (schemeObject instanceof ImportObject) {
-            return ClassName.bestGuess(schemeObject.fullName)
-        } else {
-            return ClassName.bestGuess(argumentName)
-        }
-    }
-
-    Pair<String, TypeName> getTypeNameWithArguments(TypeName parentTypeName, String genericString, Map<String, SchemeObject> objects) {
-        List<TypeName> arguments = new ArrayList<>()
-        genericString = genericString.replace(" ", "")
-        while (!genericString.isEmpty()) {
-            println "proc " + genericString
-            int nextComma = genericString.indexOf(',')
-            int nextLeft = genericString.indexOf('<')
-            int nextRight = genericString.indexOf('>')
-            if (nextComma > 0 && nextComma < nextRight && (nextLeft == -1 || nextComma < nextLeft)) {
-                arguments.add(resolveType(genericString.substring(0, nextComma), objects))
-                genericString = genericString.substring(nextComma + 1)
-                continue
-            }
-            if (nextRight == -1) {
-                arguments.add(resolveType(genericString), objects)
-                break
-            }
-            if (nextLeft == -1 || nextRight < nextLeft) {
-                arguments.add(resolveType(genericString.substring(0, nextRight), objects))
-                genericString = nextRight < genericString.length() - 1 ? genericString.substring(nextRight + 1) : ""
-                break
-            }
-            TypeName innerType = resolveType(genericString.substring(0, nextLeft), objects)
-            genericString = genericString.substring(nextLeft + 1)
-            Pair<String, TypeName> innerArgs = getTypeNameWithArguments(innerType, genericString, objects)
-            genericString = innerArgs.key.substring(1)
-            arguments.add(innerArgs.value)
-        }
-        return new Pair<String, TypeName>(genericString, ParameterizedTypeName.get(parentTypeName, (TypeName[]) arguments.toArray()))
     }
 
     FieldSpec createField(String name) {
@@ -326,6 +335,8 @@ class ClassObject extends SchemeObject {
 
     final String name
     final Map<String, FieldInfo> fieldsInfo = new HashMap<>()
+    final List<String> typeVariables = new ArrayList<>()
+    TypeName superclass
 
     ClassObject(String firstLine) {
         name = firstLine.substring(SIGNATURE.length()).trim()
@@ -335,9 +346,19 @@ class ClassObject extends SchemeObject {
     void writeToFile(File directory, Map<String, SchemeObject> objects) {
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(name)
                 .addModifiers(Modifier.PUBLIC)
-                .superclass(ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareJsonModel"))
                 .addAnnotation(AnnotationSpec.builder(ClassName.bestGuess("com.bluelinelabs.logansquare.annotation.JsonObject"))
                 .build())
+
+        if (superclass != null) {
+            classBuilder.superclass(superclass)
+        } else {
+            classBuilder.superclass(ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareJsonModel"))
+        }
+
+        for (String typeVariable : typeVariables) {
+            classBuilder.addTypeVariable(TypeVariableName.get(typeVariable))
+        }
+
         classBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .build())
@@ -389,6 +410,18 @@ class ClassObject extends SchemeObject {
 
     @Override
     void readLine(final String line, Map<String, SchemeObject> objects) {
+        if (line.startsWith("typeVariables")) {
+            for (String typeVariable : line.substring("typeVariables".length()).replace(" ", "").split(",")) {
+                typeVariables.add(typeVariable)
+            }
+            return
+        }
+
+        if (line.startsWith("extends")) {
+            superclass = TypeNameUtils.resolveTypeName(line.substring("extends".length()).replace(" ", ""), objects)
+            return
+        }
+
         String[] parts = line.split(':')
         String fieldName = parts[0].trim();
         String apiName = parts[1].trim();
