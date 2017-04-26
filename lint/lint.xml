@@ -7,6 +7,9 @@
     <issue id="NewerVersionAvailable" severity="error">
         <ignore regexp="A newer version of de.ruedigermoeller:fst than .+ is available: .+"/>
     </issue>
+    <issue id="GradleCompatible" severity="error">
+        <ignore regexp="All com.android.support libraries must use the exact same version specification (mixing versions can lead to runtime crashes). Found versions *. Examples include *"/>
+    </issue>
     <!-- todo: lint bug? -->
     <issue id="MissingRegistered" severity="error">
         <ignore
