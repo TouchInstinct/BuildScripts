@@ -21,7 +21,9 @@ abstract class SchemeObject {
     abstract void readLine(String line, Map<String, SchemeObject> objects)
 
 }
-//TODO: collection/equals collection/map/equals map/validation/check for useless types/YAML
+//TODO: missable in future
+//TODO: validation/check for useless types
+//TODO: register all maps/collections classes and work with java typical types
 class ImportObject extends SchemeObject {
 
     static final String SIGNATURE = "import"
@@ -41,7 +43,7 @@ class ImportObject extends SchemeObject {
 
     @Override
     void readLine(final String line, Map<String, SchemeObject> objects) {
-        throw new Exception("Line is not forimport object: '" + line + "'")
+        throw new Exception("Line is not related to import: '" + line + "'")
     }
 
 }
@@ -146,7 +148,7 @@ class EnumObject extends SchemeObject {
 enum FieldType {
 
     BOOLEAN(TypeName.BOOLEAN), INT(TypeName.INT), LONG(TypeName.LONG), FLOAT(TypeName.FLOAT),
-    STRING(ClassName.get(String.class)),
+    STRING(ClassName.get(String.class)), ARRAY(ClassName.get(List.class)), MAP(ClassName.get(Map.class)),
     ENUM(null), MODEL(null), GENERIC(null)
 
     final TypeName typeName
@@ -158,6 +160,8 @@ enum FieldType {
     static FieldType get(String typeString, Map<String, SchemeObject> objects) {
         switch (typeString) {
             case "string": return STRING
+            case "array": return ARRAY
+            case "map": return MAP
             case "int": return INT
             case "boolean": return BOOLEAN
             case "long": return LONG
@@ -267,7 +271,7 @@ class FieldInfo {
     final FieldType fieldType
     final TypeName typeName
 
-    FieldInfo(String apiName, String typeString, Map<String, SchemeObject> objects) {
+    FieldInfo(String apiName, String typeString, String subTypeString, Map<String, SchemeObject> objects) {
         this.apiName = apiName
         required = typeString.endsWith('*')
         if (required) {
@@ -281,7 +285,13 @@ class FieldInfo {
         typeString = getTypeSimpleName(typeString);
         fieldType = FieldType.get(typeString, objects);
         if (fieldType.typeName != null) {
-            typeName = fieldType.typeName
+            if (fieldType == FieldType.ARRAY) {
+                typeName = ParameterizedTypeName.get(fieldType.typeName, TypeNameUtils.resolveTypeName(subTypeString, objects))
+            } else if (fieldType == FieldType.MAP) {
+                typeName = ParameterizedTypeName.get(fieldType.typeName, ClassName.get(String.class), TypeNameUtils.resolveTypeName(subTypeString, objects))
+            } else {
+                typeName = fieldType.typeName
+            }
         } else if (fieldType != FieldType.GENERIC) {
             typeName = TypeNameUtils.resolveTypeName(original, objects)
         } else {
@@ -302,12 +312,19 @@ class FieldInfo {
         final MethodSpec.Builder builder = MethodSpec.methodBuilder("get" + upperStartName(name))
                 .returns(typeName)
                 .addModifiers(Modifier.PUBLIC)
-                .addStatement("return " + name)
         if (!typeName.isPrimitive()) {
             builder.addAnnotation(AnnotationSpec.builder(nullable
                     ? ClassName.bestGuess("android.support.annotation.Nullable")
                     : ClassName.bestGuess("android.support.annotation.NonNull"))
                     .build());
+        }
+
+        if (fieldType == FieldType.MAP) {
+            builder.addStatement("return \$T.unmodifiableMap(\$L)", ClassName.get(Collections.class), name)
+        } else if (fieldType == FieldType.ARRAY) {
+            builder.addStatement("return \$T.unmodifiableList(\$L)", ClassName.get(Collections.class), name)
+        } else {
+            builder.addStatement("return \$L", name)
         }
         return builder.build()
     }
@@ -323,7 +340,15 @@ class FieldInfo {
         final MethodSpec.Builder builder = MethodSpec.methodBuilder("set" + upperStartName(name))
                 .addParameter(parameterBuilder.build())
                 .addModifiers(Modifier.PUBLIC)
-                .addStatement("this." + name + " = " + name)
+
+        if (fieldType == FieldType.MAP) {
+            builder.addStatement("this.\$L = \$T.unmodifiableMap(\$L)", name, ClassName.get(Collections.class), name)
+        } else if (fieldType == FieldType.ARRAY) {
+            builder.addStatement("this.\$L = \$T.unmodifiableList(\$L)", name, ClassName.get(Collections.class), name)
+        } else {
+            builder.addStatement("this.\$L = \$L", name, name)
+        }
+
         return builder.build()
     }
 
@@ -388,12 +413,27 @@ class ClassObject extends SchemeObject {
             classBuilder.addMethod(entry.value.createGetter(entry.key))
             classBuilder.addMethod(entry.value.createSetter(entry.key))
             if (first) {
-                equalsStatement.add("return \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
-                        entry.key, entry.key)
-                hashCodeStatement.add("return \$T.hashCode(\$L", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"), entry.key)
+                if (superclass == null) {
+                    hashCodeStatement.add("return \$T.hashCode(\$L", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"), entry.key)
+                    equalsStatement.add("return \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                            entry.key, entry.key)
+                } else {
+                    hashCodeStatement.add("return \$T.hashCode(super.hashCode(), \$L", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"), entry.key)
+                    equalsStatement.add("return super.equals(that) && \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                            entry.key, entry.key)
+                }
             } else {
-                equalsStatement.add("\n&& \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
-                        entry.key, entry.key)
+                if (entry.value.fieldType == FieldType.MAP) {
+                    equalsStatement.add("\n&& \$T.isMapsEquals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                            entry.key, entry.key)
+                } else if (entry.value.fieldType == FieldType.ARRAY) {
+                    equalsStatement.add("\n&& \$T.isCollectionsEquals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                            entry.key, entry.key)
+                } else {
+                    equalsStatement.add("\n&& \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                            entry.key, entry.key)
+                }
+
                 hashCodeStatement.add(", \$L", entry.key)
             }
             first = false
@@ -426,11 +466,12 @@ class ClassObject extends SchemeObject {
         String fieldName = parts[0].trim();
         String apiName = parts[1].trim();
         String type = parts[2].trim();
+        String subType = parts.length > 3 ? parts[3].trim() : null;
 
         if (fieldsInfo.containsKey(fieldName)) {
             throw new Exception("Field of '" + name + "' already added: " + fieldName)
         }
-        fieldsInfo.put(fieldName, new FieldInfo(apiName, type, objects))
+        fieldsInfo.put(fieldName, new FieldInfo(apiName, type, subType, objects))
     }
 
 }
