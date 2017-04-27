@@ -3,46 +3,40 @@ buildscript {
         jcenter()
     }
     dependencies {
+        classpath 'org.yaml:snakeyaml:1.8'
         classpath 'com.squareup:javapoet:1.8.0'
     }
 }
 
+
 import com.squareup.javapoet.*
 import javafx.util.Pair
+import org.yaml.snakeyaml.Yaml
 
 import javax.lang.model.element.Modifier
 
 abstract class SchemeObject {
 
-    List<String> lines = new ArrayList<>();
-
     abstract void writeToFile(File directory, Map<String, SchemeObject> objects)
 
-    abstract void readLine(String line, Map<String, SchemeObject> objects)
-
 }
-//TODO: YAML
 //TODO: missable in future
+//TODO: dynamic package
 class ImportObject extends SchemeObject {
 
-    static final String SIGNATURE = "import"
+    static final String GROUP_NAME = "imports"
 
     final String name
     final String fullName
 
-    ImportObject(String firstLine) {
-        fullName = firstLine.substring(SIGNATURE.length()).trim()
+    ImportObject(String value) {
+        fullName = value.trim()
         name = fullName.substring(fullName.lastIndexOf('.') + 1)
     }
 
     @Override
     void writeToFile(final File directory, Map<String, SchemeObject> objects) {
         //do nothing - imports are for other objects
-    }
-
-    @Override
-    void readLine(final String line, Map<String, SchemeObject> objects) {
-        throw new Exception("Line is not related to import: '" + line + "'")
     }
 
 }
@@ -53,15 +47,32 @@ class EnumObject extends SchemeObject {
         STRING, NUMBER, BOOLEAN
     }
 
-    static final String SIGNATURE = "enum"
+    static final String PREFIX = "enum "
 
     final String name
     Type type
 
     Map<String, Object> values = new HashMap<>()
 
-    EnumObject(String firstLine) {
-        name = firstLine.substring(SIGNATURE.length()).trim()
+    EnumObject(String name, Map<String, String> values) {
+        this.name = name.trim()
+
+        for (Map.Entry<String, String> entry : values) {
+            final apiValue = entry.value.trim()
+            if (apiValue.isEmpty()) {
+                throw new Exception("Name of enum is empty")
+            }
+            if (this.values.containsKey(entry.key)) {
+                throw new Exception("Name '" + value + "' already added to enum")
+            }
+            Type type = typeOf(apiValue)
+            if (this.type == null) {
+                this.type = type
+            } else if (this.type != type) {
+                throw new Exception("Type of value '" + value + "' conflicts with previous value type: " + this.type)
+            }
+            this.values.put(entry.key, apiValue)
+        }
     }
 
     @Override
@@ -122,58 +133,40 @@ class EnumObject extends SchemeObject {
         }
     }
 
-    @Override
-    void readLine(final String line, Map<String, SchemeObject> objects) {
-        String[] parts = line.split(':')
-        String name = parts[0].trim();
-        if (name.isEmpty()) {
-            throw new Exception("Name of enum is empty")
-        }
-        if (values.containsKey(name)) {
-            throw new Exception("Name '" + value + "' already added to enum")
-        }
-        String value = parts[1].trim();
-        Type type = typeOf(value)
-        if (this.type == null) {
-            this.type = type
-        } else if (this.type != type) {
-            throw new Exception("Type of value '" + value + "' conflicts with previous value type: " + this.type)
-        }
-        values.put(name, value)
-    }
-
 }
 
 enum FieldType {
 
-    BOOLEAN(TypeName.BOOLEAN, ClassName.get(Boolean.class)),
-    INT(TypeName.INT, ClassName.get(Integer.class)),
-    LONG(TypeName.LONG, ClassName.get(Long.class)),
-    FLOAT(TypeName.FLOAT, ClassName.get(Float.class)),
-    DOUBLE(TypeName.DOUBLE, ClassName.get(Double.class)),
-    STRING(ClassName.get(String.class)),
-    ARRAY(ClassName.get(List.class)),
-    MAP(ClassName.get(Map.class)),
-    DATE_TIME(ClassName.bestGuess("org.joda.time.DateTime")),
-    ENUM,
-    MODEL,
-    IMPORTED_MODEL,
-    GENERIC
+    BOOLEAN(TypeName.BOOLEAN, ClassName.get(Boolean.class), false),
+    INT(TypeName.INT, ClassName.get(Integer.class), false),
+    LONG(TypeName.LONG, ClassName.get(Long.class), false),
+    FLOAT(TypeName.FLOAT, ClassName.get(Float.class), false),
+    DOUBLE(TypeName.DOUBLE, ClassName.get(Double.class), false),
+    STRING(ClassName.get(String.class), false),
+    LIST(ClassName.get(List.class), true),
+    MAP(ClassName.get(Map.class), true),
+    DATE_TIME(ClassName.bestGuess("org.joda.time.DateTime"), false),
+    ENUM(false),
+    MODEL(true),
+    IMPORTED_MODEL(true),
+    GENERIC(true)
 
     final TypeName primitiveTypeName
     final TypeName nonPrimitiveTypeName
+    final boolean ableToInnerValidate
 
-    FieldType() {
-        this(null, null)
+    FieldType(final boolean ableToInnerValidate) {
+        this(null, null, ableToInnerValidate)
     }
 
-    FieldType(final TypeName typeName) {
-        this(typeName, typeName)
+    FieldType(final TypeName typeName, final boolean ableToInnerValidate) {
+        this(typeName, typeName, ableToInnerValidate)
     }
 
-    FieldType(final TypeName primitiveTypeName, final TypeName nonPrimitiveTypeName) {
+    FieldType(final TypeName primitiveTypeName, final TypeName nonPrimitiveTypeName, final boolean ableToInnerValidate) {
         this.primitiveTypeName = primitiveTypeName
         this.nonPrimitiveTypeName = nonPrimitiveTypeName
+        this.ableToInnerValidate = ableToInnerValidate
     }
 
     static FieldType get(String typeString, Map<String, SchemeObject> objects) {
@@ -183,7 +176,7 @@ enum FieldType {
             case "List":
             case "Collection":
             case "LinkedList":
-            case "ArrayList": return ARRAY
+            case "ArrayList": return LIST
             case "Map":
             case "HashMap":
             case "TreeMap":
@@ -272,7 +265,7 @@ class TypeNameUtils {
             }
         } else {
             if (genericsSuffix != null) {
-                return getTypeNameWithArguments(ClassName.bestGuess(simpleName), genericsSuffix.substring(1), objects)
+                return getTypeNameWithArguments(ClassName.bestGuess(simpleName), genericsSuffix.substring(1), objects).value
             } else {
                 return ClassName.bestGuess(simpleName)
             }
@@ -304,52 +297,56 @@ class FieldInfo {
         return result;
     }
 
+    final String name
     final String apiName
-    final boolean nullable
-    final boolean required
-    final boolean nonEmptyCollection
-    final boolean solidCollection
+    boolean nullable
+    boolean missable
+    boolean nonEmptyCollection
+    boolean solidCollection
     final FieldType fieldType
     final TypeName typeName
 
-    FieldInfo(String apiName, String typeString, String subTypeString, Map<String, SchemeObject> objects) {
-        this.apiName = apiName
-        solidCollection = typeString.endsWith('%')
-        if (solidCollection) {
-            typeString = typeString.substring(0, typeString.length() - 1)
+    FieldInfo(String name, Map<String, String> parameters, Map<String, SchemeObject> objects) {
+        this.name = name
+        apiName = parameters.containsKey("apiName") ? parameters.get("apiName") : name
+
+        String flagsString = parameters.get("flags");
+        if (flagsString != null) {
+            List<String> flags = Arrays.asList(flagsString.replace(" ", "").split(","))
+            nullable = flags.contains("nullable")
+            missable = flags.contains("missable")
+            nonEmptyCollection = flags.contains("non-empty")
+            solidCollection = flags.contains("solid")
         }
-        nonEmptyCollection = typeString.endsWith('|')
-        if (nonEmptyCollection) {
-            typeString = typeString.substring(0, typeString.length() - 1)
+
+        String typeString = parameters.get("type")
+        if (typeString == null) {
+            throw new Exception("Missed type for field: " + name)
         }
-        required = typeString.endsWith('*')
-        if (required) {
-            typeString = typeString.substring(0, typeString.length() - 1)
-        }
-        nullable = typeString.endsWith('?')
-        if (nullable) {
-            typeString = typeString.substring(0, typeString.length() - 1)
-        }
-        String original = typeString
-        typeString = getTypeSimpleName(typeString);
-        fieldType = FieldType.get(typeString, objects);
+        fieldType = FieldType.get(getTypeSimpleName(typeString), objects);
         if (fieldType.nonPrimitiveTypeName != null) {
-            if (fieldType == FieldType.ARRAY) {
-                typeName = ParameterizedTypeName.get(fieldType.nonPrimitiveTypeName, TypeNameUtils.resolveTypeName(subTypeString, objects))
+            if (fieldType == FieldType.LIST) {
+                typeName = TypeNameUtils.resolveTypeName(typeString, objects)
+                if (!typeName.toString().startsWith("java.util.List")) {
+                    throw new Exception("Unsupported list type '" + typeName.toString() + "' of field: " + name + ". Supports only List<*>")
+                }
             } else if (fieldType == FieldType.MAP) {
-                typeName = ParameterizedTypeName.get(fieldType.nonPrimitiveTypeName, ClassName.get(String.class), TypeNameUtils.resolveTypeName(subTypeString, objects))
+                typeName = TypeNameUtils.resolveTypeName(typeString, objects)
+                if (!typeName.toString().startsWith("java.util.Map<String")) {
+                    throw new Exception("Unsupported map type of field: " + name + ". Supports only Map<String, *>")
+                }
             } else {
                 typeName = nullable ? fieldType.nonPrimitiveTypeName : fieldType.primitiveTypeName
             }
         } else if (fieldType != FieldType.GENERIC) {
-            typeName = TypeNameUtils.resolveTypeName(original, objects)
+            typeName = TypeNameUtils.resolveTypeName(typeString, objects)
         } else {
             // generic
             typeName = ClassName.bestGuess(typeString)
         }
     }
 
-    FieldSpec createField(String name) {
+    FieldSpec createField() {
         return FieldSpec.builder(typeName, name, Modifier.PRIVATE)
                 .addAnnotation(AnnotationSpec.builder(ClassName.bestGuess("com.bluelinelabs.logansquare.annotation.JsonField"))
                 .addMember("name", "\$S", apiName)
@@ -361,7 +358,7 @@ class FieldInfo {
         return name.length() > prefix.length() && name.startsWith(prefix) && name.charAt(prefix.length()).isUpperCase()
     }
 
-    String getGetterPrefix(String name) {
+    String getGetterPrefix() {
         if (fieldType != FieldType.BOOLEAN) {
             return "get"
         }
@@ -375,8 +372,8 @@ class FieldInfo {
         return "get"
     }
 
-    MethodSpec createGetter(String name) {
-        String getterPrefix = getGetterPrefix(name);
+    MethodSpec createGetter() {
+        String getterPrefix = getGetterPrefix();
         final MethodSpec.Builder builder = MethodSpec.methodBuilder(getterPrefix.equals("get")
                 ? getterPrefix + upperStartName(name)
                 : getterPrefix + upperStartName(name.substring(getterPrefix.length())))
@@ -391,7 +388,7 @@ class FieldInfo {
 
         if (fieldType == FieldType.MAP) {
             builder.addStatement("return \$T.unmodifiableMap(\$L)", ClassName.get(Collections.class), name)
-        } else if (fieldType == FieldType.ARRAY) {
+        } else if (fieldType == FieldType.LIST) {
             builder.addStatement("return \$T.unmodifiableList(\$L)", ClassName.get(Collections.class), name)
         } else {
             builder.addStatement("return \$L", name)
@@ -399,7 +396,7 @@ class FieldInfo {
         return builder.build()
     }
 
-    MethodSpec createSetter(String name) {
+    MethodSpec createSetter() {
         final ParameterSpec.Builder parameterBuilder = ParameterSpec.builder(typeName, name, Modifier.FINAL)
         if (!typeName.isPrimitive()) {
             parameterBuilder.addAnnotation(AnnotationSpec.builder(nullable
@@ -413,7 +410,7 @@ class FieldInfo {
 
         if (fieldType == FieldType.MAP) {
             builder.addStatement("this.\$L = \$T.unmodifiableMap(\$L)", name, ClassName.get(Collections.class), name)
-        } else if (fieldType == FieldType.ARRAY) {
+        } else if (fieldType == FieldType.LIST) {
             builder.addStatement("this.\$L = \$T.unmodifiableList(\$L)", name, ClassName.get(Collections.class), name)
         } else {
             builder.addStatement("this.\$L = \$L", name, name)
@@ -422,36 +419,46 @@ class FieldInfo {
         return builder.build()
     }
 
-    void addValidateStatements(String name, MethodSpec.Builder validateMethod) {
-        final String prefix
+    void addValidateStatements(MethodSpec.Builder validateMethod) {
         if (!nullable) {
-            prefix = ""
             validateMethod.addStatement("validateNotNull(\$L)", name)
-        } else {
-            prefix = "if(" + name + "!=null)"
         }
-        if (fieldType == FieldType.ARRAY) {
+        if (!fieldType.ableToInnerValidate) {
+            return
+        }
+        if (fieldType == FieldType.GENERIC || fieldType == FieldType.IMPORTED_MODEL) {
+            validateMethod
+                    .beginControlFlow("if (\$L instanceof \$T)", name, ClassName.bestGuess("ru.touchin.templates.ApiModel"))
+                    .addStatement("((\$T) \$L).validate()", ClassName.bestGuess("ru.touchin.templates.ApiModel"), name)
+                    .endControlFlow()
+            return
+        }
+        if (nullable) {
+            validateMethod.beginControlFlow("if (\$L != null)", name)
+        }
+        if (fieldType == FieldType.LIST) {
             if (nonEmptyCollection) {
-                validateMethod.addStatement(prefix + "validateCollectionNotEmpty(\$L)", name)
+                validateMethod.addStatement("validateCollectionNotEmpty(\$L)", name)
             }
             if (solidCollection) {
-                validateMethod.addStatement(prefix + "validateCollection(\$L, CollectionValidationRule.EXCEPTION_IF_ANY_INVALID)", name)
+                validateMethod.addStatement("validateCollection(\$L, CollectionValidationRule.EXCEPTION_IF_ANY_INVALID)", name)
             } else if (nonEmptyCollection) {
-                validateMethod.addStatement(prefix + "validateCollection(\$L, CollectionValidationRule.EXCEPTION_IF_ALL_INVALID)", name)
+                validateMethod.addStatement("validateCollection(\$L, CollectionValidationRule.EXCEPTION_IF_ALL_INVALID)", name)
             } else {
-                validateMethod.addStatement(prefix + "validateCollection(\$L, CollectionValidationRule.REMOVE_INVALID_ITEMS)", name)
+                validateMethod.addStatement("validateCollection(\$L, CollectionValidationRule.REMOVE_INVALID_ITEMS)", name)
             }
         } else if (fieldType == FieldType.MAP) {
             if (nonEmptyCollection) {
-                validateMethod.addStatement(prefix + "validateCollectionNotEmpty(\$L.values())", name)
+                validateMethod.addStatement("validateCollectionNotEmpty(\$L.values())", name)
             }
-            validateMethod.addStatement(prefix + "validateCollection(\$L.values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID)", name)
+            validateMethod.addStatement("validateCollection(\$L.values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID)", name)
         } else if (fieldType == FieldType.MODEL) {
-            validateMethod.addStatement(prefix + "\$L.validate()", name)
-        } else if (fieldType == FieldType.GENERIC || fieldType == FieldType.IMPORTED_MODEL) {
-            validateMethod.addStatement("if(\$L instanceof \$T) ((\$T)\$L).validate()", name,
-                    ClassName.bestGuess("ru.touchin.templates.ApiModel"),
-                    ClassName.bestGuess("ru.touchin.templates.ApiModel"), name)
+            validateMethod.addStatement("\$L.validate()", name)
+        } else {
+            throw new Exception("Unexpected able to validate field type '" + fieldType + "' of field " + name)
+        }
+        if (nullable) {
+            validateMethod.endControlFlow()
         }
     }
 
@@ -459,15 +466,47 @@ class FieldInfo {
 
 class ClassObject extends SchemeObject {
 
-    static final String SIGNATURE = "class"
+    static final String PREFIX = "class "
 
     final String name
-    final Map<String, FieldInfo> fieldsInfo = new HashMap<>()
+    final Map<String, String> info
+    final List<FieldInfo> fields = new ArrayList<>()
     final List<String> typeVariables = new ArrayList<>()
     TypeName superclass
 
-    ClassObject(String firstLine) {
-        name = firstLine.substring(SIGNATURE.length()).trim()
+    ClassObject(String name, Map<String, String> info) {
+        this.name = name
+        this.info = info
+    }
+
+    void resolveFieldsAndProperties(Map<String, SchemeObject> objects) {
+        final List<String> fieldNames = new ArrayList<>()
+        for (final Map.Entry entry : info.entrySet()) {
+            if (entry.key.equals("typeVariables")) {
+                for (String typeVariable : entry.value.replace(" ", "").split(",")) {
+                    typeVariables.add(typeVariable)
+                }
+                continue
+            }
+
+            if (entry.key.equals("extends")) {
+                superclass = TypeNameUtils.resolveTypeName(entry.value.replace(" ", ""), objects)
+                continue
+            }
+
+            if (fieldNames.contains(entry.key)) {
+                throw new Exception("Duplicate field name: " + name)
+            }
+            fieldNames.add(entry.key)
+
+            if (entry.value instanceof Map) {
+                fields.add(new FieldInfo(entry.key, (Map<String, String>) entry.value, objects))
+            } else {
+                Map<String, String> parameters = new HashMap<>()
+                parameters.put("type", entry.value.toString())
+                fields.add(new FieldInfo(entry.key, parameters, objects))
+            }
+        }
     }
 
     @Override
@@ -505,8 +544,12 @@ class ClassObject extends SchemeObject {
                 .addParameter(ParameterSpec.builder(ClassName.get(Object.class), "object", Modifier.FINAL)
                 .addAnnotation(ClassName.bestGuess("android.support.annotation.Nullable"))
                 .build())
-                .addStatement("if (this == object) return true")
-                .addStatement("if (object == null || getClass() != object.getClass()) return false")
+                .beginControlFlow("if (this == object)")
+                .addStatement("return true")
+                .endControlFlow()
+                .beginControlFlow("if (object == null || getClass() != object.getClass())")
+                .addStatement("return false")
+                .endControlFlow()
                 .addStatement("final \$T that = (\$T) object", ClassName.bestGuess(name), ClassName.bestGuess(name))
 
         MethodSpec.Builder hashCodeMethod = MethodSpec.methodBuilder("hashCode")
@@ -524,55 +567,55 @@ class ClassObject extends SchemeObject {
         CodeBlock.Builder equalsStatement = CodeBlock.builder()
         CodeBlock.Builder hashCodeStatement = CodeBlock.builder()
 
-        for (Map.Entry<String, FieldInfo> entry : fieldsInfo) {
-            classBuilder.addField(entry.value.createField(entry.key))
-            classBuilder.addMethod(entry.value.createGetter(entry.key))
-            classBuilder.addMethod(entry.value.createSetter(entry.key))
-            entry.value.addValidateStatements(entry.key, validateMethod)
+        for (FieldInfo field : fields) {
+            classBuilder.addField(field.createField())
+            classBuilder.addMethod(field.createGetter())
+            classBuilder.addMethod(field.createSetter())
+            field.addValidateStatements(validateMethod)
 
             if (fullConstructorBuilder != null) {
-                fullConstructorBuilder.addParameter(ParameterSpec.builder(entry.value.typeName, entry.key, Modifier.FINAL)
-                        .addAnnotation(entry.value.nullable
+                fullConstructorBuilder.addParameter(ParameterSpec.builder(field.typeName, field.name, Modifier.FINAL)
+                        .addAnnotation(field.nullable
                         ? ClassName.bestGuess("android.support.annotation.Nullable")
                         : ClassName.bestGuess("android.support.annotation.NonNull"))
                         .build())
-                if (entry.value.fieldType == FieldType.ARRAY) {
-                    fullConstructorBuilder.addStatement("this.\$L = \$T.unmodifiableList(\$L)", entry.key, ClassName.get(Collections.class), entry.key)
-                } else if (entry.value.fieldType == FieldType.MAP) {
-                    fullConstructorBuilder.addStatement("this.\$L = \$T.unmodifiableMap(\$L)", entry.key, ClassName.get(Collections.class), entry.key)
+                if (field.fieldType == FieldType.LIST) {
+                    fullConstructorBuilder.addStatement("this.\$L = \$T.unmodifiableList(\$L)", field.name, ClassName.get(Collections.class), field.name)
+                } else if (field.fieldType == FieldType.MAP) {
+                    fullConstructorBuilder.addStatement("this.\$L = \$T.unmodifiableMap(\$L)", field.name, ClassName.get(Collections.class), field.name)
                 } else {
-                    fullConstructorBuilder.addStatement("this.\$L = \$L", entry.key, entry.key)
+                    fullConstructorBuilder.addStatement("this.\$L = \$L", field.name, field.name)
                 }
             }
 
             if (first) {
                 if (superclass == null) {
-                    hashCodeStatement.add("return \$T.hashCode(\$L", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"), entry.key)
+                    hashCodeStatement.add("return \$T.hashCode(\$L", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"), field.name)
                     equalsStatement.add("return \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
-                            entry.key, entry.key)
+                            field.name, field.name)
                 } else {
-                    hashCodeStatement.add("return \$T.hashCode(super.hashCode(), \$L", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"), entry.key)
+                    hashCodeStatement.add("return \$T.hashCode(super.hashCode(), \$L", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"), field.name)
                     equalsStatement.add("return super.equals(that) && \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
-                            entry.key, entry.key)
+                            field.name, field.name)
                 }
             } else {
-                if (entry.value.fieldType == FieldType.MAP) {
-                    equalsStatement.add("\n&& \$T.isMapsEquals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
-                            entry.key, entry.key)
-                } else if (entry.value.fieldType == FieldType.ARRAY) {
-                    equalsStatement.add("\n&& \$T.isCollectionsEquals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
-                            entry.key, entry.key)
+                if (field.fieldType == FieldType.MAP) {
+                    equalsStatement.add("\n\t\t&& \$T.isMapsEquals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                            field.name, field.name)
+                } else if (field.fieldType == FieldType.LIST) {
+                    equalsStatement.add("\n\t\t&& \$T.isCollectionsEquals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                            field.name, field.name)
                 } else {
-                    equalsStatement.add("\n&& \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
-                            entry.key, entry.key)
+                    equalsStatement.add("\n\t\t&& \$T.equals(\$L, that.\$L)", ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils"),
+                            field.name, field.name)
                 }
 
-                hashCodeStatement.add(", \$L", entry.key)
+                hashCodeStatement.add(", \$L", field.name)
             }
             first = false
         }
-        equalsStatement.add(";")
-        hashCodeStatement.add(");")
+        equalsStatement.add(";\n")
+        hashCodeStatement.add(");\n")
 
         classBuilder.addMethod(validateMethod.build())
         classBuilder.addMethod(equalsMethod.addCode(equalsStatement.build()).build())
@@ -587,68 +630,49 @@ class ClassObject extends SchemeObject {
                 .build().writeTo(directory);
     }
 
-    @Override
-    void readLine(final String line, Map<String, SchemeObject> objects) {
-        if (line.startsWith("typeVariables")) {
-            for (String typeVariable : line.substring("typeVariables".length()).replace(" ", "").split(",")) {
-                typeVariables.add(typeVariable)
-            }
-            return
-        }
-
-        if (line.startsWith("extends")) {
-            superclass = TypeNameUtils.resolveTypeName(line.substring("extends".length()).replace(" ", ""), objects)
-            return
-        }
-
-        String[] parts = line.split(':')
-        String fieldName = parts[0].trim();
-        String apiName = parts[1].trim();
-        String type = parts[2].trim();
-        String subType = parts.length > 3 ? parts[3].trim() : null;
-
-        if (fieldsInfo.containsKey(fieldName)) {
-            throw new Exception("Field of '" + name + "' already added: " + fieldName)
-        }
-        fieldsInfo.put(fieldName, new FieldInfo(apiName, type, subType, objects))
-    }
-
 }
 
 android.applicationVariants.all {
     variant ->
         File generatedModels = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
-        File schemeFile = new File("${project.projectDir}/src/main/res/raw/scheme.txt")
+        File schemeFile2 = new File("${project.projectDir}/src/main/res/raw/scheme2.yaml")
+
+        String fileName = "scheme2.yaml"
 
         def apiModelsGenerationTask = tasks.create("apiModelsGeneration${variant.name}") << {
 
-            BufferedReader reader = new BufferedReader(new FileReader(schemeFile))
-            String line
+            Yaml yaml = new Yaml();
             Map<String, SchemeObject> schemeObjects = new HashMap<>()
-            schemeObjects.put("List", new ImportObject("import java.util.List"))
-            schemeObjects.put("DateTime", new ImportObject("import org.joda.time.DateTime"))
-            schemeObjects.put("Map", new ImportObject("import java.util.Map"))
-            SchemeObject currentSchemeObject = null
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith(EnumObject.SIGNATURE)) {
-                    currentSchemeObject = new EnumObject(line)
-                    schemeObjects.put(currentSchemeObject.name, currentSchemeObject)
-                } else if (line.startsWith(ClassObject.SIGNATURE)) {
-                    currentSchemeObject = new ClassObject(line)
-                    schemeObjects.put(currentSchemeObject.name, currentSchemeObject)
-                } else if (line.startsWith(ImportObject.SIGNATURE)) {
-                    currentSchemeObject = new ImportObject(line)
-                    schemeObjects.put(currentSchemeObject.name, currentSchemeObject)
-                } else if (currentSchemeObject != null) {
-                    currentSchemeObject.lines.add(line)
-                } else if (!line.trim().isEmpty()) {
-                    throw new Exception("No objects in scheme")
+            schemeObjects.put("Map", new ImportObject("java.util.Map"))
+            schemeObjects.put("List", new ImportObject("java.util.List"))
+            schemeObjects.put("DateTime", new ImportObject("org.joda.time.DateTime"))
+
+            for (final Object data : yaml.loadAll(new FileReader(schemeFile2))) {
+                if (data instanceof Map) {
+                    for (final Map.Entry<String, Object> entry : data.entrySet()) {
+                        if (entry.key.equals(ImportObject.GROUP_NAME)) {
+                            for (String importString : (Iterable) entry.value) {
+                                final ImportObject importObject = new ImportObject(importString)
+                                schemeObjects.put(importObject.name, importObject)
+                            }
+                        } else if (entry.key.startsWith(EnumObject.PREFIX)) {
+                            final EnumObject enumObject = new EnumObject(entry.key.substring(EnumObject.PREFIX.length()), entry.value)
+                            schemeObjects.put(enumObject.name, enumObject)
+                        } else if (entry.key.startsWith(ClassObject.PREFIX)) {
+                            final ClassObject classObject = new ClassObject(entry.key.substring(ClassObject.PREFIX.length()), entry.value)
+                            schemeObjects.put(classObject.name, classObject)
+                        } else {
+                            throw new Exception("Unexpected scheme object: " + entry.key)
+                        }
+                    }
+                } else {
+                    throw new Exception("Yaml file '" + fileName + "' is invalid")
                 }
             }
 
             for (SchemeObject schemeObject : schemeObjects.values()) {
-                for (String objectLine : schemeObject.lines) {
-                    schemeObject.readLine(objectLine, schemeObjects)
+                if (schemeObject instanceof ClassObject) {
+                    schemeObject.resolveFieldsAndProperties(schemeObjects)
                 }
                 schemeObject.writeToFile(generatedModels, schemeObjects)
             }
