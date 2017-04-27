@@ -21,6 +21,8 @@ abstract class SchemeObject {
     abstract void readLine(String line, Map<String, SchemeObject> objects)
 
 }
+//TODO: constructor
+//TODO: YAML
 //TODO: datetime
 //TODO: missable in future
 //TODO: register all maps/collections classes and work with java typical types
@@ -322,8 +324,29 @@ class FieldInfo {
                 .build()
     }
 
+    static boolean checkNameStartsWith(String name, String prefix) {
+        return name.length() > prefix.length() && name.startsWith(prefix) && name.charAt(prefix.length()).isUpperCase()
+    }
+
+    String getGetterPrefix(String name) {
+        if (fieldType != FieldType.BOOLEAN) {
+            return "get"
+        }
+        if (checkNameStartsWith(name, "is")) {
+            return "is"
+        } else if (checkNameStartsWith(name, "has")) {
+            return "has"
+        } else if (checkNameStartsWith(name, "have")) {
+            return "have"
+        }
+        return "get"
+    }
+
     MethodSpec createGetter(String name) {
-        final MethodSpec.Builder builder = MethodSpec.methodBuilder("get" + upperStartName(name))
+        String getterPrefix = getGetterPrefix(name);
+        final MethodSpec.Builder builder = MethodSpec.methodBuilder(getterPrefix.equals("get")
+                ? getterPrefix + upperStartName(name)
+                : getterPrefix + upperStartName(name.substring(getterPrefix.length())))
                 .returns(typeName)
                 .addModifiers(Modifier.PUBLIC)
         if (!typeName.isPrimitive()) {
