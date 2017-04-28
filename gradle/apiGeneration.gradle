@@ -1,3 +1,5 @@
+apply plugin: 'com.android.application'
+
 buildscript {
     repositories {
         jcenter()
@@ -17,11 +19,12 @@ import javax.lang.model.element.Modifier
 
 abstract class SchemeObject {
 
-    abstract void writeToFile(File directory, Map<String, SchemeObject> objects)
+    abstract void writeToFile(File directory, Map<String, SchemeObject> objects, String appPackage)
 
 }
 //TODO: missable in future
-//TODO: dynamic package
+//TODO: move out of allvariants - too much
+//TODO: refactor code
 class ImportObject extends SchemeObject {
 
     static final String GROUP_NAME = "imports"
@@ -35,7 +38,7 @@ class ImportObject extends SchemeObject {
     }
 
     @Override
-    void writeToFile(final File directory, Map<String, SchemeObject> objects) {
+    void writeToFile(final File directory, Map<String, SchemeObject> objects, String appPackage) {
         //do nothing - imports are for other objects
     }
 
@@ -76,7 +79,7 @@ class EnumObject extends SchemeObject {
     }
 
     @Override
-    void writeToFile(File directory, Map<String, SchemeObject> objects) {
+    void writeToFile(File directory, Map<String, SchemeObject> objects, String appPackage) {
         TypeSpec.Builder enumBuilder = TypeSpec.enumBuilder(name)
                 .addModifiers(Modifier.PUBLIC)
                 .addSuperinterface(ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareEnum"))
@@ -117,7 +120,7 @@ class EnumObject extends SchemeObject {
             }
         }
 
-        JavaFile.builder("com.touchin.sberinkas", enumBuilder.build()).indent("    ").build().writeTo(directory);
+        JavaFile.builder(appPackage, enumBuilder.build()).indent("    ").build().writeTo(directory);
     }
 
     Type typeOf(String value) {
@@ -510,10 +513,11 @@ class ClassObject extends SchemeObject {
     }
 
     @Override
-    void writeToFile(File directory, Map<String, SchemeObject> objects) {
+    void writeToFile(File directory, Map<String, SchemeObject> objects, String appPackage) {
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(name)
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(AnnotationSpec.builder(ClassName.bestGuess("com.bluelinelabs.logansquare.annotation.JsonObject"))
+                .addMember("serializeNullObjects", "true")
                 .build())
 
         if (superclass != null) {
@@ -624,20 +628,42 @@ class ClassObject extends SchemeObject {
         if (fullConstructorBuilder != null) {
             classBuilder.addMethod(fullConstructorBuilder.build())
         }
-
-        JavaFile.builder("com.touchin.sberinkas", classBuilder.build())
+        println "!!!!!" + appPackage
+        JavaFile.builder(appPackage, classBuilder.build())
                 .indent("    ")
                 .build().writeTo(directory);
     }
 
 }
 
+class FileUtils {
+
+    static void purgeDirectory(File dir) {
+        for (File file : dir.listFiles()) {
+            if (file.isDirectory()) purgeDirectory(file);
+            file.delete();
+        }
+    }
+
+}
+
 android.applicationVariants.all {
     variant ->
-        File generatedModels = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
-        File schemeFile2 = new File("${project.projectDir}/src/main/res/raw/scheme2.yaml")
+        File generatedModels = new File("${project.buildDir}/generated/source/api/model/${variant.dirName}")
+        String modelsPackage = android.extensions.findByName("apiGeneratorModelsPackage")
+        String schemePath = android.extensions.findByName("apiGeneratorSchemePath")
+        if (modelsPackage == null) {
+            modelsPackage = android.defaultConfig.applicationId + '.logic.api.model'
+        }
 
-        String fileName = "scheme2.yaml"
+        if (schemePath == null) {
+            return
+        }
+
+        File schemeFile = new File(schemePath)
+        if (!schemeFile.exists()) {
+            schemeFile = new File("${project.projectDir}", schemePath)
+        }
 
         def apiModelsGenerationTask = tasks.create("apiModelsGeneration${variant.name}") << {
 
@@ -647,7 +673,7 @@ android.applicationVariants.all {
             schemeObjects.put("List", new ImportObject("java.util.List"))
             schemeObjects.put("DateTime", new ImportObject("org.joda.time.DateTime"))
 
-            for (final Object data : yaml.loadAll(new FileReader(schemeFile2))) {
+            for (final Object data : yaml.loadAll(new FileReader(schemeFile))) {
                 if (data instanceof Map) {
                     for (final Map.Entry<String, Object> entry : data.entrySet()) {
                         if (entry.key.equals(ImportObject.GROUP_NAME)) {
@@ -669,12 +695,12 @@ android.applicationVariants.all {
                     throw new Exception("Yaml file '" + fileName + "' is invalid")
                 }
             }
-
+            FileUtils.purgeDirectory(generatedModels)
             for (SchemeObject schemeObject : schemeObjects.values()) {
                 if (schemeObject instanceof ClassObject) {
                     schemeObject.resolveFieldsAndProperties(schemeObjects)
                 }
-                schemeObject.writeToFile(generatedModels, schemeObjects)
+                schemeObject.writeToFile(generatedModels, schemeObjects, modelsPackage)
             }
         }
 
