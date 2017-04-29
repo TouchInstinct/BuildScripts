@@ -41,6 +41,7 @@ import javax.lang.model.element.Modifier
 
 //TODO: move out of allvariants - too much
 //TODO: serialization/deserialization
+//TODO: setup generation by map yaml->package
 
 class Types {
 
