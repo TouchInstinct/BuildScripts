@@ -40,7 +40,7 @@ import javax.lang.model.element.Modifier
 //TODO: NUMBER/BOOLEAN enums in future
 //TODO: maybe save md5-hashes to check if files/scheme changed
 
-//TODO: serialization/deserialization
+//TODO: bug with 'type: List<String,TResponse2>'
 //TODO: setup generation by map yaml->package
 
 class Types {
