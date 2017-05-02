@@ -40,7 +40,6 @@ import javax.lang.model.element.Modifier
 //TODO: NUMBER/BOOLEAN enums in future
 //TODO: maybe save md5-hashes to check if files/scheme changed
 
-//TODO: bug with 'type: List<String,TResponse2>'
 //TODO: setup generation by map yaml->package
 
 class Types {
@@ -388,19 +387,20 @@ class TypeNameUtils {
     static TypeName resolveTypeName(final String typeString, final Map<String, SchemeObject> objects) {
         final TypeName baseTypeName = resolveBaseTypeName(typeString, objects)
         final String typeArgumentsString = extractTypeArgumentsString(typeString)
-        if (typeArgumentsString != null) {
-            try {
-                final Pair<String, TypeName> result = getTypeNameWithArguments(baseTypeName, typeArgumentsString.substring(1), objects)
-                if (!result.key.isEmpty()) {
-                    throw new Exception("Useless symbols '" + result.key + "'")
-                }
-            } catch (final Exception exception) {
-                throw new Exception("Error resolving type of '" + typeString + "' : " + exception.getMessage())
-            }
+        if (typeArgumentsString == null) {
+            return baseTypeName
         }
-        return baseTypeName
-    }
 
+        try {
+            final Pair<String, TypeName> result = getTypeNameWithArguments(baseTypeName, typeArgumentsString.substring(1), objects)
+            if (!result.key.isEmpty()) {
+                throw new Exception("Useless symbols '" + result.key + "'")
+            }
+            return result.getValue()
+        } catch (final Exception exception) {
+            throw new Exception("Error resolving type of '" + typeString + "' : " + exception.getMessage())
+        }
+    }
 }
 
 /**
@@ -743,7 +743,7 @@ class ClassObject extends SchemeObject {
             serializeMethod.addStatement("outputStream.\$L(\$L)", serializeMethodName, field.name)
             if (deserializeMethodName.equals("readObject")) {
                 deserializeMethod.addStatement("\$L = (\$T) inputStream.\$L()", field.name, field.typeName, deserializeMethodName)
-            } else{
+            } else {
                 deserializeMethod.addStatement("\$L = inputStream.\$L()", field.name, deserializeMethodName)
             }
 
