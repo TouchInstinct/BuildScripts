@@ -299,6 +299,12 @@ enum FieldType {
 
 class TypeNameUtils {
 
+    /**
+     * Returns type arguments part from full string that represents type.
+     * Sample: 'List<String>' -> '<String>' or 'Map<Integer, String>' -> '<Integer,String>'.
+     * @param fullTypeString Full string represents type. E.g. 'Map<String, String>';
+     * @return Type arguments part of string. Like '<String,String>'
+     */
     private static String extractTypeArgumentsString(final String fullTypeString) {
         final int startOfTypeArguments = fullTypeString.indexOf("<");
         return startOfTypeArguments > 0 ? fullTypeString.substring(startOfTypeArguments).replace(" ", "") : null
@@ -321,8 +327,15 @@ class TypeNameUtils {
         return result
     }
 
-    private static TypeName resolveBaseTypeName(final String typeStringWithoutArguments, final Map<String, SchemeObject> objects) {
-        final String baseTypeString = extractBaseTypeString(typeStringWithoutArguments)
+    /**
+     * Resolving type name of base type from string.
+     * Sample: 'List<String>' -> 'java.util.List' typeName.
+     * @param typeString String represents type;
+     * @param objects Objects to resolve some external imported classes;
+     * @return Type name of base type.
+     */
+    private static TypeName resolveBaseTypeName(final String typeString, final Map<String, SchemeObject> objects) {
+        final String baseTypeString = extractBaseTypeString(typeString)
         final SchemeObject associatedObject = objects.get(baseTypeString)
         if (associatedObject instanceof ImportObject) {
             return ClassName.bestGuess(associatedObject.fullName)
