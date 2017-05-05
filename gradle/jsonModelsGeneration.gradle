@@ -87,14 +87,22 @@ abstract class SchemeObject {
  */
 class ImportObject extends SchemeObject {
 
+    enum Type {
+        MODEL,
+        ENUM,
+        EXTERNAL
+    }
+
     static final String GROUP_NAME = "imports"
 
     final String name
     final String fullName
+    final Type type
 
-    ImportObject(String value) {
+    ImportObject(final String value, final Type type) {
         fullName = value.trim()
         name = fullName.substring(fullName.lastIndexOf('.') + 1)
+        this.type = type
     }
 
     @Override
@@ -284,7 +292,14 @@ enum FieldType {
             default:
                 final SchemeObject object = objects.get(typeString)
                 if (object instanceof ImportObject) {
-                    return IMPORTED_CLASS
+                    switch (object.type){
+                        case ImportObject.Type.MODEL:
+                            return MODEL
+                        case ImportObject.Type.ENUM:
+                            return ENUM
+                        case ImportObject.Type.EXTERNAL:
+                            return IMPORTED_CLASS
+                    }
                 }
                 if (object instanceof EnumObject) {
                     return ENUM
@@ -856,9 +871,9 @@ class FileUtils {
 
         final Yaml yaml = new Yaml()
         final Map<String, SchemeObject> schemeObjects = new HashMap<>()
-        schemeObjects.put("Map", new ImportObject("java.util.Map"))
-        schemeObjects.put("List", new ImportObject("java.util.List"))
-        schemeObjects.put("DateTime", new ImportObject("org.joda.time.DateTime"))
+        schemeObjects.put("Map", new ImportObject("java.util.Map", ImportObject.Type.EXTERNAL))
+        schemeObjects.put("List", new ImportObject("java.util.List", ImportObject.Type.EXTERNAL))
+        schemeObjects.put("DateTime", new ImportObject("org.joda.time.DateTime", ImportObject.Type.EXTERNAL))
 
         for (final Object data : yaml.loadAll(new FileReader(schemeFile))) {
             if (!(data instanceof Map)) {
@@ -868,7 +883,7 @@ class FileUtils {
             for (final Map.Entry<String, Object> entry : data.entrySet()) {
                 if (entry.key.equals(ImportObject.GROUP_NAME)) {
                     for (String importString : (Iterable) entry.value) {
-                        final ImportObject importObject = new ImportObject(importString)
+                        final ImportObject importObject = new ImportObject(importString, ImportObject.Type.EXTERNAL)
                         schemeObjects.put(importObject.name, importObject)
                     }
                 } else if (entry.key.startsWith(EnumObject.PREFIX)) {
@@ -928,9 +943,11 @@ android.applicationVariants.all {
                         if (externalObject instanceof ImportObject) {
                             schemeObjects.put(externalObject.name, externalObject)
                         } else if (externalObject instanceof EnumObject) {
-                            schemeObjects.put(externalObject.name, new ImportObject(externalObjects.key + '.' + externalObject.name))
+                            schemeObjects.put(externalObject.name,
+                                    new ImportObject(externalObjects.key + '.' + externalObject.name, ImportObject.Type.ENUM))
                         } else if (externalObject instanceof ClassObject) {
-                            schemeObjects.put(externalObject.name, new ImportObject(externalObjects.key + '.' + externalObject.name))
+                            schemeObjects.put(externalObject.name,
+                                    new ImportObject(externalObjects.key + '.' + externalObject.name, ImportObject.Type.MODEL))
                         }
                     }
                 }
