@@ -22,6 +22,8 @@
 
 ## Подключение и использование генератора
 
+Подключаем сабмодуль [BuildScripts](https://github.com/TouchInstinct/BuildScripts) в папку libraries.
+
 Чтобы подключить скрипт, добавьте в конец файл `build.gradle` модуля следующую строку:
 ```gradle
     apply from: "${rootDir}/libraries/BuildScripts/gradle/jsonModelsGeneration.gradle"
