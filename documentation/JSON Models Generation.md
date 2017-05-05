@@ -32,8 +32,8 @@
 Чтобы зарегистрировать YAML файлы для генерации моделей, в секцию `android` надо добавить:
 ```gradle
 android {
-      extensions.jsonModelsMapping = ['schemes/api_models.yaml -> ${applicationId}.logic.api.model',
-                                      'schemes/internal_models.yaml -> ${applicationId}.logic.model']
+      extensions.jsonModelsMapping = ["schemes/api_models.yaml -> ${defaulConfig.applicationId}.logic.api.model",
+                                      "schemes/internal_models.yaml -> ${defaulConfig.applicationId}.logic.model"]
     }
 ```
 - `schemes/api_models.yaml` - путь к файлу схемы. По умолчанию относительно папки модуля, но можно указать и абсолютный путь;
