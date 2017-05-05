@@ -34,6 +34,7 @@ import javafx.util.Pair
 import org.yaml.snakeyaml.Yaml
 
 import javax.lang.model.element.Modifier
+import java.util.Map.Entry
 
 
 //TODO: missable in future
@@ -840,8 +841,7 @@ class FileUtils {
         }
     }
 
-    static void generateJsonModelsCode(final File generatedModelsDirectory, final String schemeFilePath,
-                                       final String modelsPackage, final String projectDir) {
+    static Map<String, SchemeObject> getObjectsMap(final String schemeFilePath, final String projectDir) {
         if (schemeFilePath == null) {
             return
         }
@@ -883,20 +883,7 @@ class FileUtils {
             }
         }
 
-        for (final SchemeObject schemeObject : schemeObjects.values()) {
-            if (schemeObject instanceof ClassObject) {
-                try {
-                    schemeObject.resolveFieldsInfo(schemeObjects)
-                } catch (final Exception exception) {
-                    throw new Exception("Error on parsing class '" + schemeObject.name + "' : " + exception.getMessage())
-                }
-            }
-            try {
-                schemeObject.writeToFile(generatedModelsDirectory, schemeObjects, modelsPackage)
-            } catch (final Exception exception) {
-                throw new Exception("Error on generating code for '" + schemeObject.name + "' : " + exception.getMessage())
-            }
-        }
+        return schemeObjects
     }
 
 }
@@ -911,18 +898,56 @@ android.applicationVariants.all {
             final List<String> jsonModelsMapping = android.extensions.findByName("jsonModelsMapping")
 
             FileUtils.purgeDirectory(generatedModelsDirectory)
+            final Map<String, Map<String, SchemeObject>> overallObjects = new HashMap<>()
             for (final String jsonMapping : jsonModelsMapping) {
                 final int indexOfDivider = jsonMapping.indexOf('->')
+                final String packageName
+                final Map<String, SchemeObject> objects
                 if (indexOfDivider == -1) {
-                    FileUtils.generateJsonModelsCode(generatedModelsDirectory,
-                            jsonMapping.trim(),
-                            android.defaultConfig.applicationId + '.logic.model',
-                            "${project.projectDir}")
+                    packageName = android.defaultConfig.applicationId + '.logic.model'
+                    objects = FileUtils.getObjectsMap(jsonMapping.trim(), "${project.projectDir}")
                 } else {
-                    FileUtils.generateJsonModelsCode(generatedModelsDirectory,
-                            jsonMapping.substring(0, indexOfDivider).trim(),
-                            jsonMapping.substring(indexOfDivider + 2).trim(),
-                            "${project.projectDir}")
+                    packageName = jsonMapping.substring(indexOfDivider + 2).trim()
+                    objects = FileUtils.getObjectsMap(jsonMapping.substring(0, indexOfDivider).trim(), "${project.projectDir}")
+                }
+                if (overallObjects.containsKey(packageName)) {
+                    overallObjects.get(packageName).putAll(objects)
+                } else {
+                    overallObjects.put(packageName, objects)
+                }
+            }
+
+            for (final Entry<String, Map<String, SchemeObject>> fileObjects : overallObjects.entrySet()) {
+                final String packageName = fileObjects.key
+                final Map<String, SchemeObject> schemeObjects = new HashMap<>(fileObjects.value)
+                for (final Entry<String, Map<String, SchemeObject>> externalObjects : overallObjects.entrySet()) {
+                    if (externalObjects.key == packageName) {
+                        continue
+                    }
+                    for (final SchemeObject externalObject : externalObjects.value.values()) {
+                        if (externalObject instanceof ImportObject) {
+                            schemeObjects.put(externalObject.name, externalObject)
+                        } else if (externalObject instanceof EnumObject) {
+                            schemeObjects.put(externalObject.name, new ImportObject(externalObjects.key + '.' + externalObject.name))
+                        } else if (externalObject instanceof ClassObject) {
+                            schemeObjects.put(externalObject.name, new ImportObject(externalObjects.key + '.' + externalObject.name))
+                        }
+                    }
+                }
+
+                for (final SchemeObject schemeObject : schemeObjects.values()) {
+                    if (schemeObject instanceof ClassObject) {
+                        try {
+                            schemeObject.resolveFieldsInfo(schemeObjects)
+                        } catch (final Exception exception) {
+                            throw new Exception("Error on parsing class '" + schemeObject.name + "' : " + exception.getMessage())
+                        }
+                    }
+                    try {
+                        schemeObject.writeToFile(generatedModelsDirectory, schemeObjects, packageName)
+                    } catch (final Exception exception) {
+                        throw new Exception("Error on generating code for '" + schemeObject.name + "' : " + exception.getMessage())
+                    }
                 }
             }
         }
