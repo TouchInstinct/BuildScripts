@@ -571,10 +571,10 @@ class FieldInfo {
             builder.addAnnotation(AnnotationSpec.builder(couldContainsNull() ? Types.NULLABLE : Types.NON_NULL).build())
         }
 
-        if (type == FieldType.MAP) {
-            builder.addStatement("return \$T.unmodifiableMap(\$L)", Types.COLLECTIONS, name)
-        } else if (type == FieldType.LIST) {
+        if (type == FieldType.LIST) {
             builder.addStatement("return \$T.unmodifiableList(\$L)", Types.COLLECTIONS, name)
+        } else if (type == FieldType.MAP) {
+            builder.addStatement("return \$T.unmodifiableMap(\$L)", Types.COLLECTIONS, name)
         } else {
             builder.addStatement("return \$L", name)
         }
@@ -592,10 +592,10 @@ class FieldInfo {
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(parameterBuilder.build())
 
-        if (type == FieldType.MAP) {
-            builder.addStatement("this.\$L = new \$T(\$L)", name, Types.ARRAY_LIST, name)
-        } else if (type == FieldType.LIST) {
-            builder.addStatement("this.\$L = new \$T(\$L)", name, Types.HASH_MAP, name)
+        if (type == FieldType.LIST) {
+            builder.addStatement("this.\$L = new \$T<>(\$L)", name, Types.ARRAY_LIST, name)
+        } else if (type == FieldType.MAP) {
+            builder.addStatement("this.\$L = new \$T<>(\$L)", name, Types.HASH_MAP, name)
         } else {
             builder.addStatement("this.\$L = \$L", name, name)
         }
@@ -621,7 +621,7 @@ class FieldInfo {
                     .endControlFlow()
             validateMethod
                     .beginControlFlow("if (\$L instanceof \$T)", name, Types.MAP)
-                    .addStatement("validateCollection(((\$T) \$L).values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID)", Types.COLLECTION, name)
+                    .addStatement("validateCollection(((\$T) \$L).values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID)", Types.MAP, name)
                     .endControlFlow()
             return
         }
@@ -795,9 +795,9 @@ class ClassObject extends SchemeObject {
                         .addAnnotation(field.couldContainsNull() ? Types.NULLABLE : Types.NON_NULL)
                         .build())
                 if (field.type == FieldType.LIST) {
-                    fullConstructorBuilder.addStatement("this.\$L = new \$T(\$L)", field.name, Types.ARRAY_LIST, field.name)
+                    fullConstructorBuilder.addStatement("this.\$L = new \$T<>(\$L)", field.name, Types.ARRAY_LIST, field.name)
                 } else if (field.type == FieldType.MAP) {
-                    fullConstructorBuilder.addStatement("this.\$L = new \$T(\$L)", field.name, Types.HASH_MAP, field.name)
+                    fullConstructorBuilder.addStatement("this.\$L = new \$T<>(\$L)", field.name, Types.HASH_MAP, field.name)
                 } else {
                     fullConstructorBuilder.addStatement("this.\$L = \$L", field.name, field.name)
                 }
