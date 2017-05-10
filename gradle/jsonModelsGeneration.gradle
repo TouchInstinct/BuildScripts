@@ -684,7 +684,7 @@ class ClassObject extends SchemeObject {
                 throw new Exception("Duplicate field name: " + name)
             }
 
-            if (entry.key.equals("typeVariables")) {
+            if (entry.key.equals("typeArguments")) {
                 for (String typeVariable : entry.value.replace(" ", "").split(",")) {
                     typeVariables.add(typeVariable)
                 }
