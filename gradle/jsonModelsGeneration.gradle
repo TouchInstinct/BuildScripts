@@ -50,6 +50,10 @@ class Types {
     static final TypeName JSON_OBJECT = ClassName.bestGuess("com.bluelinelabs.logansquare.annotation.JsonObject")
     static final TypeName JSON_FIELD = ClassName.bestGuess("com.bluelinelabs.logansquare.annotation.JsonField")
     static final TypeName COLLECTIONS = ClassName.get(Collections.class)
+    static final TypeName COLLECTION = ClassName.get(Collection.class)
+    static final TypeName ARRAY_LIST = ClassName.get(ArrayList.class)
+    static final TypeName MAP = ClassName.get(Map.class)
+    static final TypeName HASH_MAP = ClassName.get(HashMap.class)
     static final TypeName API_MODEL = ClassName.bestGuess("ru.touchin.templates.ApiModel")
     static final TypeName LOGAN_SQUARE_JSON_MODEL = ClassName.bestGuess("ru.touchin.templates.logansquare.LoganSquareJsonModel")
     static final TypeName OBJECT_UTILS = ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils")
@@ -163,7 +167,7 @@ class EnumObject extends SchemeObject {
             throw new Exception("Name of enum is empty")
         }
 
-        for (final Map.Entry<String, String> entry : jsonValues) {
+        for (final Entry<String, String> entry : jsonValues) {
             final enumValue = entry.key.trim()
             final jsonValue = entry.value.trim()
             if (jsonValue.isEmpty() || enumValue.isEmpty()) {
@@ -211,7 +215,7 @@ class EnumObject extends SchemeObject {
                 .build())
                 .build())
 
-        for (final Map.Entry<String, Object> enumValue : values) {
+        for (final Entry<String, Object> enumValue : values) {
             enumBuilder.addEnumConstant(enumValue.key, TypeSpec.anonymousClassBuilder(type.format, enumValue.value).build())
         }
 
@@ -292,7 +296,7 @@ enum FieldType {
             default:
                 final SchemeObject object = objects.get(typeString)
                 if (object instanceof ImportObject) {
-                    switch (object.type){
+                    switch (object.type) {
                         case ImportObject.Type.MODEL:
                             return MODEL
                         case ImportObject.Type.ENUM:
@@ -519,7 +523,7 @@ class FieldInfo {
                     throw new Exception("Unsupported map type of field: " + fieldName + ". Supports only Map<String, *>")
                 }
             } else {
-                typeName = nullable ? type.nonPrimitiveTypeName : type.primitiveTypeName
+                typeName = couldContainsNull() ? type.nonPrimitiveTypeName : type.primitiveTypeName
             }
         } else if (type != FieldType.TYPE_ARGUMENT) {
             typeName = TypeNameUtils.resolveTypeName(typeString, objects)
@@ -527,6 +531,10 @@ class FieldInfo {
             // generic
             typeName = ClassName.bestGuess(typeString)
         }
+    }
+
+    boolean couldContainsNull() {
+        return nullable || missable
     }
 
     FieldSpec generateFieldCode() {
@@ -560,7 +568,7 @@ class FieldInfo {
                 .returns(typeName)
 
         if (!typeName.isPrimitive()) {
-            builder.addAnnotation(AnnotationSpec.builder(nullable ? Types.NULLABLE : Types.NON_NULL).build())
+            builder.addAnnotation(AnnotationSpec.builder(couldContainsNull() ? Types.NULLABLE : Types.NON_NULL).build())
         }
 
         if (type == FieldType.MAP) {
@@ -577,7 +585,7 @@ class FieldInfo {
     MethodSpec generateSetterCode() {
         final ParameterSpec.Builder parameterBuilder = ParameterSpec.builder(typeName, name, Modifier.FINAL)
         if (!typeName.isPrimitive()) {
-            parameterBuilder.addAnnotation(AnnotationSpec.builder(nullable ? Types.NULLABLE : Types.NON_NULL).build())
+            parameterBuilder.addAnnotation(AnnotationSpec.builder(couldContainsNull() ? Types.NULLABLE : Types.NON_NULL).build())
         }
 
         final MethodSpec.Builder builder = MethodSpec.methodBuilder("set" + upperStartName(name))
@@ -585,9 +593,9 @@ class FieldInfo {
                 .addParameter(parameterBuilder.build())
 
         if (type == FieldType.MAP) {
-            builder.addStatement("this.\$L = \$T.unmodifiableMap(\$L)", name, ClassName.get(Collections.class), name)
+            builder.addStatement("this.\$L = new \$T(\$L)", name, Types.ARRAY_LIST, name)
         } else if (type == FieldType.LIST) {
-            builder.addStatement("this.\$L = \$T.unmodifiableList(\$L)", name, ClassName.get(Collections.class), name)
+            builder.addStatement("this.\$L = new \$T(\$L)", name, Types.HASH_MAP, name)
         } else {
             builder.addStatement("this.\$L = \$L", name, name)
         }
@@ -596,7 +604,7 @@ class FieldInfo {
     }
 
     void generateValidationCode(MethodSpec.Builder validateMethod) {
-        if (!nullable) {
+        if (!couldContainsNull()) {
             validateMethod.addStatement("validateNotNull(\$L)", name)
         }
         if (!type.ableToInnerValidate) {
@@ -607,9 +615,17 @@ class FieldInfo {
                     .beginControlFlow("if (\$L instanceof \$T)", name, Types.API_MODEL)
                     .addStatement("((\$T) \$L).validate()", Types.API_MODEL, name)
                     .endControlFlow()
+            validateMethod
+                    .beginControlFlow("if (\$L instanceof \$T)", name, Types.COLLECTION)
+                    .addStatement("validateCollection((\$T) \$L, CollectionValidationRule.EXCEPTION_IF_ANY_INVALID)", Types.COLLECTION, name)
+                    .endControlFlow()
+            validateMethod
+                    .beginControlFlow("if (\$L instanceof \$T)", name, Types.MAP)
+                    .addStatement("validateCollection(((\$T) \$L).values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID)", Types.COLLECTION, name)
+                    .endControlFlow()
             return
         }
-        if (nullable) {
+        if (couldContainsNull()) {
             validateMethod.beginControlFlow("if (\$L != null)", name)
         }
         if (type == FieldType.LIST) {
@@ -633,7 +649,7 @@ class FieldInfo {
         } else {
             throw new Exception("Unexpected able to validate field type '" + type + "' of field " + name)
         }
-        if (nullable) {
+        if (couldContainsNull()) {
             validateMethod.endControlFlow()
         }
     }
@@ -679,7 +695,7 @@ class ClassObject extends SchemeObject {
 
     void resolveFieldsInfo(final Map<String, SchemeObject> objects) {
         final Set<String> fieldNames = new HashSet<>()
-        for (final Map.Entry entry : fieldsInfo.entrySet()) {
+        for (final Entry entry : fieldsInfo.entrySet()) {
             if (fieldNames.contains(entry.key)) {
                 throw new Exception("Duplicate field name: " + name)
             }
@@ -763,9 +779,9 @@ class ClassObject extends SchemeObject {
             classBuilder.addMethod(field.generateGetterCode())
             classBuilder.addMethod(field.generateSetterCode())
             field.generateValidationCode(validateMethod)
-            final String serializeMethodName = (!field.nullable && field.type.serializationMethodName != null
+            final String serializeMethodName = (!field.couldContainsNull() && field.type.serializationMethodName != null
                     ? field.type.serializationMethodName : "writeObject");
-            final String deserializeMethodName = (!field.nullable && field.type.deserializationMethodName != null
+            final String deserializeMethodName = (!field.couldContainsNull() && field.type.deserializationMethodName != null
                     ? field.type.deserializationMethodName : "readObject");
             serializeMethod.addStatement("outputStream.\$L(\$L)", serializeMethodName, field.name)
             if (deserializeMethodName.equals("readObject")) {
@@ -776,12 +792,12 @@ class ClassObject extends SchemeObject {
 
             if (fullConstructorBuilder != null) {
                 fullConstructorBuilder.addParameter(ParameterSpec.builder(field.typeName, field.name, Modifier.FINAL)
-                        .addAnnotation(field.nullable ? Types.NULLABLE : Types.NON_NULL)
+                        .addAnnotation(field.couldContainsNull() ? Types.NULLABLE : Types.NON_NULL)
                         .build())
                 if (field.type == FieldType.LIST) {
-                    fullConstructorBuilder.addStatement("this.\$L = \$T.unmodifiableList(\$L)", field.name, Types.COLLECTIONS, field.name)
+                    fullConstructorBuilder.addStatement("this.\$L = new \$T(\$L)", field.name, Types.ARRAY_LIST, field.name)
                 } else if (field.type == FieldType.MAP) {
-                    fullConstructorBuilder.addStatement("this.\$L = \$T.unmodifiableMap(\$L)", field.name, Types.COLLECTIONS, field.name)
+                    fullConstructorBuilder.addStatement("this.\$L = new \$T(\$L)", field.name, Types.HASH_MAP, field.name)
                 } else {
                     fullConstructorBuilder.addStatement("this.\$L = \$L", field.name, field.name)
                 }
@@ -880,7 +896,7 @@ class FileUtils {
                 throw new Exception("Yaml file '" + schemeFile + "' is invalid")
             }
 
-            for (final Map.Entry<String, Object> entry : data.entrySet()) {
+            for (final Entry<String, Object> entry : data.entrySet()) {
                 if (entry.key.equals(ImportObject.GROUP_NAME)) {
                     for (String importString : (Iterable) entry.value) {
                         final ImportObject importObject = new ImportObject(importString, ImportObject.Type.EXTERNAL)
