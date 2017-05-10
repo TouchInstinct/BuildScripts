@@ -34,6 +34,7 @@ import javafx.util.Pair
 import org.yaml.snakeyaml.Yaml
 
 import javax.lang.model.element.Modifier
+import java.util.Map.Entry
 
 
 //TODO: missable in future
@@ -86,14 +87,22 @@ abstract class SchemeObject {
  */
 class ImportObject extends SchemeObject {
 
+    enum Type {
+        MODEL,
+        ENUM,
+        EXTERNAL
+    }
+
     static final String GROUP_NAME = "imports"
 
     final String name
     final String fullName
+    final Type type
 
-    ImportObject(String value) {
+    ImportObject(final String value, final Type type) {
         fullName = value.trim()
         name = fullName.substring(fullName.lastIndexOf('.') + 1)
+        this.type = type
     }
 
     @Override
@@ -283,7 +292,14 @@ enum FieldType {
             default:
                 final SchemeObject object = objects.get(typeString)
                 if (object instanceof ImportObject) {
-                    return IMPORTED_CLASS
+                    switch (object.type){
+                        case ImportObject.Type.MODEL:
+                            return MODEL
+                        case ImportObject.Type.ENUM:
+                            return ENUM
+                        case ImportObject.Type.EXTERNAL:
+                            return IMPORTED_CLASS
+                    }
                 }
                 if (object instanceof EnumObject) {
                     return ENUM
@@ -840,8 +856,7 @@ class FileUtils {
         }
     }
 
-    static void generateJsonModelsCode(final File generatedModelsDirectory, final String schemeFilePath,
-                                       final String modelsPackage, final String projectDir) {
+    static Map<String, SchemeObject> getObjectsMap(final String schemeFilePath, final String projectDir) {
         if (schemeFilePath == null) {
             return
         }
@@ -856,9 +871,9 @@ class FileUtils {
 
         final Yaml yaml = new Yaml()
         final Map<String, SchemeObject> schemeObjects = new HashMap<>()
-        schemeObjects.put("Map", new ImportObject("java.util.Map"))
-        schemeObjects.put("List", new ImportObject("java.util.List"))
-        schemeObjects.put("DateTime", new ImportObject("org.joda.time.DateTime"))
+        schemeObjects.put("Map", new ImportObject("java.util.Map", ImportObject.Type.EXTERNAL))
+        schemeObjects.put("List", new ImportObject("java.util.List", ImportObject.Type.EXTERNAL))
+        schemeObjects.put("DateTime", new ImportObject("org.joda.time.DateTime", ImportObject.Type.EXTERNAL))
 
         for (final Object data : yaml.loadAll(new FileReader(schemeFile))) {
             if (!(data instanceof Map)) {
@@ -868,7 +883,7 @@ class FileUtils {
             for (final Map.Entry<String, Object> entry : data.entrySet()) {
                 if (entry.key.equals(ImportObject.GROUP_NAME)) {
                     for (String importString : (Iterable) entry.value) {
-                        final ImportObject importObject = new ImportObject(importString)
+                        final ImportObject importObject = new ImportObject(importString, ImportObject.Type.EXTERNAL)
                         schemeObjects.put(importObject.name, importObject)
                     }
                 } else if (entry.key.startsWith(EnumObject.PREFIX)) {
@@ -883,20 +898,7 @@ class FileUtils {
             }
         }
 
-        for (final SchemeObject schemeObject : schemeObjects.values()) {
-            if (schemeObject instanceof ClassObject) {
-                try {
-                    schemeObject.resolveFieldsInfo(schemeObjects)
-                } catch (final Exception exception) {
-                    throw new Exception("Error on parsing class '" + schemeObject.name + "' : " + exception.getMessage())
-                }
-            }
-            try {
-                schemeObject.writeToFile(generatedModelsDirectory, schemeObjects, modelsPackage)
-            } catch (final Exception exception) {
-                throw new Exception("Error on generating code for '" + schemeObject.name + "' : " + exception.getMessage())
-            }
-        }
+        return schemeObjects
     }
 
 }
@@ -911,18 +913,58 @@ android.applicationVariants.all {
             final List<String> jsonModelsMapping = android.extensions.findByName("jsonModelsMapping")
 
             FileUtils.purgeDirectory(generatedModelsDirectory)
+            final Map<String, Map<String, SchemeObject>> overallObjects = new HashMap<>()
             for (final String jsonMapping : jsonModelsMapping) {
                 final int indexOfDivider = jsonMapping.indexOf('->')
+                final String packageName
+                final Map<String, SchemeObject> objects
                 if (indexOfDivider == -1) {
-                    FileUtils.generateJsonModelsCode(generatedModelsDirectory,
-                            jsonMapping.trim(),
-                            android.defaultConfig.applicationId + '.logic.model',
-                            "${project.projectDir}")
+                    packageName = android.defaultConfig.applicationId + '.logic.model'
+                    objects = FileUtils.getObjectsMap(jsonMapping.trim(), "${project.projectDir}")
                 } else {
-                    FileUtils.generateJsonModelsCode(generatedModelsDirectory,
-                            jsonMapping.substring(0, indexOfDivider).trim(),
-                            jsonMapping.substring(indexOfDivider + 2).trim(),
-                            "${project.projectDir}")
+                    packageName = jsonMapping.substring(indexOfDivider + 2).trim()
+                    objects = FileUtils.getObjectsMap(jsonMapping.substring(0, indexOfDivider).trim(), "${project.projectDir}")
+                }
+                if (overallObjects.containsKey(packageName)) {
+                    overallObjects.get(packageName).putAll(objects)
+                } else {
+                    overallObjects.put(packageName, objects)
+                }
+            }
+
+            for (final Entry<String, Map<String, SchemeObject>> fileObjects : overallObjects.entrySet()) {
+                final String packageName = fileObjects.key
+                final Map<String, SchemeObject> schemeObjects = new HashMap<>(fileObjects.value)
+                for (final Entry<String, Map<String, SchemeObject>> externalObjects : overallObjects.entrySet()) {
+                    if (externalObjects.key == packageName) {
+                        continue
+                    }
+                    for (final SchemeObject externalObject : externalObjects.value.values()) {
+                        if (externalObject instanceof ImportObject) {
+                            schemeObjects.put(externalObject.name, externalObject)
+                        } else if (externalObject instanceof EnumObject) {
+                            schemeObjects.put(externalObject.name,
+                                    new ImportObject(externalObjects.key + '.' + externalObject.name, ImportObject.Type.ENUM))
+                        } else if (externalObject instanceof ClassObject) {
+                            schemeObjects.put(externalObject.name,
+                                    new ImportObject(externalObjects.key + '.' + externalObject.name, ImportObject.Type.MODEL))
+                        }
+                    }
+                }
+
+                for (final SchemeObject schemeObject : schemeObjects.values()) {
+                    if (schemeObject instanceof ClassObject) {
+                        try {
+                            schemeObject.resolveFieldsInfo(schemeObjects)
+                        } catch (final Exception exception) {
+                            throw new Exception("Error on parsing class '" + schemeObject.name + "' : " + exception.getMessage())
+                        }
+                    }
+                    try {
+                        schemeObject.writeToFile(generatedModelsDirectory, schemeObjects, packageName)
+                    } catch (final Exception exception) {
+                        throw new Exception("Error on generating code for '" + schemeObject.name + "' : " + exception.getMessage())
+                    }
                 }
             }
         }
