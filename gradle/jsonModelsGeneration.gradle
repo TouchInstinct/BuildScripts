@@ -37,7 +37,7 @@ import javax.lang.model.element.Modifier
 import java.util.Map.Entry
 
 
-//TODO: missable in future
+//TODO: optional in future
 //TODO: NUMBER/BOOLEAN enums in future
 //TODO: maybe save md5-hashes to check if files/scheme changed
 
@@ -442,7 +442,7 @@ class TypeNameUtils {
  * - jsonName - field name association with JSON parameter name. By default equals 'name' property;
  * - type - type of field;
  * - nullable - 'nullable' flag, true if field could contains null and associated JSON value could be null;
- * - missable - 'missable' flag, true if JSON parameter associated with field could be missed in JSON object;
+ * - optional - 'optional' flag, true if JSON parameter associated with field could be missed in JSON object;
  * - nonEmptyCollection - 'non-empty' flag, true if JSON parameter could contains collection and that collection souldn't be empty;
  * - solidCollection - 'solid' flag, true if JSON parameter could contains collection and that collection can't contains any invalid element.
  */
@@ -467,7 +467,7 @@ class FieldInfo {
     final String name
     final String jsonName
     boolean nullable
-    boolean missable
+    boolean optional
     boolean nonEmptyCollection
     boolean solidCollection
     final FieldType type
@@ -491,8 +491,8 @@ class FieldInfo {
                     case "nullable":
                         nullable = true
                         break
-                    case "missable":
-                        missable = true
+                    case "optional":
+                        optional = true
                         break
                     case "non-empty":
                         nonEmptyCollection = true
@@ -536,7 +536,7 @@ class FieldInfo {
     }
 
     boolean couldContainsNull() {
-        return nullable || missable
+        return nullable || optional
     }
 
     FieldSpec generateFieldCode() {
@@ -784,10 +784,15 @@ class ClassObject extends SchemeObject {
                 .addAnnotation(AnnotationSpec.builder(Types.JSON_OBJECT).addMember("serializeNullObjects", "true").build())
                 .superclass(superclass != null ? superclass : Types.LOGAN_SQUARE_JSON_MODEL)
 
+        final TypeName[] arguments = new TypeName[typeArguments.size()]
+        int index = 0
         // adds type variables
-        for (String typeVariable : typeArguments) {
+        for (final String typeVariable : typeArguments) {
             classBuilder.addTypeVariable(TypeVariableName.get(typeVariable))
+            arguments[index++] = TypeVariableName.get(typeVariable)
         }
+
+        final TypeName thisTypeName = arguments.length > 0 ? ParameterizedTypeName.get(ClassName.bestGuess(name), arguments) : ClassName.bestGuess(name)
 
         // adds default constructor
         classBuilder.addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC).addStatement("super()").build())
@@ -809,6 +814,13 @@ class ClassObject extends SchemeObject {
             fullConstructorBuilder.addStatement("super(\$L)", parameters.join(", "))
         } else {
             fullConstructorBuilder = null
+        }
+
+        // creates copy logic method
+        final MethodSpec.Builder copyToMethod = MethodSpec.methodBuilder("copyTo").addModifiers(Modifier.PROTECTED)
+                .addParameter(ParameterSpec.builder(thisTypeName, "destination", Modifier.FINAL).addAnnotation(Types.NON_NULL).build())
+        if (parentModel != null) {
+            copyToMethod.addStatement("super.copyTo(destination)")
         }
 
         // creates validate() method
@@ -857,13 +869,22 @@ class ClassObject extends SchemeObject {
                 fullConstructorBuilder.addParameter(ParameterSpec.builder(field.typeName, field.name, Modifier.FINAL)
                         .addAnnotation(field.couldContainsNull() ? Types.NULLABLE : Types.NON_NULL)
                         .build())
-                if (field.type == FieldType.LIST) {
+            }
+            if (field.type == FieldType.LIST) {
+                if (fullConstructorBuilder != null) {
                     fullConstructorBuilder.addStatement("this.\$L = new \$T<>(\$L)", field.name, Types.ARRAY_LIST, field.name)
-                } else if (field.type == FieldType.MAP) {
+                }
+                copyToMethod.addStatement("destination.\$L = new \$T<>(\$L)", field.name, Types.ARRAY_LIST, field.name)
+            } else if (field.type == FieldType.MAP) {
+                if (fullConstructorBuilder != null) {
                     fullConstructorBuilder.addStatement("this.\$L = new \$T<>(\$L)", field.name, Types.HASH_MAP, field.name)
-                } else {
+                }
+                copyToMethod.addStatement("destination.\$L = new \$T<>(\$L)", field.name, Types.HASH_MAP, field.name)
+            } else {
+                if (fullConstructorBuilder != null) {
                     fullConstructorBuilder.addStatement("this.\$L = \$L", field.name, field.name)
                 }
+                copyToMethod.addStatement("destination.\$L = \$L", field.name, field.name)
             }
 
             if (first) {
@@ -894,6 +915,17 @@ class ClassObject extends SchemeObject {
 
         // creates validate() method
         classBuilder.addMethod(validateMethod.build())
+        // creates copyTo() method
+        classBuilder.addMethod(copyToMethod.build())
+        // creates copy() method
+        classBuilder.addMethod(MethodSpec.methodBuilder("copy").addModifiers(Modifier.PUBLIC)
+                .returns(thisTypeName)
+                .addAnnotation(Types.NON_NULL)
+                .addStatement("final \$T result = new \$T()", thisTypeName, thisTypeName)
+                .addStatement("this.copyTo(result)")
+                .addStatement("return result")
+                .addJavadoc("Beware! It is not copying objects stored in fields.")
+                .build())
         // adds equals() method
         classBuilder.addMethod(MethodSpec.methodBuilder("equals").addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override.class)
