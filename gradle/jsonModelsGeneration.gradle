@@ -102,11 +102,13 @@ class ImportObject extends SchemeObject {
     final String name
     final String fullName
     final Type type
+    final ClassObject relatedModel
 
-    ImportObject(final String value, final Type type) {
+    ImportObject(final String value, final Type type, final ClassObject relatedModel) {
         fullName = value.trim()
         name = fullName.substring(fullName.lastIndexOf('.') + 1)
         this.type = type
+        this.relatedModel = relatedModel
     }
 
     @Override
@@ -682,11 +684,24 @@ class ClassObject extends SchemeObject {
 
     static final String PREFIX = "class "
 
+    private static ClassObject resolveBaseTypeModel(final String typeString, final Map<String, SchemeObject> objects) {
+        final String baseTypeString = TypeNameUtils.extractBaseTypeString(typeString)
+        final SchemeObject associatedObject = objects.get(baseTypeString)
+        if (associatedObject instanceof ClassObject) {
+            return associatedObject
+        }
+        if (associatedObject instanceof ImportObject && associatedObject.relatedModel != null) {
+            return associatedObject.relatedModel
+        }
+        return null
+    }
+
     final String name
     final Map<String, String> fieldsInfo
     final List<FieldInfo> fields = new ArrayList<>()
-    final List<String> typeVariables = new ArrayList<>()
+    final List<String> typeArguments = new ArrayList<>()
     TypeName superclass
+    ClassObject parentModel
 
     ClassObject(final String name, final Map<String, String> fieldsInfo) {
         this.name = name.trim()
@@ -702,13 +717,14 @@ class ClassObject extends SchemeObject {
 
             if (entry.key.equals("typeArguments")) {
                 for (String typeVariable : entry.value.replace(" ", "").split(",")) {
-                    typeVariables.add(typeVariable)
+                    typeArguments.add(typeVariable)
                 }
                 continue
             }
 
             if (entry.key.equals("extends")) {
                 superclass = TypeNameUtils.resolveTypeName(entry.value, objects)
+                parentModel = resolveBaseTypeModel(entry.value, objects)
                 continue
             }
 
@@ -728,6 +744,40 @@ class ClassObject extends SchemeObject {
         }
     }
 
+    private MethodSpec.Builder createFullConstructorWithParent(final List<String> parameters, final List<String> childTypeArguments) {
+        final MethodSpec.Builder result
+        if (parentModel != null) {
+            final List<String> resolvedTypeArguments = new ArrayList<>()
+            if (superclass instanceof ParameterizedTypeName) {
+                for (final TypeName typeName : superclass.typeArguments) {
+                    final int argIndex = typeArguments.indexOf(typeName.toString())
+                    if (argIndex >= 0) {
+                        resolvedTypeArguments.add(childTypeArguments.get(argIndex))
+                    } else {
+                        resolvedTypeArguments.add(typeName.toString())
+                    }
+                }
+            }
+            result = parentModel.createFullConstructorWithParent(parameters, resolvedTypeArguments)
+        } else {
+            result = MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC)
+        }
+        for (final FieldInfo field : fields) {
+            final int argIndex = typeArguments.indexOf(field.typeName.toString())
+            if (argIndex >= 0) {
+                result.addParameter(ParameterSpec.builder(ClassName.bestGuess(childTypeArguments.get(argIndex)), field.name, Modifier.FINAL)
+                        .addAnnotation(field.couldContainsNull() ? Types.NULLABLE : Types.NON_NULL)
+                        .build())
+            } else {
+                result.addParameter(ParameterSpec.builder(field.typeName, field.name, Modifier.FINAL)
+                        .addAnnotation(field.couldContainsNull() ? Types.NULLABLE : Types.NON_NULL)
+                        .build())
+            }
+            parameters.add(field.name)
+        }
+        return result
+    }
+
     @Override
     void writeToFile(final File directory, final Map<String, SchemeObject> objects, final String packageName) {
         final TypeSpec.Builder classBuilder = TypeSpec.classBuilder(name).addModifiers(Modifier.PUBLIC)
@@ -735,7 +785,7 @@ class ClassObject extends SchemeObject {
                 .superclass(superclass != null ? superclass : Types.LOGAN_SQUARE_JSON_MODEL)
 
         // adds type variables
-        for (String typeVariable : typeVariables) {
+        for (String typeVariable : typeArguments) {
             classBuilder.addTypeVariable(TypeVariableName.get(typeVariable))
         }
 
@@ -744,9 +794,22 @@ class ClassObject extends SchemeObject {
 
         // creates full constructor only if it is extends from LoganSquareJsonModel,
         // else we can't create constructor as parent constructor could also have parameters
-        final MethodSpec.Builder fullConstructorBuilder = superclass == null ?
-                MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC).addStatement("super()")
-                : null
+        final MethodSpec.Builder fullConstructorBuilder
+        if (superclass == null) {
+            fullConstructorBuilder = MethodSpec.constructorBuilder().addModifiers(Modifier.PUBLIC).addStatement("super()")
+        } else if (parentModel != null) {
+            final List<String> parameters = new ArrayList<>()
+            final List<String> typeArguments = new ArrayList<>()
+            if (superclass instanceof ParameterizedTypeName) {
+                for (final TypeName typeName : superclass.typeArguments) {
+                    typeArguments.add(typeName.toString())
+                }
+            }
+            fullConstructorBuilder = parentModel.createFullConstructorWithParent(parameters, typeArguments)
+            fullConstructorBuilder.addStatement("super(\$L)", parameters.join(", "))
+        } else {
+            fullConstructorBuilder = null
+        }
 
         // creates validate() method
         final MethodSpec.Builder validateMethod = MethodSpec.methodBuilder("validate").addModifiers(Modifier.PUBLIC)
@@ -887,9 +950,9 @@ class FileUtils {
 
         final Yaml yaml = new Yaml()
         final Map<String, SchemeObject> schemeObjects = new HashMap<>()
-        schemeObjects.put("Map", new ImportObject("java.util.Map", ImportObject.Type.EXTERNAL))
-        schemeObjects.put("List", new ImportObject("java.util.List", ImportObject.Type.EXTERNAL))
-        schemeObjects.put("DateTime", new ImportObject("org.joda.time.DateTime", ImportObject.Type.EXTERNAL))
+        schemeObjects.put("Map", new ImportObject("java.util.Map", ImportObject.Type.EXTERNAL, null))
+        schemeObjects.put("List", new ImportObject("java.util.List", ImportObject.Type.EXTERNAL, null))
+        schemeObjects.put("DateTime", new ImportObject("org.joda.time.DateTime", ImportObject.Type.EXTERNAL, null))
 
         for (final Object data : yaml.loadAll(new FileReader(schemeFile))) {
             if (!(data instanceof Map)) {
@@ -899,14 +962,23 @@ class FileUtils {
             for (final Entry<String, Object> entry : data.entrySet()) {
                 if (entry.key.equals(ImportObject.GROUP_NAME)) {
                     for (String importString : (Iterable) entry.value) {
-                        final ImportObject importObject = new ImportObject(importString, ImportObject.Type.EXTERNAL)
+                        final ImportObject importObject = new ImportObject(importString, ImportObject.Type.EXTERNAL, null)
+                        if (schemeObjects.containsKey(importObject.name)) {
+                            throw new Exception("Duplicate import object with name '" + importObject.name + "' in file " + schemeFile.getPath())
+                        }
                         schemeObjects.put(importObject.name, importObject)
                     }
                 } else if (entry.key.startsWith(EnumObject.PREFIX)) {
                     final EnumObject enumObject = new EnumObject(entry.key.substring(EnumObject.PREFIX.length()), entry.value)
+                    if (schemeObjects.containsKey(enumObject.name)) {
+                        throw new Exception("Duplicate enum object with name '" + enumObject.name + "' in file " + schemeFile.getPath())
+                    }
                     schemeObjects.put(enumObject.name, enumObject)
                 } else if (entry.key.startsWith(ClassObject.PREFIX)) {
                     final ClassObject classObject = new ClassObject(entry.key.substring(ClassObject.PREFIX.length()), entry.value)
+                    if (schemeObjects.containsKey(classObject.name)) {
+                        throw new Exception("Duplicate class object with name '" + classObject.name + "' in file " + schemeFile.getPath())
+                    }
                     schemeObjects.put(classObject.name, classObject)
                 } else {
                     throw new Exception("Unexpected scheme object: " + entry.key)
@@ -956,14 +1028,19 @@ android.applicationVariants.all {
                         continue
                     }
                     for (final SchemeObject externalObject : externalObjects.value.values()) {
+                        if (schemeObjects.containsKey(externalObject.name)) {
+                            if (!(externalObject instanceof ImportObject) || externalObject.type != ImportObject.Type.EXTERNAL) {
+                                throw new Exception("Duplicate model name '" + externalObject.name + "' for package " + packageName)
+                            }
+                        }
                         if (externalObject instanceof ImportObject) {
                             schemeObjects.put(externalObject.name, externalObject)
                         } else if (externalObject instanceof EnumObject) {
                             schemeObjects.put(externalObject.name,
-                                    new ImportObject(externalObjects.key + '.' + externalObject.name, ImportObject.Type.ENUM))
+                                    new ImportObject(externalObjects.key + '.' + externalObject.name, ImportObject.Type.ENUM, null))
                         } else if (externalObject instanceof ClassObject) {
                             schemeObjects.put(externalObject.name,
-                                    new ImportObject(externalObjects.key + '.' + externalObject.name, ImportObject.Type.MODEL))
+                                    new ImportObject(externalObjects.key + '.' + externalObject.name, ImportObject.Type.MODEL, externalObject))
                         }
                     }
                 }
@@ -976,6 +1053,9 @@ android.applicationVariants.all {
                             throw new Exception("Error on parsing class '" + schemeObject.name + "' : " + exception.getMessage())
                         }
                     }
+                }
+
+                for (final SchemeObject schemeObject : schemeObjects.values()) {
                     try {
                         schemeObject.writeToFile(generatedModelsDirectory, schemeObjects, packageName)
                     } catch (final Exception exception) {
