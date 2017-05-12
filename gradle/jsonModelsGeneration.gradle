@@ -30,7 +30,6 @@ buildscript {
 }
 
 import com.squareup.javapoet.*
-import javafx.util.Pair
 import org.yaml.snakeyaml.Yaml
 
 import javax.lang.model.element.Modifier
@@ -59,6 +58,18 @@ class Types {
     static final TypeName OBJECT_UTILS = ClassName.bestGuess("ru.touchin.roboswag.core.utils.ObjectUtils")
     static final TypeName OBJECT_OUTPUT_STREAM = ClassName.bestGuess("java.io.ObjectOutputStream")
     static final TypeName OBJECT_INPUT_STREAM = ClassName.bestGuess("java.io.ObjectInputStream")
+
+}
+
+class Pair<TKey, TValue> {
+
+    public final TKey key;
+    public final TValue value;
+
+    public Pair(final TKey key, final TValue value) {
+        this.key = key
+        this.value = value
+    }
 
 }
 
@@ -429,7 +440,7 @@ class TypeNameUtils {
             if (!result.key.isEmpty()) {
                 throw new Exception("Useless symbols '" + result.key + "'")
             }
-            return result.getValue()
+            return result.value
         } catch (final Exception exception) {
             throw new Exception("Error resolving type of '" + typeString + "' : " + exception.getMessage())
         }
