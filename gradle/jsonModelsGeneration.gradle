@@ -1097,7 +1097,11 @@ android.applicationVariants.all {
                         }
                     }
                 }
+            }
 
+            for (final Entry<String, Map<String, SchemeObject>> fileObjects : overallObjects.entrySet()) {
+                final String packageName = fileObjects.key
+                final Map<String, SchemeObject> schemeObjects = new HashMap<>(fileObjects.value)
                 for (final SchemeObject schemeObject : schemeObjects.values()) {
                     try {
                         schemeObject.writeToFile(generatedModelsDirectory, schemeObjects, packageName)
