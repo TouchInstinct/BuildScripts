@@ -585,9 +585,17 @@ class FieldInfo {
         }
 
         if (type == FieldType.LIST) {
-            builder.addStatement("return \$T.unmodifiableList(\$L)", Types.COLLECTIONS, name)
+            if (couldContainsNull()) {
+                builder.addStatement("return \$L != null ? \$T.unmodifiableList(\$L) : null", name, Types.COLLECTIONS, name)
+            } else {
+                builder.addStatement("return \$T.unmodifiableList(\$L)", Types.COLLECTIONS, name)
+            }
         } else if (type == FieldType.MAP) {
-            builder.addStatement("return \$T.unmodifiableMap(\$L)", Types.COLLECTIONS, name)
+            if (couldContainsNull()) {
+                builder.addStatement("return \$L != null ? \\$T.unmodifiableMap(\\$L) : null", name, Types.COLLECTIONS, name)
+            } else {
+                builder.addStatement("return \$T.unmodifiableMap(\$L)", name, Types.COLLECTIONS, name)
+            }
         } else {
             builder.addStatement("return \$L", name)
         }
@@ -606,9 +614,17 @@ class FieldInfo {
                 .addParameter(parameterBuilder.build())
 
         if (type == FieldType.LIST) {
-            builder.addStatement("this.\$L = new \$T<>(\$L)", name, Types.ARRAY_LIST, name)
+            if (couldContainsNull()) {
+                builder.addStatement("this.\$L = \$L !=null ? new \$T<>(\$L) : null", name, name, Types.ARRAY_LIST, name)
+            } else {
+                builder.addStatement("this.\$L = new \$T<>(\$L)", name, Types.ARRAY_LIST, name)
+            }
         } else if (type == FieldType.MAP) {
-            builder.addStatement("this.\$L = new \$T<>(\$L)", name, Types.HASH_MAP, name)
+            if (couldContainsNull()) {
+                builder.addStatement("this.\$L = \$L !=null ? new \$T<>(\$L) : null", name, name, Types.HASH_MAP, name)
+            } else {
+                builder.addStatement("this.\$L = new \$T<>(\$L)", name, name, Types.HASH_MAP, name)
+            }
         } else {
             builder.addStatement("this.\$L = \$L", name, name)
         }
