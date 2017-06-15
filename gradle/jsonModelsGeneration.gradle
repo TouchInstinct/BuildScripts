@@ -936,13 +936,13 @@ class ClassObject extends SchemeObject {
             }
 
             if (field.type == FieldType.MAP) {
-                equalsStatement.add("\$T.isMapsEquals(\$L, that.\$L)", Types.OBJECT_UTILS, field.name, field.name)
+                equalsStatement.add("\$T.isMapsEquals(this.\$L, that.\$L)", Types.OBJECT_UTILS, field.name, field.name)
             } else if (field.type == FieldType.LIST) {
-                equalsStatement.add("\$T.isCollectionsEquals(\$L, that.\$L)", Types.OBJECT_UTILS, field.name, field.name)
+                equalsStatement.add("\$T.isCollectionsEquals(this.\$L, that.\$L)", Types.OBJECT_UTILS, field.name, field.name)
             } else {
-                equalsStatement.add("\$T.equals(\$L, that.\$L)", Types.OBJECT_UTILS, field.name, field.name)
+                equalsStatement.add("\$T.equals(this.\$L, that.\$L)", Types.OBJECT_UTILS, field.name, field.name)
             }
-            hashCodeStatement.add("\$L", field.name)
+            hashCodeStatement.add("this.\$L", field.name)
             first = false
         }
         equalsStatement.add(";\n")
