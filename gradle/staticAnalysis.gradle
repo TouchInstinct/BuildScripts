@@ -460,6 +460,6 @@ dependencies {
 
     pngtastic 'com.github.depsypher:pngtastic:1.2'
 
-    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.M12.2'
-    detekt 'io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0.M12.2'
+    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.M12.3'
+    detekt 'io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0.M12.3'
 }

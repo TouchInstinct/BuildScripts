@@ -21,7 +21,7 @@ potential-bugs:
     active: false
 
 exceptions:
-  active: true
+  active: false
 
 empty-blocks:
   active: true
@@ -29,17 +29,17 @@ empty-blocks:
 complexity:
   active: true
   LongMethod:
-    threshold: 20
+    threshold: 40
   LongParameterList:
-    threshold: 5
+    threshold: 10
   LargeClass:
-    threshold: 150
+    threshold: 800
   ComplexMethod:
     threshold: 10
   TooManyFunctions:
-    threshold: 10
+    threshold: 20
   ComplexCondition:
-    threshold: 3
+    threshold: 6
 
 code-smell:
   active: true
@@ -56,7 +56,7 @@ formatting:
     indentSize: 4
   ConsecutiveBlankLines:
     active: true
-    autoCorrect: true
+    autoCorrect: false
   MultipleSpaces:
     active: true
     autoCorrect: true
@@ -108,28 +108,19 @@ style:
     excludeImportStatements: false
   NamingConventionViolation:
     active: true
-    variablePattern: '^(_)?[a-z$][a-zA-Z$0-9]*$'
-    constantPattern: '^([A-Z_]*|serialVersionUID)$'
-    methodPattern: '^[a-z$][a-zA-Z$0-9]*$'
-    classPattern: '[A-Z$][a-zA-Z$]*'
-    enumEntryPattern: '^[A-Z$][a-zA-Z_$]*$'
+    variablePattern: '^[a-z][a-z0-9][a-zA-Z0-9]*$'
+    constantPattern: '^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'
+    methodPattern: '^[a-z][a-z0-9][a-zA-Z0-9_]*$'
+    classPattern: '^[A-Z][a-zA-Z0-9]*$'
+    enumEntryPattern: '^[A-Z][a-zA-Z0-9]*$'
 
 comments:
-  active: true
+  active: false
   CommentOverPrivateMethod:
-    active: true
+    active: false
   CommentOverPrivateProperty:
-    active: true
+    active: false
   UndocumentedPublicClass:
     active: false
   UndocumentedPublicFunction:
     active: false
-
-# *experimental feature*
-# Migration rules can be defined in the same config file or a new one
-migration:
-  active: false
-  imports:
-    # your.package.Class: new.package.or.Class
-    # for example:
-    # io.gitlab.arturbosch.detekt.api.Rule: io.gitlab.arturbosch.detekt.rule.Rule
