@@ -45,18 +45,21 @@ gradle.projectsEvaluated {
                 "-Werror"
     }
 
-    task staticAnalysis {
+    // TODO duplicate task name org.gradle.api.InvalidUserDataException: Cannot add task ':app:cpd_app' as a task with that name already exists.
+    task localStaticAnalysis {
         def excludes = rootProject.extensions.findByName("staticAnalysisExcludes");
-
         def ideaFormatTask = getIdeaFormatTask(getSources(excludes))
         def staticAnalysisTasks = getStaticAnalysisTaskNames(getSources(excludes), getBinaries(excludes))
         staticAnalysisTasks.each { task ->
             tasks.findByName(task).mustRunAfter(ideaFormatTask)
         }
-        if (System.getenv("BUILD_NUMBER") == null) { // TODO env isRunningBuildServer
-            dependsOn ideaFormatTask
-        }
+        dependsOn ideaFormatTask
         dependsOn staticAnalysisTasks
+    }
+
+    task staticAnalysis {
+        def excludes = rootProject.extensions.findByName("staticAnalysisExcludes");
+        dependsOn getStaticAnalysisTaskNames(getSources(excludes), getBinaries(excludes))
 
         doFirst {
             StringBuilder fullReport = new StringBuilder()
@@ -459,7 +462,7 @@ getIdeaFormatTask = { sources ->
     return tasks.create("ideaFormat_$project.name", Exec) {
         def ideaPath = System.getenv("IDEA_HOME")
         def inspectionPath
-        def params = ['-r', '-s', "${ideaPath}\\code-style.xml", '-m', '*.java,*.kt,*.xml', sources.join(" ")]
+        def params = ['-r', '-s', "${rootDir}/libraries/BuildScripts/idea/code-style.xml", '-m', '*.java,*.kt,*.xml', sources.join(" ")]
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             inspectionPath = ['cmd', '/c', "${ideaPath}\\bin\\format.bat ${params.join(" ")}"]
         } else {
