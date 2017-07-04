@@ -9,8 +9,9 @@ def getPmdTask
 def getLintTasks
 def getCheckstyleTask
 def getKotlinDetektTask
+def getIdeaFormatTask
 
-def getStaticAnalysisTasks
+def getStaticAnalysisTaskNames
 
 def appendError
 def appendCheckstyleErrors
@@ -46,7 +47,16 @@ gradle.projectsEvaluated {
 
     task staticAnalysis {
         def excludes = rootProject.extensions.findByName("staticAnalysisExcludes");
-        dependsOn getStaticAnalysisTasks(getSources(excludes), getBinaries(excludes))
+
+        def ideaFormatTask = getIdeaFormatTask(getSources(excludes))
+        def staticAnalysisTasks = getStaticAnalysisTaskNames(getSources(excludes), getBinaries(excludes))
+        staticAnalysisTasks.each { task ->
+            tasks.findByName(task).mustRunAfter(ideaFormatTask)
+        }
+        if (System.getenv("BUILD_NUMBER") == null) { // TODO env isRunningBuildServer
+            dependsOn ideaFormatTask
+        }
+        dependsOn staticAnalysisTasks
 
         doFirst {
             StringBuilder fullReport = new StringBuilder()
@@ -324,11 +334,15 @@ getSources = { excludes ->
         }
 
         for (def sourceFlavorDirectory : sourcesDirectory.listFiles()) {
-            def sourceSetDirectory = new File(sourceFlavorDirectory.path, 'java');
-            if (!sourceSetDirectory.exists() || !sourceSetDirectory.isDirectory()) {
-                continue
+            def javaSourceDirectory = new File(sourceFlavorDirectory.path, 'java');
+            def kotlinSourceDirectory = new File(sourceFlavorDirectory.path, 'kotlin');
+
+            if (javaSourceDirectory.exists() && javaSourceDirectory.isDirectory()) {
+                sources.add(javaSourceDirectory.absolutePath)
             }
-            sources.add(sourceSetDirectory.absolutePath)
+            if (kotlinSourceDirectory.exists() && kotlinSourceDirectory.isDirectory()) {
+                sources.add(kotlinSourceDirectory.absolutePath)
+            }
         }
     }
     return sources
@@ -424,7 +438,7 @@ getLintTasks = {
 
 getKotlinDetektTask = {
     def taskName = "detektCheck_${project.name}"
-    return tasks.create(taskName, JavaExec) {
+    tasks.create(taskName, JavaExec) {
         main = "io.gitlab.arturbosch.detekt.cli.Main"
         classpath = configurations.detekt
         def input = "${rootDir}"
@@ -436,9 +450,26 @@ getKotlinDetektTask = {
         def params = ['-p', input, '-o', output, '-c', config, '-f', filters]
         args(params)
     }
+    return taskName
 }
 
-getStaticAnalysisTasks = { sources, binaries ->
+import org.apache.tools.ant.taskdefs.condition.Os
+
+getIdeaFormatTask = { sources ->
+    return tasks.create("ideaFormat_$project.name", Exec) {
+        def ideaPath = System.getenv("IDEA_HOME")
+        def inspectionPath
+        def params = ['-r', '-s', "${ideaPath}\\code-style.xml", '-m', '*.java,*.kt,*.xml', sources.join(" ")]
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            inspectionPath = ['cmd', '/c', "${ideaPath}\\bin\\format.bat ${params.join(" ")}"]
+        } else {
+            inspectionPath = ["{$ideaPath}/bin/format.sh ${params.join(" ")}"]
+        }
+        commandLine inspectionPath
+    }
+}
+
+getStaticAnalysisTaskNames = { sources, binaries ->
     def tasksNames = new ArrayList<String>()
     try {
         tasksNames.add(getCpdTask(sources))
