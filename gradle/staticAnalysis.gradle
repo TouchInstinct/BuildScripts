@@ -19,7 +19,7 @@ def appendPmdErrors
 def appendCpdErrors
 def appendLintErrors
 def appendKotlinErrors
-def normilizeFileUrl
+def normalizeFileUrl
 
 repositories {
     maven { url "http://dl.bintray.com/touchin/touchin-tools" }
@@ -45,99 +45,105 @@ gradle.projectsEvaluated {
                 "-Werror"
     }
 
-    // TODO duplicate task name org.gradle.api.InvalidUserDataException: Cannot add task ':app:cpd_app' as a task with that name already exists.
-    task localStaticAnalysis {
-        def excludes = rootProject.extensions.findByName("staticAnalysisExcludes");
+    def excludes = rootProject.extensions.findByName("staticAnalysisExcludes");
+    def staticAnalysisTasks = getStaticAnalysisTaskNames(getSources(excludes), getBinaries(excludes))
+    def generateHtmlReport
+
+    task staticAnalysis {
         def ideaFormatTask = getIdeaFormatTask(getSources(excludes))
-        def staticAnalysisTasks = getStaticAnalysisTaskNames(getSources(excludes), getBinaries(excludes))
         staticAnalysisTasks.each { task ->
             tasks.findByName(task).mustRunAfter(ideaFormatTask)
         }
         dependsOn ideaFormatTask
         dependsOn staticAnalysisTasks
+        doFirst {
+            generateHtmlReport()
+        }
     }
 
-    task staticAnalysis {
-        def excludes = rootProject.extensions.findByName("staticAnalysisExcludes");
-        dependsOn getStaticAnalysisTaskNames(getSources(excludes), getBinaries(excludes))
-
+    task serverStaticAnalysis {
+        dependsOn staticAnalysisTasks
         doFirst {
-            StringBuilder fullReport = new StringBuilder()
+            generateHtmlReport()
+        }
+    }
 
-            fullReport.append("<table cellpadding='10px' border='2px' cellspacing='0px' cols='4'>");
+    generateHtmlReport = {
+        StringBuilder fullReport = new StringBuilder()
 
-            StringBuilder consoleReport = new StringBuilder()
-            consoleReport.append("STATIC ANALYSIS RESULTS:")
-            def count = 0
+        fullReport.append("<table cellpadding='10px' border='2px' cellspacing='0px' cols='4'>");
 
-            def previousCount = count
-            count = appendCpdErrors(fullReport, count, new File("${project.buildDir}/reports/cpd_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mCPD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/cpd_${project.name}.xml"))
-            } else {
-                consoleReport.append("\n\u001B[32mCPD: PASSED\u001B[0m")
-            }
+        StringBuilder consoleReport = new StringBuilder()
+        consoleReport.append("STATIC ANALYSIS RESULTS:")
+        def count = 0
 
-            previousCount = count
-            count = appendPmdErrors(fullReport, count, new File("${project.buildDir}/reports/pmd_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mPMD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/pmd_${project.name}.html"))
-            } else {
-                consoleReport.append("\n\u001B[32mPMD: PASSED\u001B[0m")
-            }
+        def previousCount = count
+        count = appendCpdErrors(fullReport, count, new File("${project.buildDir}/reports/cpd_${project.name}.xml"))
+        if (count - previousCount > 0) {
+            consoleReport.append("\n\u001B[31mCPD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
+                    normalizeFileUrl("file://${project.buildDir}/reports/cpd_${project.name}.xml"))
+        } else {
+            consoleReport.append("\n\u001B[32mCPD: PASSED\u001B[0m")
+        }
 
-            previousCount = count
-            count = appendLintErrors(fullReport, count, new File("${project.buildDir}/reports/lint_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mLint: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/lint_${project.name}.html"))
-            } else {
-                consoleReport.append("\n\u001B[32mLint: PASSED\u001B[0m")
-            }
+        previousCount = count
+        count = appendPmdErrors(fullReport, count, new File("${project.buildDir}/reports/pmd_${project.name}.xml"))
+        if (count - previousCount > 0) {
+            consoleReport.append("\n\u001B[31mPMD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
+                    normalizeFileUrl("file://${project.buildDir}/reports/pmd_${project.name}.html"))
+        } else {
+            consoleReport.append("\n\u001B[32mPMD: PASSED\u001B[0m")
+        }
 
-            previousCount = count
-            count = appendCheckstyleErrors(fullReport, count, new File("${project.buildDir}/reports/checkstyle_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mCheckstyle: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/checkstyle_${project.name}.xml"))
-            } else {
-                consoleReport.append("\n\u001B[32mCheckstyle: PASSED\u001B[0m")
-            }
+        previousCount = count
+        count = appendLintErrors(fullReport, count, new File("${project.buildDir}/reports/lint_${project.name}.xml"))
+        if (count - previousCount > 0) {
+            consoleReport.append("\n\u001B[31mLint: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
+                    normalizeFileUrl("file://${project.buildDir}/reports/lint_${project.name}.html"))
+        } else {
+            consoleReport.append("\n\u001B[32mLint: PASSED\u001B[0m")
+        }
 
-            previousCount = count
-            count = appendKotlinErrors(fullReport, count, new File("${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mKotlin-detekt: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"))
-            } else {
-                consoleReport.append("\n\u001B[32mKotlin-detekt: PASSED\u001B[0m")
-            }
+        previousCount = count
+        count = appendCheckstyleErrors(fullReport, count, new File("${project.buildDir}/reports/checkstyle_${project.name}.xml"))
+        if (count - previousCount > 0) {
+            consoleReport.append("\n\u001B[31mCheckstyle: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
+                    normalizeFileUrl("file://${project.buildDir}/reports/checkstyle_${project.name}.xml"))
+        } else {
+            consoleReport.append("\n\u001B[32mCheckstyle: PASSED\u001B[0m")
+        }
 
-            fullReport.append("\n</table>\n");
-            fullReport.append("<script>\n" +
-                    "\tfunction visitPage(file, line) {\n" +
-                    "\t\tfor (port = 63330; port < 63340; port++) {\n" +
-                    "\t\t\tvar theUrl='http://127.0.0.1:' + port + '/file?file=' + file + '&line=' + line;\n" +
-                    "\t\t\tvar xmlHttp = new XMLHttpRequest();\n" +
-                    "\t\t\txmlHttp.open('GET', theUrl, true);\n" +
-                    "\t\t\txmlHttp.send(null);\n" +
-                    "\t\t}\n" +
-                    "\t}\n" +
-                    "</script>");
+        previousCount = count
+        count = appendKotlinErrors(fullReport, count, new File("${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"))
+        if (count - previousCount > 0) {
+            consoleReport.append("\n\u001B[31mKotlin-detekt: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
+                    normalizeFileUrl("file://${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"))
+        } else {
+            consoleReport.append("\n\u001B[32mKotlin-detekt: PASSED\u001B[0m")
+        }
 
-            File fullReportFile = new File("${project.buildDir}/reports/full_report.html")
-            fullReportFile.write(fullReport.toString());
+        fullReport.append("\n</table>\n");
+        fullReport.append("<script>\n" +
+                "\tfunction visitPage(file, line) {\n" +
+                "\t\tfor (port = 63330; port < 63340; port++) {\n" +
+                "\t\t\tvar theUrl='http://127.0.0.1:' + port + '/file?file=' + file + '&line=' + line;\n" +
+                "\t\t\tvar xmlHttp = new XMLHttpRequest();\n" +
+                "\t\t\txmlHttp.open('GET', theUrl, true);\n" +
+                "\t\t\txmlHttp.send(null);\n" +
+                "\t\t}\n" +
+                "\t}\n" +
+                "</script>");
 
-            if (count > 0) {
-                consoleReport.append("\n\u001B[31mOverall: FAILED (" + count + " errors)\u001B[0m "
-                        + normilizeFileUrl("file://${project.buildDir}/reports/full_report.html"))
-                throw new Exception(consoleReport.toString())
-            } else {
-                consoleReport.append("\n\u001B[32mOverall: PASSED\u001B[0m")
-                println(consoleReport.toString())
-            }
+        File fullReportFile = new File("${project.buildDir}/reports/full_report.html")
+        fullReportFile.write(fullReport.toString());
+
+        if (count > 0) {
+            consoleReport.append("\n\u001B[31mOverall: FAILED (" + count + " errors)\u001B[0m "
+                    + normalizeFileUrl("file://${project.buildDir}/reports/full_report.html"))
+            throw new Exception(consoleReport.toString())
+        } else {
+            consoleReport.append("\n\u001B[32mOverall: PASSED\u001B[0m")
+            println(consoleReport.toString())
         }
     }
 }
@@ -157,7 +163,7 @@ task optimizePng {
     }
 }
 
-normilizeFileUrl = { url ->
+normalizeFileUrl = { url ->
     return url.replace("\\", "/");
 }
 
@@ -462,7 +468,7 @@ getIdeaFormatTask = { sources ->
     return tasks.create("ideaFormat_$project.name", Exec) {
         def ideaPath = System.getenv("IDEA_HOME")
         def inspectionPath
-        def params = ['-r', '-s', "${rootDir}/libraries/BuildScripts/idea/code-style.xml", '-m', '*.java,*.kt,*.xml', sources.join(" ")]
+        def params = ['-r', '-mask', '*.java,*.kt,*.xml', sources.join(" ")]
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             inspectionPath = ['cmd', '/c', "${ideaPath}\\bin\\format.bat ${params.join(" ")}"]
         } else {
