@@ -50,7 +50,9 @@ gradle.projectsEvaluated {
     def generateHtmlReport
 
     task staticAnalysis {
-        def ideaFormatTask = getIdeaFormatTask(getSources(excludes))
+        // TODO remove empty task after repository with settings will be created
+        def ideaFormatTask = System.getenv("IDEA_HOME") != null ? getIdeaFormatTask(getSources(excludes)) : tasks.create("empty")
+
         staticAnalysisTasks.each { task ->
             tasks.findByName(task).mustRunAfter(ideaFormatTask)
         }
@@ -467,6 +469,9 @@ import org.apache.tools.ant.taskdefs.condition.Os
 getIdeaFormatTask = { sources ->
     return tasks.create("ideaFormat_$project.name", Exec) {
         def ideaPath = System.getenv("IDEA_HOME")
+        if (ideaPath == null) {
+            throw new GradleException('Please specify IDEA_HOME environment variable!')
+        }
         def inspectionPath
         def params = ['-r', '-mask', '*.java,*.kt,*.xml', sources.join(" ")]
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
