@@ -112,7 +112,7 @@ style:
     constantPattern: '^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'
     methodPattern: '^[a-z][a-z0-9][a-zA-Z0-9_]*$'
     classPattern: '^[A-Z][a-zA-Z0-9]*$'
-    enumEntryPattern: '^[A-Z][a-zA-Z0-9]*$'
+    enumEntryPattern: '^[A-Z][a-zA-Z0-9_]*$'
 
 comments:
   active: false
