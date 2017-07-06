@@ -5,13 +5,26 @@ apply from: "${rootDir}/libraries/BuildScripts/gradle/commonStaticAnalysis.gradl
 
 gradle.projectsEvaluated {
 
+    tasks.withType(JavaCompile) {
+        options.compilerArgs <<
+                "-Xlint:cast" <<
+                "-Xlint:divzero" <<
+                "-Xlint:empty" <<
+                "-Xlint:deprecation" <<
+                "-Xlint:finally" <<
+                "-Xlint:overrides" <<
+                "-Xlint:path" <<
+                "-Xlint:unchecked" <<
+                "-Werror"
+    }
+
     def excludes = rootProject.extensions.findByName("staticAnalysisExcludes")
-    def isAndroidProject = project.hasProperty('android')
-    def staticAnalysisTasks = getStaticAnalysisTaskNames(isAndroidProject,
-            isAndroidProject ? getAndroidProjectSources(excludes) : getServerProjectSources(excludes))
+    def isServerProject = project.hasProperty('server')
+    def staticAnalysisTasks = getStaticAnalysisTaskNames(isServerProject,
+            isServerProject ? getServerProjectSources(excludes) : getAndroidProjectSources(excludes))
 
     // TODO remove empty task after repository with settings will be created
-    def ideaFormatTask = System.getenv("IDEA_HOMETODO") != null ? getIdeaFormatTask(getServerProjectSources(excludes)) : tasks.create("empty")
+    def ideaFormatTask = System.getenv("IDEA_HOME") != null ? getIdeaFormatTask(getServerProjectSources(excludes)) : tasks.create("empty")
 
     task staticAnalysis {
         staticAnalysisTasks.each { task ->
@@ -20,14 +33,14 @@ gradle.projectsEvaluated {
         dependsOn ideaFormatTask
         dependsOn staticAnalysisTasks
         doFirst {
-            generateHtmlReport()
+            generateHtmlReport(isServerProject)
         }
     }
 
     task staticAnalysisWithoutFormatting {
         dependsOn staticAnalysisTasks
         doFirst {
-            generateHtmlReport()
+            generateHtmlReport(isServerProject)
         }
     }
 }
