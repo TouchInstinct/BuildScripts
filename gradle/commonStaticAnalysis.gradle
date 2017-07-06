@@ -1,0 +1,238 @@
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
+apply plugin: 'cpd'
+
+def getCpdTask
+def getKotlinDetektTask
+
+def appendError
+def appendCpdErrors
+def appendKotlinErrors
+def normalizeFileUrl
+
+configurations {
+    detekt
+}
+
+ext.generateHtmlReport = {
+    StringBuilder fullReport = new StringBuilder()
+
+    fullReport.append("<table cellpadding='10px' border='2px' cellspacing='0px' cols='4'>");
+
+    StringBuilder consoleReport = new StringBuilder()
+    consoleReport.append("STATIC ANALYSIS RESULTS:")
+    def count = 0
+
+    def previousCount = count
+    count = appendCpdErrors(fullReport, count, new File("${project.buildDir}/reports/cpd_${project.name}.xml"))
+    if (count - previousCount > 0) {
+        consoleReport.append("\n\u001B[31mCPD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
+                normalizeFileUrl("file://${project.buildDir}/reports/cpd_${project.name}.xml"))
+    } else {
+        consoleReport.append("\n\u001B[32mCPD: PASSED\u001B[0m")
+    }
+
+    previousCount = count
+    count = appendKotlinErrors(fullReport, count, new File("${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"))
+    if (count - previousCount > 0) {
+        consoleReport.append("\n\u001B[31mKotlin-detekt: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
+                normalizeFileUrl("file://${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"))
+    } else {
+        consoleReport.append("\n\u001B[32mKotlin-detekt: PASSED\u001B[0m")
+    }
+
+    fullReport.append("\n</table>\n");
+    fullReport.append("<script>\n" +
+            "\tfunction visitPage(file, line) {\n" +
+            "\t\tfor (port = 63330; port < 63340; port++) {\n" +
+            "\t\t\tvar theUrl='http://127.0.0.1:' + port + '/file?file=' + file + '&line=' + line;\n" +
+            "\t\t\tvar xmlHttp = new XMLHttpRequest();\n" +
+            "\t\t\txmlHttp.open('GET', theUrl, true);\n" +
+            "\t\t\txmlHttp.send(null);\n" +
+            "\t\t}\n" +
+            "\t}\n" +
+            "</script>")
+
+    File fullReportFile = new File("${project.buildDir}/reports/full_report.html")
+    fullReportFile.write(fullReport.toString());
+
+    if (count > 0) {
+        consoleReport.append("\n\u001B[31mOverall: FAILED (" + count + " errors)\u001B[0m "
+                + normalizeFileUrl("file://${project.buildDir}/reports/full_report.html"))
+        throw new Exception(consoleReport.toString())
+    } else {
+        consoleReport.append("\n\u001B[32mOverall: PASSED\u001B[0m")
+        println(consoleReport.toString())
+    }
+}
+
+normalizeFileUrl = { url ->
+    return url.replace("\\", "/")
+}
+
+appendError = { report, number, analyzer, file, line, errorId, errorLink, description ->
+    report.append("\n\t<tr>")
+
+    report.append("\n\t\t<td>" + number + "</td>")
+
+    report.append("\n\t\t<td>" + analyzer + "</td>")
+
+    report.append("\n\t\t<td>")
+    if (analyzer == "Lint") {
+        report.append("\n\t\t\t<a href='javascript:alert(\"" + errorLink.replace("'", "&apos;") + "\")'>" + description + " (" + errorId + ")</a>")
+    } else if (analyzer == "Detekt") {
+        report.append("\n\t\t\t" + description + " (" + errorId + ")")
+    } else {
+        report.append("\n\t\t\t<a target='_blank' href='" + errorLink + "'>" + description + " (" + errorId + ")</a>")
+    }
+    report.append("\n\t\t</td>")
+
+    def indexOfSrc = file.indexOf("src")
+    def deeplink = (indexOfSrc > 0 ? file.substring(indexOfSrc) : file).replace('\\', '/')
+    report.append("\n\t\t<td>")
+    report.append("\n\t\t\t<a href='javascript:visitPage(\"" + deeplink + "\", " + line + ")'>" + file + ":" + line + "</a>")
+    report.append("\n\t\t</td>")
+
+    report.append("\n\t</tr>")
+    println("\n\u001B[31m" + number + " " + analyzer + ": " + description + " (" + errorId + ")\n\tat " + file + ":" + line + "\u001B[0m")
+}
+
+appendKotlinErrors = { report, count, checkstyleFile ->
+    def rootNode = new XmlParser().parse(checkstyleFile)
+    for (def fileNode : rootNode.children()) {
+        if (!fileNode.name().equals("file")) {
+            continue
+        }
+
+        for (def errorNode : fileNode.children()) {
+            if (!errorNode.name().equals("error")) {
+                continue
+            }
+            count++
+
+            def error = errorNode.attribute("source")
+            appendError(report, count, "Detekt", fileNode.attribute("name"), errorNode.attribute("line"), error, "", errorNode.attribute("message"))
+        }
+    }
+    return count
+}
+
+appendCpdErrors = { report, count, cpdFile ->
+    def rootNode = new XmlParser().parse(cpdFile)
+    for (def duplicationNode : rootNode.children()) {
+        if (!duplicationNode.name().equals("duplication")) {
+            continue
+        }
+        count++
+
+        report.append("\n\t<tr>")
+
+        report.append("\n\t\t<td>" + count + "</td>")
+
+        report.append("\n\t\t<td>CPD</td>")
+
+        def fragment = "<b>Code duplication:</b></br></br>"
+        def links = ""
+        def duplicationIndex = 0
+        String duplicationPoints = "";
+        for (def filePointNode : duplicationNode.children()) {
+            if (filePointNode.name().equals("file")) {
+                def file = filePointNode.attribute("path")
+                def line = filePointNode.attribute("line");
+                def indexOfSrc = file.indexOf("src")
+                def deeplink = (indexOfSrc > 0 ? file.substring(indexOfSrc) : file).replace('\\', '/')
+                if (duplicationIndex > 0) {
+                    links += "\n\t\t\t</br></br>"
+                }
+                links += "Code fragment " + (duplicationIndex + 1) + "</br>"
+                links += "\n\t\t\t<a href='javascript:visitPage(\"" + deeplink + "\", " + line + ")'>" + file + ":" + line + "</a>"
+                duplicationPoints += "\n\tat " + file + ":" + line
+                duplicationIndex++
+            } else if (filePointNode.name().equals("codefragment")) {
+                fragment += filePointNode.text().replace("\n", "</br>").replace(" ", "&nbsp;")
+            }
+        }
+        report.append("\n\t\t<td>" + fragment + "\n\t\t</td>")
+
+        report.append("\n\t\t<td>" + links + "\n\t\t</td>")
+
+        report.append("\n\t</tr>")
+        println("\u001B[31m" + count + " CPD: code duplication" + duplicationPoints + "\u001B[0m")
+    }
+    return count
+}
+
+getCpdTask = { sources ->
+    def taskName = "cpd_${project.name}"
+    tasks.create(taskName, tasks.findByName('cpdCheck').getClass().getSuperclass()) {
+        minimumTokenCount = 60
+        source = files(sources)
+        ignoreFailures = true
+        reports {
+            xml {
+                enabled = true
+                println("${project.buildDir}/reports/${taskName}.xml")
+                destination "${project.buildDir}/reports/${taskName}.xml"
+            }
+        }
+    }
+    return taskName
+}
+
+getKotlinDetektTask = {
+    def taskName = "detektCheck_${project.name}"
+    tasks.create(taskName, JavaExec) {
+        main = "io.gitlab.arturbosch.detekt.cli.Main"
+        classpath = configurations.detekt
+        def input = "${rootDir}"
+        def output = "${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"
+        def config = "${rootDir}/libraries/BuildScripts/kotlin/detekt-config.yml"
+
+        // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
+        def filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
+        def params = ['-p', input, '-o', output, '-c', config, '-f', filters]
+        args(params)
+    }
+    return taskName
+}
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
+ext.getIdeaFormatTask = { sources ->
+    return tasks.create("ideaFormat_$project.name", Exec) {
+        def ideaPath = System.getenv("IDEA_HOME")
+        if (ideaPath == null) {
+            throw new GradleException('Please specify IDEA_HOME environment variable!')
+        }
+        def inspectionPath
+        def params = ['-r', '-mask', '*.java,*.kt,*.xml', sources.join(" ")]
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            inspectionPath = ['cmd', '/c', "${ideaPath}\\bin\\format.bat ${params.join(" ")}"]
+        } else {
+            inspectionPath = ["{$ideaPath}/bin/format.sh ${params.join(" ")}"]
+        }
+        commandLine inspectionPath
+    }
+}
+
+ext.getStaticAnalysisTaskNames = { isAndroid, sources ->
+    def tasksNames = new ArrayList<String>()
+    try {
+        tasksNames.add(getCpdTask(sources))
+        tasksNames.add(getKotlinDetektTask())
+        if (isAndroid) {
+            // TODO tasksNames.add()
+        }
+    } catch (Exception exception) {
+        println(exception.toString())
+    }
+    return tasksNames
+}
+
+dependencies {
+    pmd 'net.sourceforge.pmd:pmd-core:5.5.3'
+    pmd 'net.sourceforge.pmd:pmd-java:5.5.3'
+
+    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.M12.3'
+    detekt 'io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0.M12.3'
+}
