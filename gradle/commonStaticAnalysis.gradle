@@ -28,8 +28,8 @@ configurations {
 
 import org.apache.tools.ant.taskdefs.condition.Os
 
-ext.getIdeaFormatTask = { sources ->
-    return tasks.create("ideaFormat_$project.name", Exec) {
+ext.getIdeaFormatTask = { isAndroidProject, sources ->
+    return tasks.create(isAndroidProject ? "android" : "server" + "IdeaFormat_$project.name", Exec) {
         def ideaPath = System.getenv("IDEA_HOME")
         if (ideaPath == null) {
             throw new GradleException('Please specify IDEA_HOME environment variable!')
@@ -45,12 +45,12 @@ ext.getIdeaFormatTask = { sources ->
     }
 }
 
-ext.getStaticAnalysisTaskNames = { isServerProject, sources ->
+ext.getStaticAnalysisTaskNames = { isAndroidProject, sources ->
     def tasksNames = new ArrayList<String>()
     try {
         tasksNames.add(getCpdTask(sources))
         tasksNames.add(getKotlinDetektTask())
-        if (!isServerProject) {
+        if (isAndroidProject) {
             tasksNames.add(getCheckstyleTask(sources))
             tasksNames.add(getPmdTask(sources))
             tasksNames.addAll(getLintTasks())
@@ -61,7 +61,7 @@ ext.getStaticAnalysisTaskNames = { isServerProject, sources ->
     return tasksNames
 }
 
-ext.generateHtmlReport = { isServerProject ->
+ext.generateHtmlReport = { isAndroidProject ->
     StringBuilder fullReport = new StringBuilder()
 
     fullReport.append("<table cellpadding='10px' border='2px' cellspacing='0px' cols='4'>");
@@ -88,7 +88,7 @@ ext.generateHtmlReport = { isServerProject ->
         consoleReport.append("\n\u001B[32mKotlin-detekt: PASSED\u001B[0m")
     }
 
-    if (!isServerProject) {
+    if (isAndroidProject) {
         previousCount = count
         count = appendPmdErrors(fullReport, count, new File("${project.buildDir}/reports/pmd_${project.name}.xml"))
         if (count - previousCount > 0) {
