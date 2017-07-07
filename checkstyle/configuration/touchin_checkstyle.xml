@@ -164,10 +164,7 @@
         <!-- <module name="JavadocPackage"/> -->
         <module name="JavadocParagraph"/>
         <!-- <module name="JavadocStyle"/> -->
-
-        <!-- https://youtrack.jetbrains.com/issue/IDEA-121723
-        <module name="JavadocTagContinuationIndentation"/> -->
-
+        <!-- https://youtrack.jetbrains.com/issue/IDEA-121723 <module name="JavadocTagContinuationIndentation"/> -->
         <!-- <module name="JavadocType"/> -->
         <!-- <module name="JavadocVariable"/> -->
         <!-- <module name="JavaNCSS"/> -->
