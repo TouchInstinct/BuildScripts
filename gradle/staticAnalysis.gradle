@@ -23,12 +23,9 @@ gradle.projectsEvaluated {
     def staticAnalysisTasks = getStaticAnalysisTaskNames(isServerProject,
             isServerProject ? getServerProjectSources(excludes) : getAndroidProjectSources(excludes))
 
-    // TODO remove empty task after repository with settings will be created
-    def ideaFormatTask = System.getenv("IDEA_HOME") != null ? getIdeaFormatTask(getServerProjectSources(excludes)) : tasks.create("empty")
-
     task staticAnalysis {
         staticAnalysisTasks.each { task ->
-            tasks.findByName(task).mustRunAfter(ideaFormatTask)
+            tasks.findByName(task).mustRunAfter(getIdeaFormatTask(getServerProjectSources(excludes)))
         }
         dependsOn ideaFormatTask
         dependsOn staticAnalysisTasks
