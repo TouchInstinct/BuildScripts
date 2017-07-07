@@ -29,7 +29,7 @@ configurations {
 import org.apache.tools.ant.taskdefs.condition.Os
 
 ext.getIdeaFormatTask = { isAndroidProject, sources ->
-    return tasks.create(isAndroidProject ? "android" : "server" + "IdeaFormat_$project.name", Exec) {
+    return tasks.create((isAndroidProject ? "android" : "server") + "IdeaFormat_$project.name", Exec) {
         def ideaPath = System.getenv("IDEA_HOME")
         if (ideaPath == null) {
             throw new GradleException('Please specify IDEA_HOME environment variable!')
@@ -39,7 +39,7 @@ ext.getIdeaFormatTask = { isAndroidProject, sources ->
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             inspectionPath = ['cmd', '/c', "${ideaPath}\\bin\\format.bat ${params.join(" ")}"]
         } else {
-            inspectionPath = ["{$ideaPath}/bin/format.sh ${params.join(" ")}"]
+            inspectionPath = ["$ideaPath/bin/format.sh ${params.join(" ")}"]
         }
         commandLine inspectionPath
     }
@@ -48,8 +48,8 @@ ext.getIdeaFormatTask = { isAndroidProject, sources ->
 ext.getStaticAnalysisTaskNames = { isAndroidProject, sources ->
     def tasksNames = new ArrayList<String>()
     try {
-        tasksNames.add(getCpdTask(sources))
-        tasksNames.add(getKotlinDetektTask())
+        tasksNames.add(getCpdTask(isAndroidProject, sources))
+        tasksNames.add(getKotlinDetektTask(isAndroidProject))
         if (isAndroidProject) {
             tasksNames.add(getCheckstyleTask(sources))
             tasksNames.add(getPmdTask(sources))
@@ -298,8 +298,8 @@ appendLintErrors = { report, count, lintFile ->
     return count
 }
 
-getCpdTask = { sources ->
-    def taskName = "cpd_${project.name}"
+getCpdTask = { isAndroidProject, sources ->
+    def taskName = (isAndroidProject ? "android" : "server") + "cpd_${project.name}"
     tasks.create(taskName, tasks.findByName('cpdCheck').getClass().getSuperclass()) {
         minimumTokenCount = 60
         source = files(sources)
@@ -387,8 +387,8 @@ getCheckstyleTask = { sources ->
     return taskName
 }
 
-getKotlinDetektTask = {
-    def taskName = "detektCheck_${project.name}"
+getKotlinDetektTask = { isAndroidProject ->
+    def taskName = (isAndroidProject ? "android" : "server") + "detektCheck_${project.name}"
     tasks.create(taskName, JavaExec) {
         main = "io.gitlab.arturbosch.detekt.cli.Main"
         classpath = configurations.detekt
