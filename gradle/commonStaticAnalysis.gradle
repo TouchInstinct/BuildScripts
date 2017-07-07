@@ -35,13 +35,18 @@ ext.getIdeaFormatTask = { isAndroidProject, sources ->
             throw new GradleException('Please specify IDEA_HOME environment variable!')
         }
         def inspectionPath
-        def params = ['-r', '-mask', '*.java,*.kt,*.xml', sources.join(" ")]
+        def params = ["-r", "-mask", "*.java,*.kt,*.xml"]
+        for (String source : sources) {
+            params.add(source)
+        }
+
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            inspectionPath = ['cmd', '/c', "${ideaPath}\\bin\\format.bat ${params.join(" ")}"]
+            inspectionPath = ['cmd', '/c', "${ideaPath}\\bin\\format.bat"]
         } else {
-            inspectionPath = ["$ideaPath/bin/format.sh ${params.join(" ")}"]
+            inspectionPath = ["$ideaPath/bin/format.sh"]
         }
         commandLine inspectionPath
+        args = params
     }
 }
 
@@ -99,7 +104,7 @@ ext.generateHtmlReport = { isAndroidProject ->
         }
 
         previousCount = count
-        count = appendLintErrors(fullReport, count, new File("${project.buildDir}/reports/lint.xml"))
+        count = appendLintErrors(fullReport, count, new File("${project.buildDir}/reports/lint_report.xml"))
         if (count - previousCount > 0) {
             consoleReport.append("\n\u001B[31mLint: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
                     normalizeFileUrl("file://${project.buildDir}/reports/lint.html"))
@@ -355,9 +360,9 @@ getLintTasks = {
     android.lintOptions.checkAllWarnings = true
     android.lintOptions.warningsAsErrors = false
     android.lintOptions.xmlReport = true
-    android.lintOptions.xmlOutput = file("${project.buildDir}/reports/lint.xml")
+    android.lintOptions.xmlOutput = file("${project.buildDir}/reports/lint_report.xml")
     android.lintOptions.htmlReport = true
-    android.lintOptions.htmlOutput = file("${project.buildDir}/reports/lint.html")
+    android.lintOptions.htmlOutput = file("${project.buildDir}/reports/lint_report.html")
     android.lintOptions.lintConfig = file("${rootDir}/libraries/BuildScripts/lint/lint.xml")
     return lintTaskNames
 }
