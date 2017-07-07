@@ -71,47 +71,47 @@ ext.generateHtmlReport = { isAndroidProject ->
     def count = 0
 
     def previousCount = count
-    count = appendCpdErrors(fullReport, count, new File("${project.buildDir}/reports/cpd_${project.name}.xml"))
+    count = appendCpdErrors(fullReport, count, new File("${project.buildDir}/reports/cpd.xml"))
     if (count - previousCount > 0) {
         consoleReport.append("\n\u001B[31mCPD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                normalizeFileUrl("file://${project.buildDir}/reports/cpd_${project.name}.xml"))
+                normalizeFileUrl("file://${project.buildDir}/reports/cpd.xml"))
     } else {
         consoleReport.append("\n\u001B[32mCPD: PASSED\u001B[0m")
     }
 
     previousCount = count
-    count = appendKotlinErrors(fullReport, count, new File("${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"))
+    count = appendKotlinErrors(fullReport, count, new File("${project.buildDir}/reports/kotlin-detekt.xml"))
     if (count - previousCount > 0) {
         consoleReport.append("\n\u001B[31mKotlin-detekt: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                normalizeFileUrl("file://${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"))
+                normalizeFileUrl("file://${project.buildDir}/reports/kotlin-detekt.xml"))
     } else {
         consoleReport.append("\n\u001B[32mKotlin-detekt: PASSED\u001B[0m")
     }
 
     if (isAndroidProject) {
         previousCount = count
-        count = appendPmdErrors(fullReport, count, new File("${project.buildDir}/reports/pmd_${project.name}.xml"))
+        count = appendPmdErrors(fullReport, count, new File("${project.buildDir}/reports/pmd.xml"))
         if (count - previousCount > 0) {
             consoleReport.append("\n\u001B[31mPMD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                    normalizeFileUrl("file://${project.buildDir}/reports/pmd_${project.name}.html"))
+                    normalizeFileUrl("file://${project.buildDir}/reports/pmd.html"))
         } else {
             consoleReport.append("\n\u001B[32mPMD: PASSED\u001B[0m")
         }
 
         previousCount = count
-        count = appendLintErrors(fullReport, count, new File("${project.buildDir}/reports/lint_${project.name}.xml"))
+        count = appendLintErrors(fullReport, count, new File("${project.buildDir}/reports/lint.xml"))
         if (count - previousCount > 0) {
             consoleReport.append("\n\u001B[31mLint: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                    normalizeFileUrl("file://${project.buildDir}/reports/lint_${project.name}.html"))
+                    normalizeFileUrl("file://${project.buildDir}/reports/lint.html"))
         } else {
             consoleReport.append("\n\u001B[32mLint: PASSED\u001B[0m")
         }
 
         previousCount = count
-        count = appendCheckstyleErrors(fullReport, count, new File("${project.buildDir}/reports/checkstyle_${project.name}.xml"))
+        count = appendCheckstyleErrors(fullReport, count, new File("${project.buildDir}/reports/checkstyle.xml"))
         if (count - previousCount > 0) {
             consoleReport.append("\n\u001B[31mCheckstyle: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                    normalizeFileUrl("file://${project.buildDir}/reports/checkstyle_${project.name}.xml"))
+                    normalizeFileUrl("file://${project.buildDir}/reports/checkstyle.xml"))
         } else {
             consoleReport.append("\n\u001B[32mCheckstyle: PASSED\u001B[0m")
         }
@@ -307,8 +307,7 @@ getCpdTask = { isAndroidProject, sources ->
         reports {
             xml {
                 enabled = true
-                println("${project.buildDir}/reports/${taskName}.xml")
-                destination "${project.buildDir}/reports/${taskName}.xml"
+                destination "${project.buildDir}/reports/cpd.xml"
             }
         }
     }
@@ -326,11 +325,11 @@ getPmdTask = { sources ->
         reports {
             html {
                 enabled = true
-                destination "${project.buildDir}/reports/${taskName}.html"
+                destination "${project.buildDir}/reports/pmd.html"
             }
             xml {
                 enabled = true
-                destination "${project.buildDir}/reports/${taskName}.xml"
+                destination "${project.buildDir}/reports/pmd.xml"
             }
         }
     }
@@ -356,9 +355,9 @@ getLintTasks = {
     android.lintOptions.checkAllWarnings = true
     android.lintOptions.warningsAsErrors = false
     android.lintOptions.xmlReport = true
-    android.lintOptions.xmlOutput = file("${project.buildDir}/reports/lint_${project.name}.xml")
+    android.lintOptions.xmlOutput = file("${project.buildDir}/reports/lint.xml")
     android.lintOptions.htmlReport = true
-    android.lintOptions.htmlOutput = file("${project.buildDir}/reports/lint_${project.name}.html")
+    android.lintOptions.htmlOutput = file("${project.buildDir}/reports/lint.html")
     android.lintOptions.lintConfig = file("${rootDir}/libraries/BuildScripts/lint/lint.xml")
     return lintTaskNames
 }
@@ -380,7 +379,7 @@ getCheckstyleTask = { sources ->
         reports {
             xml {
                 enabled = true
-                destination "${project.buildDir}/reports/${taskName}.xml"
+                destination "${project.buildDir}/reports/checkstyle.xml"
             }
         }
     }
@@ -393,7 +392,7 @@ getKotlinDetektTask = { isAndroidProject ->
         main = "io.gitlab.arturbosch.detekt.cli.Main"
         classpath = configurations.detekt
         def input = "${rootDir}"
-        def output = "${project.buildDir}/reports/kotlin-detekt_${project.name}.xml"
+        def output = "${project.buildDir}/reports/kotlin-detekt.xml"
         def config = "${rootDir}/libraries/BuildScripts/kotlin/detekt-config.yml"
 
         // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
