@@ -7,27 +7,24 @@ configurations {
     apigenerator
 }
 
-task generateApi() << {
-    javaexec {
-        //TODO uncomment when jar on bintray will be updated
-        //jarArgs.add(configurations.apigenerator.asPath)
-        println("${appId}")
-        main = "-jar";
-        workingDir = file("${rootDir}");
-        args = [
-                "api-generator-1.0-all.jar",
-                "${rootDir}" + "\\app\\Dominos-common\\schemes",
-                "$buildDir.absolutePath" + "\\generated\\schemes",
-                "libraries\\BuildScripts\\api-java-templates",
-                "--package ${appId}"
-        ]
+android.applicationVariants.all {
+    variant ->
+        final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
 
-        /*jarArgs.add("api-generator-1.0-all.jar")
-        jarArgs.add("${rootDir}" + "\\app\\Dominos-common\\schemes")
-        jarArgs.add("$buildDir.absolutePath" + "\\generated\\schemes")
-        jarArgs.add("libraries\\BuildScripts\\api-java-templates")
-        javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }*/
-    }
+        def generateJsonModelsTask = tasks.create("generateJsonModels${variant.name}") << {
+            def jarArgs = new ArrayList<String>()
+            //TODO replace when jar on bintray will be updated
+            jarArgs.add("api-generator-1.0-all.jar")
+            jarArgs.add("${rootDir}/app/Dominos-common/schemes")
+            jarArgs.add("${project.buildDir}/generated/source/models/${variant.dirName}")
+            jarArgs.add("libraries/BuildScripts/api-java-templates")
+            jarArgs.add("--package")
+            jarArgs.add("${appId}")
+            javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
+        }
+
+        generateJsonModelsTask.description = 'Generates Java classes for JSON models'
+        variant.registerJavaGeneratingTask generateJsonModelsTask, generatedModelsDirectory
 }
 
 dependencies {
