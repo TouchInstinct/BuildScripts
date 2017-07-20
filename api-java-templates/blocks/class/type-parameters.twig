@@ -1,0 +1,8 @@
+{%- import '../../utils.twig' as utils -%}
+{%- if typeParameters is not empty -%}
+<
+{%- for typeParameter in typeParameters %}
+{{- utils.formatSimpleValueType(typeParameter) -}}{%- if not (loop.last) %}, {% endif %}
+{%- endfor -%}
+>
+{%- endif -%}

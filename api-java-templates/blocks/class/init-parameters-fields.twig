@@ -1,0 +1,7 @@
+{%- import '../../utils.twig' as utils -%}
+
+{%- if fields is not empty -%}
+{%- for field in fields -%}
+	{{ utils.writeNullCheckAnnotation(field.type.type.baseTypeName, field.nullable, field.optional) }} final {{ utils.formatValueType(field.type.type, field.nullable, field.optional) }} {{ field.name }} {%- if not (loop.last) %}, {% endif %}
+{%- endfor -%}
+{%- endif -%}

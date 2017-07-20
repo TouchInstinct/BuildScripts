@@ -1,0 +1,4 @@
+{%- import '../../utils.twig' as utils -%}
+{% for field in fields %}
+		outputStream.{{ utils.formatWriteObject(field.name, field.type.type, field.nullable, field.optional) }};
+{%- endfor -%}

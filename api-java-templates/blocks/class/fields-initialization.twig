@@ -1,0 +1,4 @@
+{%- import '../../utils.twig' as utils -%}
+{%- for field in fields %}
+		{{ utils.formatValueSetter(object, field.name, field.type.type.baseTypeName, field.nullable, field.optional ) }}
+{%- endfor -%}

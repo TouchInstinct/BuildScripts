@@ -1,0 +1,4 @@
+{%- import '../../utils.twig' as utils -%}
+{% for field in fields %}
+		this.{{ field.name }} = {{ utils.formatReadObject(field.type.type, field.nullable, field.optional) }};
+{%- endfor -%}

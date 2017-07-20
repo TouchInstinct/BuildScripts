@@ -1,0 +1,7 @@
+{%- import '../../utils.twig' as utils %}
+    /**
+     * {{ method.description }}
+     */
+    @NonNull
+    @POST("{{ method.url }}")
+    Single<BaseResponse<{{ method.responseType.type.typeName }}>> {{ utils.decapitalize(method.name) }}(@NonNull @Body {{ method.bodyType.type.typeName }} {{ utils.decapitalize(method.bodyType.type.typeName) }});

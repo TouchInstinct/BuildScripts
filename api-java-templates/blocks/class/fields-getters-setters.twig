@@ -1,0 +1,22 @@
+{%- import '../../utils.twig' as utils -%}
+
+{%- if fields is not empty -%}
+{%- for field in fields %}
+	/**
+	 * {{ field.description }}
+	 */
+	{{ utils.writeNullCheckAnnotation(field.type.type.baseTypeName, field.nullable, field.optional) }}
+	//TODO: getter with is****
+	public {{ utils.formatValueType(field.type.type, field.nullable, field.optional) }} get{{ utils.capitalize(field.name) }}() {
+		{{ utils.formatValueGetter(field.name, field.type.type, field.nullable, field.optional) }}
+	}
+
+	/**
+	 * {{ field.description }}
+	 */
+	//TODO: setter with is****
+	public void set{{ utils.capitalize(field.name) }}({{ utils.writeNullCheckAnnotation(field.type.type.baseTypeName, field.nullable, field.optional) }} final {{ utils.formatValueType(field.type.type, field.nullable, field.optional) }} {{ field.name }}) {
+		{{ utils.formatValueSetter("this", field.name, field.type.type.baseTypeName, fiel.nullable, field.optional ) }}
+	}
+{% endfor -%}
+{%- endif -%}

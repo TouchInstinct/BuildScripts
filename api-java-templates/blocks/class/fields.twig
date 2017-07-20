@@ -1,0 +1,12 @@
+{%- import '../../utils.twig' as utils -%}
+
+{%- if fields is not empty -%}
+{% for field in fields %}
+	/**
+	 * {{ field.description }}
+	 */
+    @JsonField(name = "{{ field.jsonName }}")
+	{{ utils.writeNullCheckAnnotation(field.type.type.baseTypeName, field.nullable, field.optional) }}
+	private {{ utils.formatValueType(field.type.type, field.nullable, field.optional) }} {{ field.name }};
+{% endfor -%}
+{% endif %}

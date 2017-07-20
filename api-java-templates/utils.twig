@@ -1,0 +1,230 @@
+{% macro decapitalize(text) %}
+{{- concat(slice(text, 0, 1) | lower, slice(text, 1, text | length)) -}}
+{% endmacro %}
+
+{% macro capitalize(text) %}
+{{- concat(slice(text, 0, 1) | upper, slice(text, 1, text | length)) -}}
+{% endmacro %}
+
+{% macro enumType(valuesTypes) %}
+{%- if valuesTypes == "STRING" -%}
+String
+{%- elseif valuesTypes == "INT" -%}
+Int
+{%- endif -%}
+{% endmacro %}
+
+{% macro parentClassType(parent) %}
+{%- if parent is not null %}
+{{- parent.type.baseTypeName -}}
+{%- else -%}
+LoganSquareJsonModel
+{%- endif -%}
+{% endmacro %}
+
+{% macro writeNullCheckAnnotation(baseTypeName, nullable, optional) %}
+{%- if optional -%}
+@NonNull
+{%- elseif nullable -%}
+@Nullable
+{%- elseif not (baseTypeName == "Int" or baseTypeName == "Long" or baseTypeName == "Double" or baseTypeName == "Bool") -%}
+@NonNull
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatNonOptionalValueType(valueType, tryUsePrimitive) %}
+{% import _self as self %}
+{%- if valueType.baseTypeName == "Int" -%}
+{%- if tryUsePrimitive -%}int{%- else -%}Integer{%- endif -%}
+{%- elseif valueType.baseTypeName == "Long" -%}
+{%- if tryUsePrimitive -%}long{%- else -%}Long{%- endif -%}
+{%- elseif valueType.baseTypeName == "Double" -%}
+{%- if tryUsePrimitive -%}double{%- else -%}Double{%- endif -%}
+{%- elseif valueType.baseTypeName == "Decimal" -%}
+BigDecimal
+{%- elseif valueType.baseTypeName == "Bool" -%}
+{%- if tryUsePrimitive -%}bool{%- else -%}Boolean{%- endif -%}
+{%- elseif valueType.baseTypeName == "Map" -%}
+Map<{{ self.formatNonOptionalValueType(valueType.keysType, false) }}, {{ self.formatNonOptionalValueType(valueType.valuesType, false) }}>
+{%- elseif valueType.baseTypeName == "Array" -%}
+List<{{ self.formatNonOptionalValueType(valueType.itemsType, false) }}>
+{%- else -%}
+{{ valueType.baseTypeName }}
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatValueType(valueType, nullable, optional) %}
+{% import _self as self %}
+{%- if optional -%}
+JsonOptional<{{ self.formatNonOptionalValueType(valueType, false) }}>
+{%- else -%}
+{{ self.formatNonOptionalValueType(valueType, not nullable) }}
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatSimpleValueType(valueType) %}
+{%- import _self as self -%}
+{{- self.formatValueType(valueType, true, false) -}}
+{% endmacro %}
+
+{% macro formatNullableValueSetter(fieldName, valueType, nullable) %}
+{%- if valueType == "List" -%}
+{%- if nullable -%}
+{{ fieldName }} != null ? new ArrayList<>({{ fieldName }}) : null
+{%- else -%}
+new ArrayList<>({{ fieldName }})
+{%- endif -%}
+{%- elseif valueType == "Map" -%}
+{%- if nullable -%}
+{{ fieldName }} != null ? new HashMap<>({{ fieldName }}) : null
+{%- else -%}
+new HashMap<>({{ fieldName }})
+{%- endif -%}
+{%- else -%}
+{{ fieldName }}
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatValueSetter(object, fieldName, valueType, nullable, optional) %}
+{% import _self as self %}
+{%- if optional -%}
+{{ object }}.{{ fieldName }} = new JsonOptional({{- self.formatNullableValueSetter(fieldName, valueType, nullable) -}});
+{%- elseif nullable -%}
+{{ object }}.{{ fieldName }} = self.formatNullableValueSetter(fieldName, valueType, nullable) -}};
+{%- else -%}
+{{ object }}.{{ fieldName }} = {{ fieldName }};
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatNullableValueGetter(fieldName, valueType, nullable) %}
+{%- if valueType == "List" -%}
+{%- if nullable -%}
+{{ fieldName }} != null ? Collections.unmodifiableList({{ fieldName }}) : null
+{%- else -%}
+Collections.unmodifiableList({{ fieldName }})
+{%- endif -%}
+{%- elseif valueType == "Map" -%}
+{%- if nullable -%}
+{{ fieldName }} != null ? Collections.unmodifiableMap({{ fieldName }}) : null
+{%- else -%}
+Collections.unmodifiableMap({{ fieldName }})
+{%- endif -%}
+{%- else -%}
+{{ fieldName }}
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatValueGetter(fieldName, valueType, nullable, optional) %}
+{% import _self as self %}
+{%- if optional -%}
+return new JsonOptional({{- self.formatNullableValueGetter(fieldName, valueType, nullable) -}});
+{%- elseif nullable -%}
+return self.formatNullableValueGetter(fieldName, valueType, nullable) -}};
+{%- else -%}
+return this.{{ fieldName }};
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatEquals(fieldName, valueType, optional) %}
+{%- if valueType == "List" -%}
+ObjectUtils.isCollectionsEquals({%- if optional -%}{{ fieldName }}.get(){%- else -%}{{ fieldName }}{%- endif -%}, that.{%- if optional -%}{{ fieldName }}.get(){%- else -%}{{ fieldName }}{%- endif -%})
+{%- elseif valueType == "Map" -%}
+ObjectUtils.isMapsEquals({%- if optional -%}{{ fieldName }}.get(){%- else -%}{{ fieldName }}{%- endif -%}, that.{%- if optional -%}{{ fieldName }}.get(){%- else -%}{{ fieldName }}{%- endif -%})
+{%- else -%}
+ObjectUtils.equals({%- if optional -%}{{ fieldName }}.get(){%- else -%}{{ fieldName }}{%- endif -%}, that.{%- if optional -%}{{ fieldName }}.get(){%- else -%}{{ fieldName }}
+{%- endif -%})
+{%- endif -%}
+{% endmacro %}
+
+{% macro escapeIfNeeded(expr) %}
+{%- if expr == "default" -%}
+`{{ expr }}`
+{%- else -%}
+{{ expr }}
+{%- endif -%}
+{% endmacro %}
+
+{% macro mappingFromMapForField(field) %}
+{%- if field.type.type.baseTypeName == "DateTime" -%}
+map.value("{{ field.jsonName }}", using: {{ field.name -}}Transform)
+{%- else -%}
+map.value("{{ field.jsonName }}")
+{%- endif -%}
+{% endmacro %}
+
+{% macro mappingToMapForField(field) %}
+{%- if field.type.type.baseTypeName == "DateTime" -%}
+(map["{{ field.jsonName }}"], {{ field.name -}}Transform)
+{%- else -%}
+map["{{ field.jsonName }}"]
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatWriteObject(fieldName, valueType, nullable, optional) %}
+{%- if nullable or optional -%}
+writeObject({{ fieldName }})
+{%- else -%}
+{%- if valueType.baseTypeName == "Int" -%}
+writeInt({{ fieldName }})
+{%- elseif valueType.baseTypeName == "Long" -%}
+writeLong({{ fieldName }})
+{%- elseif valueType.baseTypeName == "Double" -%}
+writeDouble({{ fieldName }})
+{%- elseif valueType.baseTypeName == "String" -%}
+writeUTF({{ fieldName }})
+{%- elseif valueType.baseTypeName == "Bool" -%}
+writeBoolean({{ fieldName }})
+{%- else -%}
+writeObject({{ fieldName }})
+{%- endif -%}
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatReadObject(valueType, nullable, optional) %}
+{% import _self as self %}
+{%- if nullable or optional -%}
+({{ self.formatValueType(valueType, nullable, optional) }}) readObject()
+{%- else -%}
+{%- if valueType.baseTypeName == "Int" -%}
+readInt()
+{%- elseif valueType.baseTypeName == "Long" -%}
+readLong()
+{%- elseif valueType.baseTypeName == "Double" -%}
+readDouble()
+{%- elseif valueType.baseTypeName == "String" -%}
+readUTF()
+{%- elseif valueType.baseTypeName == "Bool" -%}
+readBoolean()
+{%- else -%}
+({{ self.formatValueType(valueType, nullable, optional) }}) readObject()
+{%- endif -%}
+{%- endif -%}
+{% endmacro %}
+
+{% macro formatValidateObject(object, valueType, nullable) %}
+{% import _self as self %}
+{%- if not nullable and valueType.baseTypeName != "Int" and valueType.baseTypeName != "Long" and valueType.baseTypeName != "Double" and valueType.baseTypeName != "Bool" %}
+		validateNotNull({{ object }});
+{%- endif -%}
+{%- if valueType.baseTypeName == "Map" %}
+{%- if nullable -%}
+		if ({{ object }} != null) {
+			validateCollection({{ object }}.values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
+		}
+{%- else -%}
+		validateCollection({{ object }}.values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
+{%- endif -%}	
+{%- elseif valueType.baseTypeName == "Array" %}
+{%- if nullable -%}
+		if ({{ object }} != null) {
+			validateCollection({{ object }}, CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
+		}
+{%- else -%}
+		validateCollection({{ object }}, CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
+{%- endif -%}
+{%- elseif valueType.baseTypeName != "Int" and valueType.baseTypeName != "Long" and valueType.baseTypeName != "Double" and valueType.baseTypeName != "Bool" and valueType.baseTypeName != "String" and valueType.baseTypeName != "Decimal" and valueType.baseTypeName != "DateTime" %}
+		if ({{ object }} instanceof ApiModel) {
+			((ApiModel) {{ object }}).validate();
+		}
+{%- endif -%}
+{% endmacro %}

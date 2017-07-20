@@ -1,0 +1,11 @@
+{%- import '../../utils.twig' as utils -%}
+{%- for value in values %}
+	/**
+	 * {{ value.description }}
+	 */
+{%- if valuesTypes == "STRING" %}
+	{{ value.nameUpperCaseWithUnderscope }}("{{ value.value }}"){%- if not (loop.last) %},{% else %};{% endif %}
+{%- else %}
+	TODO,
+{%- endif -%}
+{%- endfor -%}
