@@ -404,7 +404,7 @@ getKotlinDetektTask = { isAndroidProject ->
 
         // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
         def filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
-        def params = ['-p', input, '-o', output, '-c', config, '-f', filters]
+        def params = ['-i', input, '-o', output, '-c', config, '-f', filters]
         args(params)
     }
     return taskName
@@ -433,6 +433,6 @@ dependencies {
 
     pngtastic 'com.github.depsypher:pngtastic:1.2'
 
-    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.M12.3'
-    detekt 'io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0.M12.3'
+    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.M13.2'
+    detekt 'io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0.M13.2'
 }

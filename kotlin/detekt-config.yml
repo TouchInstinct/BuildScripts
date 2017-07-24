@@ -99,6 +99,11 @@ formatting:
 
 style:
   active: true
+  NewLineAtEndOfFile:
+    active: true
+  ForbiddenComment:
+    active: true
+    values: 'STOPSHIP:'
   WildcardImport:
     active: true
   MaxLineLength:
