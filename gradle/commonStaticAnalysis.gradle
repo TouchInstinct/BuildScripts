@@ -29,11 +29,11 @@ configurations {
 import org.apache.tools.ant.taskdefs.condition.Os
 
 ext.getIdeaFormatTask = { isAndroidProject, sources ->
+    def ideaPath = System.getenv("IDEA_HOME")
+    if (ideaPath == null) {
+        return tasks.create((isAndroidProject ? "android" : "server") + "do nothing")
+    }
     return tasks.create((isAndroidProject ? "android" : "server") + "IdeaFormat_$project.name", Exec) {
-        def ideaPath = System.getenv("IDEA_HOME")
-        if (ideaPath == null) {
-            throw new GradleException('Please specify IDEA_HOME environment variable!')
-        }
         def inspectionPath
         def params = ["-r", "-mask", "*.java,*.kt,*.xml"]
         for (String source : sources) {
