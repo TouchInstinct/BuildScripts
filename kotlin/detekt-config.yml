@@ -100,7 +100,7 @@ formatting:
 style:
   active: true
   NewLineAtEndOfFile:
-    active: true
+    active: false
   ForbiddenComment:
     active: true
     values: 'STOPSHIP:'
