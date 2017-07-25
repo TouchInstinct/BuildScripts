@@ -19,6 +19,17 @@ potential-bugs:
     active: true
   LateinitUsage:
     active: false
+  UnsafeCallOnNullableType:
+    active: false
+  UnsafeCast:
+    active: false
+
+performance:
+  active: true
+  ForEachOnRange:
+    active: true
+  SpreadOperator:
+    active: true
 
 exceptions:
   active: false
