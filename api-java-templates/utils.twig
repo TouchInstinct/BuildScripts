@@ -43,7 +43,7 @@ LoganSquareJsonModel
 {%- elseif valueType.baseTypeName == "Decimal" -%}
 BigDecimal
 {%- elseif valueType.baseTypeName == "Bool" -%}
-{%- if tryUsePrimitive -%}bool{%- else -%}Boolean{%- endif -%}
+{%- if tryUsePrimitive -%}boolean{%- else -%}Boolean{%- endif -%}
 {%- elseif valueType.baseTypeName == "Map" -%}
 Map<{{ self.formatNonOptionalValueType(valueType.keysType, false) }}, {{ self.formatNonOptionalValueType(valueType.valuesType, false) }}>
 {%- elseif valueType.baseTypeName == "Array" -%}
@@ -183,20 +183,20 @@ writeObject({{ fieldName }})
 {% macro formatReadObject(valueType, nullable, optional) %}
 {% import _self as self %}
 {%- if nullable or optional -%}
-({{ self.formatValueType(valueType, nullable, optional) }}) readObject()
+({{ self.formatValueType(valueType, nullable, optional) }}) inputStream.readObject()
 {%- else -%}
 {%- if valueType.baseTypeName == "Int" -%}
-readInt()
+inputStream.readInt()
 {%- elseif valueType.baseTypeName == "Long" -%}
-readLong()
+inputStream.readLong()
 {%- elseif valueType.baseTypeName == "Double" -%}
-readDouble()
+inputStream.readDouble()
 {%- elseif valueType.baseTypeName == "String" -%}
-readUTF()
+inputStream.readUTF()
 {%- elseif valueType.baseTypeName == "Bool" -%}
-readBoolean()
+inputStream.readBoolean()
 {%- else -%}
-({{ self.formatValueType(valueType, nullable, optional) }}) readObject()
+({{ self.formatValueType(valueType, nullable, optional) }}) inputStream.readObject()
 {%- endif -%}
 {%- endif -%}
 {% endmacro %}

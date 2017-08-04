@@ -7,17 +7,20 @@ configurations {
     apigenerator
 }
 
+dependencies {
+    apigenerator 'ru.touchin:api-generator:1.0.1'
+}
+
 android.applicationVariants.all {
     variant ->
         final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
 
         def generateJsonModelsTask = tasks.create("generateJsonModels${variant.name}") << {
             def jarArgs = new ArrayList<String>()
-            //TODO replace when jar on bintray will be updated
-            jarArgs.add("api-generator-1.0-all.jar")
+            jarArgs.add(configurations.apigenerator.asPath)
             jarArgs.add("${rootDir}/app/Dominos-common/schemes")
             jarArgs.add("${project.buildDir}/generated/source/models/${variant.dirName}")
-            jarArgs.add("libraries/BuildScripts/api-java-templates")
+            jarArgs.add("${rootDir}/libraries/BuildScripts/api-java-templates")
             jarArgs.add("--package")
             jarArgs.add("${appId}")
             javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
@@ -25,8 +28,4 @@ android.applicationVariants.all {
 
         generateJsonModelsTask.description = 'Generates Java classes for JSON models'
         variant.registerJavaGeneratingTask generateJsonModelsTask, generatedModelsDirectory
-}
-
-dependencies {
-    apigenerator 'ru.touchin:api-generator:1.0'
 }

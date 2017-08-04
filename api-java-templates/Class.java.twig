@@ -9,11 +9,11 @@ import android.support.annotation.Nullable;
 
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
-import {{ packageName }}.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,9 +49,7 @@ public class {% include 'blocks/class/classtype.twig' with { type: type } %} ext
 		super.validate();
 		{%- include 'blocks/class/fields-validate.twig' with { fields: fields } %}
 	}
-{% if parent is not null %}
-	@Override
-{%- endif %}
+
 	protected void copyTo(@NonNull final {% include 'blocks/class/classtype.twig' with { type: type } %} destination) {
 		{%- if parent is not null %}
 		super.copyTo(destination);
@@ -83,12 +81,12 @@ public class {% include 'blocks/class/classtype.twig' with { type: type } %} ext
 				{%- include 'blocks/class/fields-equals.twig' with { fields: fields } -%};
 	}
 
-	private void writeObject(@NonNull final ObjectOutputStream outputStream) {
+	private void writeObject(@NonNull final ObjectOutputStream outputStream) throws IOException {
 		{%- include 'blocks/class/fields-write-object.twig' with { fields: fields } %}
 	}
 
 	@SuppressWarnings("unchecked")
-	private void readObject(@NonNull final ObjectInputStream inputStream) {
+	private void readObject(@NonNull final ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
 		{%- include 'blocks/class/fields-read-object.twig' with { fields: fields } %}
 	}
 
