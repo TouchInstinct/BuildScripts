@@ -1,42 +1,7 @@
-apply plugin: 'checkstyle'
-apply plugin: 'pmd'
-apply plugin: 'cpd'
+def getServerProjectSources
+def getAndroidProjectSources
 
-def getBinaries
-def getSources
-def getCpdTask
-def getPmdTask
-def getLintTasks
-def getCheckstyleTask
-
-def getStaticAnalysisTasks
-
-def appendError
-def appendCheckstyleErrors
-def appendPmdErrors
-def appendCpdErrors
-def appendLintErrors
-def normilizeFileUrl
-
-repositories {
-    maven {
-        url "http://dl.bintray.com/touchin/touchin-tools"
-    }
-}
-
-configurations {
-    pngtastic
-}
-
-dependencies {
-
-    pmd 'net.sourceforge.pmd:pmd-core:5.5.3'
-    pmd 'net.sourceforge.pmd:pmd-java:5.5.3'
-
-    checkstyle 'ru.touchin:checkstyle:7.6.2-fork'
-
-    pngtastic 'com.github.depsypher:pngtastic:1.2'
-}
+apply from: "${rootDir}/libraries/BuildScripts/gradle/commonStaticAnalysis.gradle"
 
 gradle.projectsEvaluated {
 
@@ -53,243 +18,68 @@ gradle.projectsEvaluated {
                 "-Werror"
     }
 
+    def excludes = rootProject.extensions.findByName("staticAnalysisExcludes")
+
+    def androidStaticAnalysisTasks = getStaticAnalysisTaskNames(true, getAndroidProjectSources(excludes))
+    def androidIdeaFormatTask = getIdeaFormatTask(true, getAndroidProjectSources(excludes))
     task staticAnalysis {
-        def excludes = rootProject.extensions.findByName("staticAnalysisExcludes");
-        dependsOn getStaticAnalysisTasks(getSources(excludes), getBinaries(excludes))
-
+        androidStaticAnalysisTasks.each { task ->
+            tasks.findByName(task).mustRunAfter(androidIdeaFormatTask)
+        }
+        dependsOn androidIdeaFormatTask
+        dependsOn androidStaticAnalysisTasks
         doFirst {
-            StringBuilder fullReport = new StringBuilder()
+            generateHtmlReport(true)
+        }
+    }
 
-            fullReport.append("<table cellpadding='10px' border='2px' cellspacing='0px' cols='4'>");
+    task staticAnalysisWithoutFormatting {
+        dependsOn androidStaticAnalysisTasks
+        doFirst {
+            generateHtmlReport(true)
+        }
+    }
 
-            StringBuilder consoleReport = new StringBuilder()
-            consoleReport.append("STATIC ANALYSIS RESULTS:")
-            def count = 0
+    def serverStaticAnalysisTasks = getStaticAnalysisTaskNames(false, getServerProjectSources(excludes))
+    def serverIdeaFormatTask = getIdeaFormatTask(false, getServerProjectSources(excludes))
+    task serverStaticAnalysis {
+        serverStaticAnalysisTasks.each { task ->
+            tasks.findByName(task).mustRunAfter(serverIdeaFormatTask)
+        }
+        dependsOn serverIdeaFormatTask
+        dependsOn serverStaticAnalysisTasks
+        doFirst {
+            generateHtmlReport(false)
+        }
+    }
 
-            def previousCount = count
-            count = appendCpdErrors(fullReport, count, new File("${project.buildDir}/reports/cpd_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mCPD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/cpd_${project.name}.xml"))
-            } else {
-                consoleReport.append("\n\u001B[32mCPD: PASSED\u001B[0m")
-            }
-
-            previousCount = count
-            count = appendPmdErrors(fullReport, count, new File("${project.buildDir}/reports/pmd_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mPMD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/pmd_${project.name}.html"))
-            } else {
-                consoleReport.append("\n\u001B[32mPMD: PASSED\u001B[0m")
-            }
-
-            previousCount = count
-            count = appendLintErrors(fullReport, count, new File("${project.buildDir}/reports/lint_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mLint: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/lint_${project.name}.html"))
-            } else {
-                consoleReport.append("\n\u001B[32mLint: PASSED\u001B[0m")
-            }
-
-            previousCount = count
-            count = appendCheckstyleErrors(fullReport, count, new File("${project.buildDir}/reports/checkstyle_${project.name}.xml"))
-            if (count - previousCount > 0) {
-                consoleReport.append("\n\u001B[31mCheckstyle: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                        normilizeFileUrl("file://${project.buildDir}/reports/checkstyle_${project.name}.xml"))
-            } else {
-                consoleReport.append("\n\u001B[32mCheckstyle: PASSED\u001B[0m")
-            }
-
-            fullReport.append("\n</table>\n");
-            fullReport.append("<script>\n" +
-                    "\tfunction visitPage(file, line) {\n" +
-                    "\t\tfor (port = 63330; port < 63340; port++) {\n" +
-                    "\t\t\tvar theUrl='http://127.0.0.1:' + port + '/file?file=' + file + '&line=' + line;\n" +
-                    "\t\t\tvar xmlHttp = new XMLHttpRequest();\n" +
-                    "\t\t\txmlHttp.open('GET', theUrl, true);\n" +
-                    "\t\t\txmlHttp.send(null);\n" +
-                    "\t\t}\n" +
-                    "\t}\n" +
-                    "</script>");
-
-            File fullReportFile = new File("${project.buildDir}/reports/full_report.html")
-            fullReportFile.write(fullReport.toString());
-
-            if (count > 0) {
-                consoleReport.append("\n\u001B[31mOverall: FAILED (" + count + " errors)\u001B[0m "
-                        + normilizeFileUrl("file://${project.buildDir}/reports/full_report.html"))
-                throw new Exception(consoleReport.toString())
-            } else {
-                consoleReport.append("\n\u001B[32mOverall: PASSED\u001B[0m")
-                println(consoleReport.toString())
-            }
+    task serverStaticAnalysisWithoutFormatting {
+        dependsOn serverStaticAnalysisTasks
+        doFirst {
+            generateHtmlReport(false)
         }
     }
 }
 
-task optimizePng {
-    doFirst {
-        def jarArgs = new ArrayList<String>()
-        jarArgs.add(configurations.pngtastic.asPath)
-        def relatedPathIndex = "${rootDir}".length() + 1
-        for (def file : fileTree(dir: "${rootDir}", include: '**/src/**/res/drawable**/*.png')) {
-            jarArgs.add(file.absolutePath.substring(relatedPathIndex))
+getServerProjectSources = { excludes ->
+    def sources = new ArrayList<String>()
+    def sourcesDirectory = new File(project.projectDir.path, 'src')
+
+    for (def sourceFlavorDirectory : sourcesDirectory.listFiles()) {
+        def javaSourceDirectory = new File(sourceFlavorDirectory.path, 'java')
+        def kotlinSourceDirectory = new File(sourceFlavorDirectory.path, 'kotlin')
+
+        if (javaSourceDirectory.exists() && javaSourceDirectory.isDirectory()) {
+            sources.add(javaSourceDirectory.absolutePath)
         }
-        for (def file : fileTree(dir: "${rootDir}", include: '**/src/**/res/mipmap**/*.png')) {
-            jarArgs.add(file.absolutePath.substring(relatedPathIndex))
-        }
-        javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
-    }
-}
-
-normilizeFileUrl = { url ->
-    return url.replace("\\", "/");
-}
-
-appendError = { report, number, analyzer, file, line, errorId, errorLink, description ->
-    report.append("\n\t<tr>")
-
-    report.append("\n\t\t<td>" + number + "</td>")
-
-    report.append("\n\t\t<td>" + analyzer + "</td>")
-
-    report.append("\n\t\t<td>")
-    if (!analyzer.equals("Lint")) {
-        report.append("\n\t\t\t<a target='_blank' href='" + errorLink + "'>" + description + " (" + errorId + ")</a>")
-    } else {
-        report.append("\n\t\t\t<a href='javascript:alert(\"" + errorLink.replace("'", "&apos;") + "\")'>" + description + " (" + errorId + ")</a>")
-    }
-    report.append("\n\t\t</td>")
-
-    def indexOfSrc = file.indexOf("src")
-    def deeplink = (indexOfSrc > 0 ? file.substring(indexOfSrc) : file).replace('\\', '/')
-    report.append("\n\t\t<td>")
-    report.append("\n\t\t\t<a href='javascript:visitPage(\"" + deeplink + "\", " + line + ")'>" + file + ":" + line + "</a>")
-    report.append("\n\t\t</td>")
-
-    report.append("\n\t</tr>")
-    println("\n\u001B[31m" + number + " " + analyzer + ": " + description + " (" + errorId + ")\n\tat " + file + ":" + line + "\u001B[0m")
-}
-
-appendCheckstyleErrors = { report, count, checkstyleFile ->
-    def rootNode = new XmlParser().parse(checkstyleFile)
-    for (def fileNode : rootNode.children()) {
-        if (!fileNode.name().equals("file")) {
-            continue
-        }
-
-        for (def errorNode : fileNode.children()) {
-            if (!errorNode.name().equals("error")) {
-                continue
-            }
-            count++;
-
-            def error = errorNode.attribute("source")
-            def link = "http://checkstyle.sourceforge.net/apidocs/" + error.replace('.', '/') + ".html"
-            appendError(report, count, "Checkstyle", fileNode.attribute("name"), errorNode.attribute("line"), error, link, errorNode.attribute("message"))
+        if (kotlinSourceDirectory.exists() && kotlinSourceDirectory.isDirectory()) {
+            sources.add(kotlinSourceDirectory.absolutePath)
         }
     }
-    return count
+    return sources
 }
 
-appendPmdErrors = { report, count, pmdFile ->
-    def rootNode = new XmlParser().parse(pmdFile)
-    for (def fileNode : rootNode.children()) {
-        if (!fileNode.name().equals("file")) {
-            continue
-        }
-
-        for (def errorNode : fileNode.children()) {
-            if (!errorNode.name().equals("violation")) {
-                continue;
-            }
-            count++;
-
-            appendError(report, count, "PMD", fileNode.attribute("name"), errorNode.attribute("beginline"),
-                    errorNode.attribute("rule").trim(), errorNode.attribute("externalInfoUrl").trim(), errorNode.text().trim())
-        }
-    }
-    return count
-}
-
-appendCpdErrors = { report, count, cpdFile ->
-    def rootNode = new XmlParser().parse(cpdFile)
-    for (def duplicationNode : rootNode.children()) {
-        if (!duplicationNode.name().equals("duplication")) {
-            continue
-        }
-        count++;
-
-        report.append("\n\t<tr>")
-
-        report.append("\n\t\t<td>" + count + "</td>")
-
-        report.append("\n\t\t<td>CPD</td>")
-
-        def fragment = "<b>Code duplication:</b></br></br>"
-        def links = ""
-        def duplicationIndex = 0
-        String duplicationPoints = "";
-        for (def filePointNode : duplicationNode.children()) {
-            if (filePointNode.name().equals("file")) {
-                def file = filePointNode.attribute("path")
-                def line = filePointNode.attribute("line");
-                def indexOfSrc = file.indexOf("src")
-                def deeplink = (indexOfSrc > 0 ? file.substring(indexOfSrc) : file).replace('\\', '/')
-                if (duplicationIndex > 0) {
-                    links += "\n\t\t\t</br></br>"
-                }
-                links += "Code fragment " + (duplicationIndex + 1) + "</br>"
-                links += "\n\t\t\t<a href='javascript:visitPage(\"" + deeplink + "\", " + line + ")'>" + file + ":" + line + "</a>"
-                duplicationPoints += "\n\tat " + file + ":" + line
-                duplicationIndex++
-            } else if (filePointNode.name().equals("codefragment")) {
-                fragment += filePointNode.text().replace("\n", "</br>").replace(" ", "&nbsp;")
-            }
-        }
-        report.append("\n\t\t<td>" + fragment + "\n\t\t</td>")
-
-        report.append("\n\t\t<td>" + links + "\n\t\t</td>")
-
-        report.append("\n\t</tr>")
-        println("\u001B[31m" + count + " CPD: code duplication" + duplicationPoints + "\u001B[0m")
-    }
-    return count
-}
-
-appendLintErrors = { report, count, lintFile ->
-    def rootNode = new XmlParser().parse(lintFile)
-    for (def issueNode : rootNode.children()) {
-        if (!issueNode.name().equals("issue")
-                || !issueNode.attribute("severity").equals("Error")) {
-            continue
-        }
-        for (def locationNode : issueNode.children()) {
-            if (!locationNode.name().equals("location")) {
-                continue
-            }
-            count++;
-            appendError(report, count, "Lint", locationNode.attribute("file"), locationNode.attribute("line"),
-                    issueNode.attribute("id"), issueNode.attribute("explanation"), issueNode.attribute("message"))
-        }
-    }
-    return count
-}
-
-getBinaries = { excludes ->
-    def binaries = new ArrayList<String>()
-    for (def project : rootProject.subprojects) {
-        if (!project.subprojects.isEmpty() || (excludes != null && excludes.contains(project.path))) {
-            continue
-        }
-        binaries.add("${project.projectDir}/build/intermediates/classes")
-    }
-    return binaries
-}
-
-getSources = { excludes ->
+getAndroidProjectSources = { excludes ->
     def sources = new ArrayList<String>()
     for (def project : rootProject.subprojects) {
         if (!project.subprojects.isEmpty() || (excludes != null && excludes.contains(project.path))) {
@@ -302,113 +92,18 @@ getSources = { excludes ->
         }
 
         for (def sourceFlavorDirectory : sourcesDirectory.listFiles()) {
-            def sourceSetDirectory = new File(sourceFlavorDirectory.path, 'java');
-            if (!sourceSetDirectory.exists() || !sourceSetDirectory.isDirectory()) {
-                continue
+            def javaSourceDirectory = new File(sourceFlavorDirectory.path, 'java')
+            def kotlinSourceDirectory = new File(sourceFlavorDirectory.path, 'kotlin')
+
+            if (javaSourceDirectory.exists() && javaSourceDirectory.isDirectory()) {
+                sources.add(javaSourceDirectory.absolutePath)
             }
-            sources.add(sourceSetDirectory.absolutePath)
+            if (kotlinSourceDirectory.exists() && kotlinSourceDirectory.isDirectory()) {
+                sources.add(kotlinSourceDirectory.absolutePath)
+            }
         }
     }
     return sources
 }
 
-getCpdTask = { sources ->
-    def taskName = "cpd_${project.name}"
-    tasks.create(taskName, tasks.findByName('cpdCheck').getClass().getSuperclass()) {
-        minimumTokenCount = 60
-        source = files(sources)
-        ignoreFailures = true
-        reports {
-            xml {
-                enabled = true
-                destination "${project.buildDir}/reports/${taskName}.xml"
-            }
-        }
-    }
-    return taskName
-}
 
-getPmdTask = { sources ->
-    def taskName = "pmd_${project.name}"
-    tasks.create(taskName, Pmd) {
-        pmdClasspath = configurations.pmd.asFileTree
-        ruleSetFiles = files("${rootDir}/libraries/BuildScripts/pmd/rulesets/java/android.xml")
-        ruleSets = []
-        source files(sources)
-        ignoreFailures = true
-        reports {
-            html {
-                enabled = true
-                destination "${project.buildDir}/reports/${taskName}.html"
-            }
-            xml {
-                enabled = true
-                destination "${project.buildDir}/reports/${taskName}.xml"
-            }
-        }
-    }
-    return taskName
-}
-
-getCheckstyleTask = { sources ->
-    def taskName = "checkstyle_${project.name}"
-    def compileReleaseTask = tasks.matching {
-        it.getName().contains("compile") && it.getName().contains("Release") && it.getName().contains("Java") && !it.getName().contains("UnitTest")
-    }.last()
-    tasks.create(taskName, Checkstyle) {
-        ignoreFailures = true
-        showViolations = false
-        source files(sources)
-        configFile file("${rootDir}/libraries/BuildScripts/checkstyle/configuration/touchin_checkstyle.xml")
-        checkstyleClasspath = configurations.checkstyle.asFileTree
-        classpath = files(System.getenv("ANDROID_HOME") + "/platforms/" + android.compileSdkVersion + "/android.jar") +
-                files(System.properties.'java.home' + "/lib/rt.jar") +
-                compileReleaseTask.classpath
-        reports {
-            xml {
-                enabled = true
-                destination "${project.buildDir}/reports/${taskName}.xml"
-            }
-        }
-    }
-    return taskName
-}
-
-getLintTasks = {
-    def lintTaskNames = new ArrayList<String>()
-
-    def lintReleaseTask = tasks.matching {
-        it.getName().contains("lint") && it.getName().contains("Release")
-    }.first();
-    //TODO return on jack lintReleaseTask.dependsOn.clear()
-    lintTaskNames.add(lintReleaseTask.getName())
-
-    def lintDebugTask = tasks.matching {
-        it.getName().contains("lint") && it.getName().contains("Debug")
-    }.first();
-    //TODO return on jack lintDebugTask.dependsOn.clear()
-    lintTaskNames.add(lintDebugTask.getName())
-
-    android.lintOptions.abortOnError = false
-    android.lintOptions.checkAllWarnings = true
-    android.lintOptions.warningsAsErrors = false
-    android.lintOptions.xmlReport = true
-    android.lintOptions.xmlOutput = file("${project.buildDir}/reports/lint_${project.name}.xml")
-    android.lintOptions.htmlReport = true
-    android.lintOptions.htmlOutput = file("${project.buildDir}/reports/lint_${project.name}.html")
-    android.lintOptions.lintConfig = file("${rootDir}/libraries/BuildScripts/lint/lint.xml")
-    return lintTaskNames
-}
-
-getStaticAnalysisTasks = { sources, binaries ->
-    def tasksNames = new ArrayList<String>()
-    try {
-        tasksNames.add(getCpdTask(sources))
-        tasksNames.add(getCheckstyleTask(sources))
-        tasksNames.add(getPmdTask(sources))
-        tasksNames.addAll(getLintTasks())
-    } catch (Exception exception) {
-        println(exception.toString())
-    }
-    return tasksNames
-}
