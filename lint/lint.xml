@@ -8,16 +8,7 @@
         <ignore regexp="A newer version of de.ruedigermoeller:fst than .+ is available: .+"/>
     </issue>
     <!-- todo: lint bug? -->
-    <issue id="MissingRegistered" severity="error">
-        <ignore
-            regexp="Class referenced in the layout file, `ru.touchin.roboswag.components.views.TypefacedTextView`, was not found in the project or the libraries"/>
-        <ignore
-            regexp="Class referenced in the layout file, `ru.touchin.roboswag.components.views.TypefacedEditText`, was not found in the project or the libraries"/>
-        <ignore
-            regexp="Class referenced in the layout file, `ru.touchin.roboswag.components.views.AspectRatioFrameLayout`, was not found in the project or the libraries"/>
-        <ignore
-            regexp="Class referenced in the layout file, `ru.touchin.roboswag.components.views.MaterialLoadingBar`, was not found in the project or the libraries"/>
-    </issue>
+    <issue id="MissingRegistered" severity="ignore"/>
     <!-- todo: lint bug? -->
     <issue id="MissingPermission" severity="ignore"/>
     <!-- todo: lint bug? -->
