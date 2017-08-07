@@ -90,7 +90,7 @@ new HashMap<>({{ fieldName }})
 {%- if optional -%}
 {{ object }}.{{ fieldName }} = new JsonOptional({{- self.formatNullableValueSetter(fieldName, valueType, nullable) -}});
 {%- elseif nullable -%}
-{{ object }}.{{ fieldName }} = self.formatNullableValueSetter(fieldName, valueType, nullable);
+{{ object }}.{{ fieldName }} = {{ self.formatNullableValueSetter(fieldName, valueType, nullable)}};
 {%- else -%}
 {{ object }}.{{ fieldName }} = {{ fieldName }};
 {%- endif -%}
@@ -119,7 +119,7 @@ Collections.unmodifiableMap({{ fieldName }})
 {%- if optional -%}
 return new JsonOptional({{- self.formatNullableValueGetter(fieldName, valueType, nullable) -}});
 {%- elseif nullable -%}
-return self.formatNullableValueGetter(fieldName, valueType, nullable);
+return {{ self.formatNullableValueGetter(fieldName, valueType, nullable) }};
 {%- else -%}
 return this.{{ fieldName }};
 {%- endif -%}
