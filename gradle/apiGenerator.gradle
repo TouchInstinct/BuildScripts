@@ -1,4 +1,3 @@
-
 repositories {
     maven { url "http://dl.bintray.com/touchin/touchin-tools" }
 }
@@ -18,11 +17,11 @@ android.applicationVariants.all {
         def generateJsonModelsTask = tasks.create("generateJsonModels${variant.name}") << {
             def jarArgs = new ArrayList<String>()
             jarArgs.add(configurations.apigenerator.asPath)
-            jarArgs.add("${rootDir}/app/Dominos-common/schemes")
+            jarArgs.add(rootProject.extensions.findByName("pathToApiSchemes"))
             jarArgs.add("${project.buildDir}/generated/source/models/${variant.dirName}")
             jarArgs.add("${rootDir}/libraries/BuildScripts/api-java-templates")
             jarArgs.add("--package")
-            jarArgs.add("${appId}")
+            jarArgs.add("${applicationId}")
             javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
         }
 
