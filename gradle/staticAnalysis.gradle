@@ -13,9 +13,7 @@ gradle.projectsEvaluated {
                 "-Xlint:deprecation" <<
                 "-Xlint:finally" <<
                 "-Xlint:overrides" <<
-                "-Xlint:path" <<
-                "-Xlint:unchecked" <<
-                "-Werror"
+                "-Xlint:path"
     }
 
     def excludes = rootProject.extensions.findByName("staticAnalysisExcludes")
