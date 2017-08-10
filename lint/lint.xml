@@ -7,9 +7,6 @@
     <issue id="NewerVersionAvailable" severity="error">
         <ignore regexp="A newer version of de.ruedigermoeller:fst than .+ is available: .+"/>
     </issue>
-    <issue id="GradleCompatible" severity="error">
-        <ignore regexp="All com.android.support libraries must use the exact same version specification (mixing versions can lead to runtime crashes). Found versions *. Examples include *"/>
-    </issue>
     <!-- todo: lint bug? -->
     <issue id="MissingRegistered" severity="ignore"/>
     <!-- todo: lint bug? -->
@@ -243,8 +240,6 @@
     <issue id="ButtonStyle" severity="ignore"/>
     <issue id="ContentDescription" severity="ignore"/>
     <issue id="ExportedPreferenceActivity" severity="ignore"/>
-    <!-- remove when facebook will update support library in sdk -->
-    <issue id="GradleCompatible" severity="ignore"/>
     <issue id="IconLauncherShape" severity="ignore"/>
     <issue id="IconMissingDensityFolder" severity="ignore"/>
     <issue id="InconsistentLayout" severity="ignore"/>
