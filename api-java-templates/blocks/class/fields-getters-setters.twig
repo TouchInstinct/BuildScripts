@@ -6,15 +6,13 @@
 	 * {{ field.description }}
 	 */
 	{{ utils.writeNullCheckAnnotation(field.type.type.baseTypeName, field.nullable, field.optional) }}
-	//TODO: getter with is****
-	public {{ utils.formatValueType(field.type.type, field.nullable, field.optional) }} get{{ utils.capitalize(field.name) }}() {
+	public {{ utils.formatValueType(field.type.type, field.nullable, field.optional) }} {% if (field.type.type.baseTypeName == "Bool") and (field.name matches "^is[A-Z,0-9].*") -%}{{ field.name }}{%- else -%}get{{ utils.capitalize(field.name) }}{%- endif -%}() {
 		{{ utils.formatValueGetter(field.name, field.type.type, field.nullable, field.optional) }}
 	}
 
 	/**
 	 * {{ field.description }}
 	 */
-	//TODO: setter with is****
 	public void set{{ utils.capitalize(field.name) }}({{ utils.writeNullCheckAnnotation(field.type.type.baseTypeName, field.nullable, field.optional) }} final {{ utils.formatValueType(field.type.type, field.nullable, field.optional) }} {{ field.name }}) {
 		{{ utils.formatValueSetter("this", field.name, field.type.type.baseTypeName, fiel.nullable, field.optional ) }}
 	}

@@ -1,8 +1,8 @@
 {%- import '../../utils.twig' as utils -%}
 {% for field in fields -%}
 {%- if field.optional -%}
-{{ utils.formatValidateObject(concat("this.", field.name, ".get()"), field.type.type, field.nullable) }}
+{{ utils.formatValidateObject(concat("this.", field.name, ".get()"), field.type, field.type.type, field.nullable) }}
 {%- else -%}
-{{ utils.formatValidateObject(concat("this.", field.name), field.type.type, field.nullable) }}
+{{ utils.formatValidateObject(concat("this.", field.name), field.type, field.type.type, field.nullable) }}
 {%- endif -%}
 {%- endfor -%}

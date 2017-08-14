@@ -37,7 +37,6 @@ public class {% include 'blocks/class/classtype.twig' with { type: type } %} ext
         super();
     }
 {% if (allFieldsOrdered is not empty) %}
-	//TODO: if TItems instance of arrayList then new ArrayList
     public {{ type.baseTypeName }}({%- include 'blocks/class/init-parameters-fields.twig' with { fields: allFieldsOrdered } -%}) {
         super({%- include 'blocks/class/fields-super-initialization.twig' with { fields: superclassesFields } -%});
         {%- include 'blocks/class/fields-initialization.twig' with { fields: fields, object: "this" } %}
@@ -45,8 +44,6 @@ public class {% include 'blocks/class/classtype.twig' with { type: type } %} ext
 {% endif %}
 {%- include 'blocks/class/fields-getters-setters.twig' with { fields: fields } %}
 
-	//TODO: add check for collection if TypeParameter
-	//TODO: do not validate enums as ApiModel
 	@Override
 	public void validate() throws ValidationException {
 		super.validate();

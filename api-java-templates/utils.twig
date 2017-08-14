@@ -201,7 +201,7 @@ inputStream.readBoolean()
 {%- endif -%}
 {% endmacro %}
 
-{% macro formatValidateObject(object, valueType, nullable) %}
+{% macro formatValidateObject(object, valueTopType, valueType, nullable) %}
 {% import _self as self %}
 {%- if not nullable and valueType.baseTypeName != "Int" and valueType.baseTypeName != "Long" and valueType.baseTypeName != "Double" and valueType.baseTypeName != "Bool" %}
 		validateNotNull({{ object }});
@@ -213,7 +213,7 @@ inputStream.readBoolean()
 		}
 {%- else -%}
 		validateCollection({{ object }}.values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
-{%- endif -%}	
+{%- endif -%}
 {%- elseif valueType.baseTypeName == "Array" %}
 {%- if nullable -%}
 		if ({{ object }} != null) {
@@ -222,9 +222,24 @@ inputStream.readBoolean()
 {%- else -%}
 		validateCollection({{ object }}, CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
 {%- endif -%}
-{%- elseif valueType.baseTypeName != "Int" and valueType.baseTypeName != "Long" and valueType.baseTypeName != "Double" and valueType.baseTypeName != "Bool" and valueType.baseTypeName != "String" and valueType.baseTypeName != "Decimal" and valueType.baseTypeName != "DateTime" %}
+{%- elseif valueType.baseTypeName != "Int"
+            and valueType.baseTypeName != "Long"
+            and valueType.baseTypeName != "Double"
+            and valueType.baseTypeName != "Bool"
+            and valueType.baseTypeName != "String"
+            and valueType.baseTypeName != "Decimal"
+            and valueType.baseTypeName != "DateTime"
+            and (valueTopType.values is empty) %}
+{%- if valueTopType.allFieldsOrdered is empty %}
 		if ({{ object }} instanceof ApiModel) {
 			((ApiModel) {{ object }}).validate();
+		} else if ({{ object }} instanceof List) {
+			validateCollection(((List) {{ object }}), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
+		} else if ({{ object }} instanceof Map) {
+		    validateCollection(((Map) {{ object }}).values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
 		}
+{%- else %}
+		{{ object }}.validate();
+{%- endif -%}
 {%- endif -%}
 {% endmacro %}
