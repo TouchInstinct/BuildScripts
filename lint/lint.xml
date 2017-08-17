@@ -113,7 +113,7 @@
     <issue id="UnsupportedTvHardware" severity="error"/>
     <issue id="MissingTvBanner" severity="error"/>
     <issue id="TypographyOther" severity="error"/>
-    <issue id="TypographyQuotes" severity="error"/>
+    <issue id="TypographyQuotes" severity="warning"/>
     <issue id="UnsafeProtectedBroadcastReceiver" severity="error"/>
     <issue id="UnprotectedSMSBroadcastReceiver" severity="error"/>
     <issue id="VectorRaster" severity="error"/>
