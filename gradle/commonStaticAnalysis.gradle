@@ -45,7 +45,7 @@ ext.getIdeaFormatTask = { isAndroidProject, sources ->
         }
 
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            inspectionPath = ['cmd', '/c', "${ideaPath}\\bin\\format.bat ${params.join(" ")}"]
+            inspectionPath = ['cmd', '/c', "\"${ideaPath}\\bin\\format.bat\" ${params.join(" ")}"]
         } else {
             inspectionPath = ["$ideaPath/bin/format.sh"]
         }
