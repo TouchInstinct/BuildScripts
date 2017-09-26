@@ -1,0 +1,30 @@
+$appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
+
+before_each do |lane, options|
+  cocoapods(
+    clean: true,
+    repo_update: true
+  )
+  set_info_plist_value(
+    path: "./#{$appName}/Info.plist",
+    key: "CFBundleVersion",
+    value: options[:buildNumber] || 10000
+  )
+end
+
+after_each do |lane, options|
+  if options[:uploadToFabric]
+    token = sh("cat ../#{$appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\n'")
+    secret = sh("cat ../#{$appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//' | tr -d '\n'")
+    releaseNotesFile = "release-notes.txt"
+    sh("touch ../#{releaseNotesFile}")
+    crashlytics(
+      ipa_path: "./#{$appName}.ipa",
+      crashlytics_path: "./Pods/Crashlytics/",
+      api_token: token,
+      build_secret: secret,
+      notes_path: releaseNotesFile,
+      groups: "touch-instinct"
+    )
+  end
+end
