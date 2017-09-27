@@ -35,7 +35,8 @@ private_lane :buildConfiguration do |options|
   configuration = lane_context[SharedValues::LANE_NAME]
   method = configuration.start_with?("Enterprise") ? "enterprise" : "development"
   uploadToFabric = options[:uploadToFabric]
-  additionalArgs = uploadToFabric ? "" : "analyze"
+  icloudEnvironment = options[:iCloudContainerEnvironment] || ""
+  exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
 
   gym(
     clean: true,
@@ -45,7 +46,7 @@ private_lane :buildConfiguration do |options|
     output_name: "#{$appName}.ipa",
     configuration: configuration,
     export_method: method,
-    skip_package_ipa: !uploadToFabric,
-    xcargs: additionalArgs
+    export_options: exportOptions,
+    skip_package_ipa: !uploadToFabric
   )
 end
