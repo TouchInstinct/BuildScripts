@@ -1,10 +1,11 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
-before_each do |lane, options|
+before_all do |lane, options|
   cocoapods(
     clean: true,
     repo_update: true
   )
+
   set_info_plist_value(
     path: "./#{$appName}/Info.plist",
     key: "CFBundleVersion",
@@ -12,12 +13,13 @@ before_each do |lane, options|
   )
 end
 
-after_each do |lane, options|
+after_all do |lane, options|
   if options[:uploadToFabric]
     token = sh("cat ../#{$appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\n'")
     secret = sh("cat ../#{$appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//' | tr -d '\n'")
     releaseNotesFile = "release-notes.txt"
     sh("touch ../#{releaseNotesFile}")
+
     crashlytics(
       ipa_path: "./#{$appName}.ipa",
       crashlytics_path: "./Pods/Crashlytics/",
@@ -27,4 +29,23 @@ after_each do |lane, options|
       groups: "touch-instinct"
     )
   end
+end
+
+private_lane :buildConfiguration do |options|
+  configuration = lane_context[SharedValues::LANE_NAME]
+  method = configuration.start_with?("Enterprise") ? "enterprise" : "development"
+  uploadToFabric = options[:uploadToFabric]
+  additionalArgs = uploadToFabric ? "" : "analyze"
+
+  gym(
+    clean: true,
+    scheme: $appName,
+    archive_path: "./",
+    output_directory: "./",
+    output_name: "#{$appName}.ipa",
+    configuration: configuration,
+    export_method: method,
+    skip_package_ipa: !uploadToFabric,
+    xcargs: additionalArgs
+  )
 end
