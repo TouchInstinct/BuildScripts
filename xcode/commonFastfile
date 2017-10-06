@@ -28,6 +28,11 @@ after_all do |lane, options|
       notes_path: releaseNotesFile,
       groups: "touch-instinct"
     )
+
+    upload_symbols_to_crashlytics(
+      dsym_path: "./#{$appName}.app.dSYM.zip",
+      api_token: token
+    )
   end
 end
 
