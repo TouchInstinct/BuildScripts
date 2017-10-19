@@ -318,7 +318,7 @@ getCpdTask = { isAndroidProject, sources ->
         reports {
             xml {
                 enabled = true
-                destination = File("${project.buildDir}/reports/cpd.xml")
+                destination = file("${project.buildDir}/reports/cpd.xml")
             }
         }
     }
@@ -336,11 +336,11 @@ getPmdTask = { sources ->
         reports {
             html {
                 enabled = true
-                destination File("${project.buildDir}/reports/pmd.html")
+                destination file("${project.buildDir}/reports/pmd.html")
             }
             xml {
                 enabled = true
-                destination File("${project.buildDir}/reports/pmd.xml")
+                destination file("${project.buildDir}/reports/pmd.xml")
             }
         }
     }
@@ -390,7 +390,7 @@ getCheckstyleTask = { sources ->
         reports {
             xml {
                 enabled = true
-                destination File("${project.buildDir}/reports/checkstyle.xml")
+                destination file("${project.buildDir}/reports/checkstyle.xml")
             }
         }
     }
