@@ -7,7 +7,7 @@ configurations {
 }
 
 dependencies {
-    apigenerator 'ru.touchin:api-generator:1.0.2'
+    apigenerator 'ru.touchin:api-generator:1.0.3'
 }
 
 android.applicationVariants.all {
@@ -17,10 +17,15 @@ android.applicationVariants.all {
         def generateJsonModelsTask = tasks.create("apiGenerator${variant.name}") << {
             def jarArgs = new ArrayList<String>()
             jarArgs.add(configurations.apigenerator.asPath)
+            jarArgs.add("--specification-path")
             jarArgs.add(rootProject.extensions.findByName("pathToApiSchemes"))
-            jarArgs.add("${project.buildDir}/generated/source/models/${variant.dirName}")
+            jarArgs.add("--action")
+            jarArgs.add("generate-client-code")
+            jarArgs.add("--templates-path")
             jarArgs.add("${rootDir}/libraries/BuildScripts/api-java-templates")
-            jarArgs.add("--package")
+            jarArgs.add("--output-path")
+            jarArgs.add("${generatedModelsDirectory.path}")
+            jarArgs.add("--package-name")
             jarArgs.add("${applicationId}")
             javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
         }
