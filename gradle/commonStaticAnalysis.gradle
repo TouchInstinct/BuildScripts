@@ -134,7 +134,7 @@ ext.generateHtmlReport = { isAndroidProject ->
             "\t\t\txmlHttp.send(null);\n" +
             "\t\t}\n" +
             "\t}\n" +
-            "</script>");
+            "</script>")
 
     File fullReportFile = new File("${project.buildDir}/reports/full_report.html")
     fullReportFile.write(fullReport.toString());
@@ -217,7 +217,7 @@ appendCpdErrors = { report, count, cpdFile ->
         def fragment = "<b>Code duplication:</b></br></br>"
         def links = ""
         def duplicationIndex = 0
-        String duplicationPoints = "";
+        String duplicationPoints = ""
         for (def filePointNode : duplicationNode.children()) {
             if (filePointNode.name().equals("file")) {
                 def file = filePointNode.attribute("path")
@@ -256,7 +256,7 @@ appendCheckstyleErrors = { report, count, checkstyleFile ->
             if (!errorNode.name().equals("error")) {
                 continue
             }
-            count++;
+            count++
 
             def error = errorNode.attribute("source")
             def link = "http://checkstyle.sourceforge.net/apidocs/" + error.replace('.', '/') + ".html"
@@ -275,9 +275,9 @@ appendPmdErrors = { report, count, pmdFile ->
 
         for (def errorNode : fileNode.children()) {
             if (!errorNode.name().equals("violation")) {
-                continue;
+                continue
             }
-            count++;
+            count++
 
             appendError(report, count, "PMD", fileNode.attribute("name"), errorNode.attribute("beginline"),
                     errorNode.attribute("rule").trim(), errorNode.attribute("externalInfoUrl").trim(), errorNode.text().trim())
@@ -297,7 +297,7 @@ appendLintErrors = { report, count, lintFile ->
             if (!locationNode.name().equals("location")) {
                 continue
             }
-            count++;
+            count++
             appendError(report, count, "Lint", locationNode.attribute("file"), locationNode.attribute("line"),
                     issueNode.attribute("id"), issueNode.attribute("explanation"), issueNode.attribute("message"))
         }
@@ -314,7 +314,7 @@ getCpdTask = { isAndroidProject, sources ->
         reports {
             xml {
                 enabled = true
-                destination "${project.buildDir}/reports/cpd.xml"
+                destination = file("${project.buildDir}/reports/cpd.xml")
             }
         }
     }
@@ -332,11 +332,11 @@ getPmdTask = { sources ->
         reports {
             html {
                 enabled = true
-                destination "${project.buildDir}/reports/pmd.html"
+                destination file("${project.buildDir}/reports/pmd.html")
             }
             xml {
                 enabled = true
-                destination "${project.buildDir}/reports/pmd.xml"
+                destination file("${project.buildDir}/reports/pmd.xml")
             }
         }
     }
@@ -348,13 +348,13 @@ getLintTasks = {
 
     def lintReleaseTask = tasks.matching {
         it.getName().contains("lint") && it.getName().contains("Release")
-    }.first();
+    }.first()
     //TODO return on jack lintReleaseTask.dependsOn.clear()
     lintTaskNames.add(lintReleaseTask.getName())
 
     def lintDebugTask = tasks.matching {
         it.getName().contains("lint") && it.getName().contains("Debug")
-    }.first();
+    }.first()
     //TODO return on jack lintDebugTask.dependsOn.clear()
     lintTaskNames.add(lintDebugTask.getName())
 
@@ -386,7 +386,7 @@ getCheckstyleTask = { sources ->
         reports {
             xml {
                 enabled = true
-                destination "${project.buildDir}/reports/checkstyle.xml"
+                destination file("${project.buildDir}/reports/checkstyle.xml")
             }
         }
     }
