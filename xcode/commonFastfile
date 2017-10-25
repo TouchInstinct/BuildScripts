@@ -52,6 +52,7 @@ private_lane :buildConfiguration do |options|
     configuration: configuration,
     export_method: method,
     export_options: exportOptions,
-    skip_package_ipa: !uploadToFabric
+    skip_package_ipa: !uploadToFabric,
+    include_bitcode: false
   )
 end
