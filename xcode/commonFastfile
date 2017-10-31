@@ -42,6 +42,7 @@ private_lane :buildConfiguration do |options|
   uploadToFabric = options[:uploadToFabric]
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
+  exportOptions[:compileBitcode] = options[:compileBitcode] || false
 
   gym(
     clean: true,
