@@ -238,8 +238,12 @@ inputStream.readBoolean()
 		} else if ({{ object }} instanceof Map) {
 		    validateCollection(((Map) {{ object }}).values(), CollectionValidationRule.EXCEPTION_IF_ANY_INVALID);
 		}
-{%- else %}
-		{{ object }}.validate();
+{%- elseif nullable %}
+		if ({{ object }} != null) {
+		    {{ object }}.validate();
+		}
+{%- else -%}
+        {{ object }}.validate();
 {%- endif -%}
 {%- endif -%}
 {% endmacro %}
