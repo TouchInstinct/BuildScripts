@@ -1,6 +1,14 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
 before_all do |lane, options|
+  podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
+  lockFilePath = "#{podsReposPath}/.git/index.lock"
+
+  # check if .lock file exists in pod repos - then remove all master repo
+  if File.exists? lockFilePath
+    sh("rm -rf #{podsReposPath}")
+  end
+
   cocoapods(
     clean: true,
     repo_update: true
