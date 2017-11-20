@@ -26,6 +26,10 @@ configurations {
     detekt
 }
 
+cpd {
+    skipLexicalErrors = true
+}
+
 import org.apache.tools.ant.taskdefs.condition.Os
 
 ext.getIdeaFormatTask = { isAndroidProject, sources ->
