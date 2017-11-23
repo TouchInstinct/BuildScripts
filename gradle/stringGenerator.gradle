@@ -3,12 +3,13 @@ import groovy.xml.MarkupBuilder
 
 task stringGenerator {
     final Map<String, String> languageMap = android.extensions.findByName("languageMap")
+    final String userDefaultLanguage = android.extensions.findByName("defaultLanguage")
 
-    generate(languageMap)
+    generate(languageMap, userDefaultLanguage)
     println("Strings generated!")
 }
 
-private def generate(Map<String, String> sources) {
+private def generate(Map<String, String> sources, String userDefaultLanguage) {
     if (sources == null || sources.isEmpty()) {
         throw new IOException("languageMap can't be null or empty")
     }
@@ -18,7 +19,11 @@ private def generate(Map<String, String> sources) {
         printDiffs(diffs)
         throw new IllegalStateException("Strings source can't be different")
     }
-    def defaultLang = getDefaultLangKey(jsonMap.keySet())
+    def defaultLang = userDefaultLanguage
+    if (defaultLang == null) {
+        defaultLang = getDefaultLangKey(jsonMap.keySet())
+    }
+
     jsonMap.forEach { key, json ->
 
         def sw = new StringWriter()
