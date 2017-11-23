@@ -19,6 +19,10 @@ private def generate(Map<String, String> sources, String userDefaultLanguage) {
         printDiffs(diffs)
         throw new IllegalStateException("Strings source can't be different")
     }
+
+    if (userDefaultLanguage != null && !jsonMap.keySet().contains(userDefaultLanguage)) {
+        throw new IllegalStateException("Can't find defaultLanguage in languageMap")
+    }
     def defaultLang = userDefaultLanguage
     if (defaultLang == null) {
         defaultLang = getDefaultLangKey(jsonMap.keySet())
