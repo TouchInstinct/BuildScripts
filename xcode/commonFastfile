@@ -56,6 +56,7 @@ private_lane :buildConfiguration do |options|
 
   gym(
     clean: true,
+    workspace: "./#{appName}.xcworkspace",
     scheme: appName,
     archive_path: "./",
     output_directory: "./",
