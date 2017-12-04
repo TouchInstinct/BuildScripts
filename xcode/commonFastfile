@@ -1,6 +1,7 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
 before_all do |lane, options|
+  appName = options[:appName] || $appName
   podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
   lockFilePath = "#{podsReposPath}/.git/index.lock"
 
@@ -15,7 +16,7 @@ before_all do |lane, options|
   )
 
   set_info_plist_value(
-    path: "./#{$appName}/Info.plist",
+    path: "./#{appName}/Info.plist",
     key: "CFBundleVersion",
     value: options[:buildNumber] || 10000
   )
@@ -23,13 +24,15 @@ end
 
 after_all do |lane, options|
   if options[:uploadToFabric]
-    token = sh("cat ../#{$appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\n'")
-    secret = sh("cat ../#{$appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//' | tr -d '\n'")
+    appName = options[:appName] || $appName
+    token = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\n'")
+    secret = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//' | tr -d '\n'")
+
     releaseNotesFile = "release-notes.txt"
     sh("touch ../#{releaseNotesFile}")
 
     crashlytics(
-      ipa_path: "./#{$appName}.ipa",
+      ipa_path: "./#{appName}.ipa",
       crashlytics_path: "./Pods/Crashlytics/",
       api_token: token,
       build_secret: secret,
@@ -38,7 +41,7 @@ after_all do |lane, options|
     )
 
     upload_symbols_to_crashlytics(
-      dsym_path: "./#{$appName}.app.dSYM.zip",
+      dsym_path: "./#{appName}.app.dSYM.zip",
       api_token: token
     )
   end
@@ -47,6 +50,7 @@ end
 private_lane :buildConfiguration do |options|
   configuration = lane_context[SharedValues::LANE_NAME]
   method = configuration.start_with?("Enterprise") ? "enterprise" : "development"
+  appName = options[:appName] || $appName
   uploadToFabric = options[:uploadToFabric]
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
@@ -54,10 +58,11 @@ private_lane :buildConfiguration do |options|
 
   gym(
     clean: true,
-    scheme: $appName,
+    workspace: "./#{appName}.xcworkspace",
+    scheme: appName,
     archive_path: "./",
     output_directory: "./",
-    output_name: "#{$appName}.ipa",
+    output_name: "#{appName}.ipa",
     configuration: configuration,
     export_method: method,
     export_options: exportOptions,
