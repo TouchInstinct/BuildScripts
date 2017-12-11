@@ -3,13 +3,12 @@ import groovy.xml.MarkupBuilder
 
 task stringGenerator {
     final Map<String, String> languageMap = android.extensions.findByName("languageMap")
-    final String userDefaultLanguage = android.extensions.findByName("defaultLanguage")
 
-    generate(languageMap, userDefaultLanguage)
+    generate(languageMap)
     println("Strings generated!")
 }
 
-private def generate(Map<String, String> sources, String userDefaultLanguage) {
+private def generate(Map<String, String> sources) {
     if (sources == null || sources.isEmpty()) {
         throw new IOException("languageMap can't be null or empty")
     }
@@ -19,15 +18,7 @@ private def generate(Map<String, String> sources, String userDefaultLanguage) {
         printDiffs(diffs)
         throw new IllegalStateException("Strings source can't be different")
     }
-
-    if (userDefaultLanguage != null && !jsonMap.keySet().contains(userDefaultLanguage)) {
-        throw new IllegalStateException("Can't find defaultLanguage in languageMap")
-    }
-    def defaultLang = userDefaultLanguage
-    if (defaultLang == null) {
-        defaultLang = getDefaultLangKey(jsonMap.keySet())
-    }
-
+    def defaultLang = getDefaultLangKey(sources)
     jsonMap.forEach { key, json ->
 
         def sw = new StringWriter()
@@ -92,13 +83,12 @@ private static File getFile(String key, boolean defaultLang) {
     }
 }
 
-private static String getDefaultLangKey(Set<String> keys) {
-    keys.each { it.toLowerCase() }
-    if (keys.contains("en")) {
-        return "en"
-    } else if (keys.contains("ru")) {
-        return "ru"
+private static String getDefaultLangKey(Map<String, String> sources) {
+    def defaultLanguage = sources.find { it.value.contains("default") }
+    if (defaultLanguage != null) {
+        return defaultLanguage.key
     } else {
-        return keys.first()
+        throw new IOException("Can't find default language")
     }
+
 }
