@@ -66,7 +66,8 @@ public class {% include 'blocks/class/classtype.twig' with { type: type } %} ext
 	}
 
 	public int hashCode() {
-		return ObjectUtils.hashCode({%- if parent is not null -%}super.hashCode(), {% endif -%}{%- include 'blocks/class/fields-super-initialization.twig' with { fields: fields } -%});
+		return ObjectUtils.hashCode(super.hashCode(){% if (fields is not empty) %},{% endif %}
+		{%- include 'blocks/class/fields-super-initialization.twig' with { fields: fields } -%});
 	}
 
 	public boolean equals(@Nullable final Object object) {
@@ -77,8 +78,8 @@ public class {% include 'blocks/class/classtype.twig' with { type: type } %} ext
 			return false;
 		}
 		final {% include 'blocks/class/classtype.twig' with { type: type } %} that = ({% include 'blocks/class/classtype.twig' with { type: type } %}) object;
-		return {% if parent is not null -%}super.equals(that)
-				&& {% endif -%}
+		return super.equals(that)
+			    {% if (fields is not empty) %}&& {% endif %}
 				{%- include 'blocks/class/fields-equals.twig' with { fields: fields } -%};
 	}
 
