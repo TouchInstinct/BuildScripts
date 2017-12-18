@@ -146,7 +146,7 @@
     <issue id="ExportedService" severity="error"/>
     <issue id="ExtraText" severity="error"/>
     <issue id="GetInstance" severity="error"/>
-    <issue id="GifUsage" severity="error"/>
+    <issue id="GifUsage" severity="warning"/>
     <issue id="GradleDependency" severity="error"/>
     <issue id="GradleDeprecated" severity="error"/>
     <issue id="GradleDynamicVersion" severity="error"/>
