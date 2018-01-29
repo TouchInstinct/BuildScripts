@@ -403,12 +403,17 @@ getKotlinDetektTask = { isAndroidProject ->
         main = "io.gitlab.arturbosch.detekt.cli.Main"
         classpath = configurations.detekt
         def input = "${rootDir}"
-        def output = "${project.buildDir}/reports/kotlin-detekt.xml"
+        def output = "${project.buildDir}/reports"
+        def outputName = "kotlin-detekt"
         def config = "${rootDir}/libraries/BuildScripts/kotlin/detekt-config.yml"
 
         // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
         def filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
-        def params = ['-i', input, '-o', output, '-c', config, '-f', filters]
+        def params = ['-i', input,
+                      '-o', output,
+                      '-c', config,
+                      '-f', filters,
+                      '--output-name', outputName]
         args(params)
     }
     return taskName
@@ -437,6 +442,5 @@ dependencies {
 
     pngtastic 'com.github.depsypher:pngtastic:1.2'
 
-    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.M13.2'
-    detekt 'io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0.M13.2'
+    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.RC6-2'
 }
