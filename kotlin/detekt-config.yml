@@ -74,8 +74,8 @@ complexity:
     threshold: 40
   LongParameterList:
     active: true
-    threshold: 5
-    ignoreDefaultParameters: true
+    threshold: 10
+    ignoreDefaultParameters: false
   MethodOverloading:
     active: false
     threshold: 5
@@ -103,7 +103,7 @@ empty-blocks:
   EmptyClassBlock:
     active: true
   EmptyDefaultConstructor:
-    active: true
+    active: false
   EmptyDoWhileBlock:
     active: true
   EmptyElseBlock:
@@ -337,7 +337,7 @@ style:
   UnnecessaryInheritance:
     active: false
   UnnecessaryParentheses:
-    active: true
+    active: false
   UntilInsteadOfRangeTo:
     active: true
   UnusedImports:
