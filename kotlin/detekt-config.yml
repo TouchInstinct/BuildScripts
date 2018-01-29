@@ -314,7 +314,7 @@ style:
   OptionalUnit:
     active: true
   OptionalWhenBraces:
-    active: true
+    active: false
   ProtectedMemberInFinalClass:
     active: false
   RedundantVisibilityModifierRule:
