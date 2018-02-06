@@ -6,4 +6,4 @@ link="https://dl.bintray.com/touchin/touchin-tools/ru/touchin/api-generator/${VE
 . build-scripts/xcode/aux_scripts/download_file.sh ${FILE_NAME} ${link}
 
 # execute api generator
-java -jar "Downloads/${FILE_NAME}" --specification-path common/api --output-path ${PROJECT_NAME}/Generated --templates-path api-generator-templates/Swift --action generate-client-code --single-file true
+java -jar "Downloads/${FILE_NAME}" generate-client-code --output-language SWIFT --specification-path common/api --output-path ${PROJECT_NAME}/Generated --single-file true
