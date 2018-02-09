@@ -1,5 +1,0 @@
-{%- import '../../utils.twig' as utils -%}
-{%- for field in fields -%}
-	{{ utils.formatEquals(field.name, field.type.type.baseTypeName, field.optional) }} {%- if not (loop.last) %}
-				&& {% endif %}
-{%- endfor -%}
