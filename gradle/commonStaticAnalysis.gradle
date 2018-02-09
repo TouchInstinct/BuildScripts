@@ -19,6 +19,7 @@ def normalizeFileUrl
 
 repositories {
     maven { url "http://dl.bintray.com/touchin/touchin-tools" }
+    jcenter()
 }
 
 configurations {
