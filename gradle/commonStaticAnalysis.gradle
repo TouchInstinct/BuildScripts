@@ -15,8 +15,6 @@ def appendCheckstyleErrors
 def appendPmdErrors
 def appendLintErrors
 
-def normalizeFileUrl
-
 repositories {
     maven { url "http://dl.bintray.com/touchin/touchin-tools" }
     jcenter()
@@ -74,118 +72,66 @@ ext.getStaticAnalysisTaskNames = { isAndroidProject, sources ->
 }
 
 ext.generateHtmlReport = { isAndroidProject ->
-    StringBuilder fullReport = new StringBuilder()
-
-    fullReport.append("<table cellpadding='10px' border='2px' cellspacing='0px' cols='4'>");
-
     StringBuilder consoleReport = new StringBuilder()
     consoleReport.append("STATIC ANALYSIS RESULTS:")
     def count = 0
 
     def previousCount = count
-    count = appendCpdErrors(fullReport, count, new File("${project.buildDir}/reports/cpd.xml"))
+    count = appendCpdErrors(count, new File("${project.buildDir}/reports/cpd.xml"))
     if (count - previousCount > 0) {
-        consoleReport.append("\n\u001B[31mCPD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                normalizeFileUrl("file://${project.buildDir}/reports/cpd.xml"))
+        consoleReport.append("\nCPD: FAILED (" + (count - previousCount) + " errors)")
     } else {
-        consoleReport.append("\n\u001B[32mCPD: PASSED\u001B[0m")
+        consoleReport.append("\nCPD: PASSED")
     }
 
     previousCount = count
-    count = appendKotlinErrors(fullReport, count, new File("${project.buildDir}/reports/kotlin-detekt.xml"))
+    count = appendKotlinErrors(count, new File("${project.buildDir}/reports/kotlin-detekt.xml"))
     if (count - previousCount > 0) {
-        consoleReport.append("\n\u001B[31mKotlin-detekt: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                normalizeFileUrl("file://${project.buildDir}/reports/kotlin-detekt.xml"))
+        consoleReport.append("\nKotlin-detekt: FAILED (" + (count - previousCount) + " errors)")
     } else {
-        consoleReport.append("\n\u001B[32mKotlin-detekt: PASSED\u001B[0m")
+        consoleReport.append("\nKotlin-detekt: PASSED")
     }
 
     if (isAndroidProject) {
         previousCount = count
-        count = appendPmdErrors(fullReport, count, new File("${project.buildDir}/reports/pmd.xml"))
+        count = appendPmdErrors(count, new File("${project.buildDir}/reports/pmd.xml"))
         if (count - previousCount > 0) {
-            consoleReport.append("\n\u001B[31mPMD: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                    normalizeFileUrl("file://${project.buildDir}/reports/pmd.html"))
+            consoleReport.append("\nPMD: FAILED (" + (count - previousCount) + " errors)")
         } else {
-            consoleReport.append("\n\u001B[32mPMD: PASSED\u001B[0m")
+            consoleReport.append("\nPMD: PASSED")
         }
 
         previousCount = count
-        count = appendLintErrors(fullReport, count, new File("${project.buildDir}/reports/lint_report.xml"))
+        count = appendLintErrors(count, new File("${project.buildDir}/reports/lint_report.xml"))
         if (count - previousCount > 0) {
-            consoleReport.append("\n\u001B[31mLint: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                    normalizeFileUrl("file://${project.buildDir}/reports/lint.html"))
+            consoleReport.append("\nLint: FAILED (" + (count - previousCount) + " errors)")
         } else {
-            consoleReport.append("\n\u001B[32mLint: PASSED\u001B[0m")
+            consoleReport.append("\nLint: PASSED")
         }
 
         previousCount = count
-        count = appendCheckstyleErrors(fullReport, count, new File("${project.buildDir}/reports/checkstyle.xml"))
+        count = appendCheckstyleErrors(count, new File("${project.buildDir}/reports/checkstyle.xml"))
         if (count - previousCount > 0) {
-            consoleReport.append("\n\u001B[31mCheckstyle: FAILED (" + (count - previousCount) + " errors)\u001B[0m " +
-                    normalizeFileUrl("file://${project.buildDir}/reports/checkstyle.xml"))
+            consoleReport.append("\nCheckstyle: FAILED (" + (count - previousCount) + " errors)")
         } else {
-            consoleReport.append("\n\u001B[32mCheckstyle: PASSED\u001B[0m")
+            consoleReport.append("\nCheckstyle: PASSED")
         }
     }
 
-    fullReport.append("\n</table>\n");
-    fullReport.append("<script>\n" +
-            "\tfunction visitPage(file, line) {\n" +
-            "\t\tfor (port = 63330; port < 63340; port++) {\n" +
-            "\t\t\tvar theUrl='http://127.0.0.1:' + port + '/file?file=' + file + '&line=' + line;\n" +
-            "\t\t\tvar xmlHttp = new XMLHttpRequest();\n" +
-            "\t\t\txmlHttp.open('GET', theUrl, true);\n" +
-            "\t\t\txmlHttp.send(null);\n" +
-            "\t\t}\n" +
-            "\t}\n" +
-            "</script>")
-
-    File fullReportFile = new File("${project.buildDir}/reports/full_report.html")
-    fullReportFile.write(fullReport.toString());
-
     if (count > 0) {
-        consoleReport.append("\n\u001B[31mOverall: FAILED (" + count + " errors)\u001B[0m "
-                + normalizeFileUrl("file://${project.buildDir}/reports/full_report.html"))
+        consoleReport.append("\nOverall: FAILED (" + count + " errors)")
         throw new Exception(consoleReport.toString())
     } else {
-        consoleReport.append("\n\u001B[32mOverall: PASSED\u001B[0m")
+        consoleReport.append("\nOverall: PASSED")
         println(consoleReport.toString())
     }
 }
 
-normalizeFileUrl = { url ->
-    return url.replace("\\", "/")
+appendError = { number, analyzer, file, line, errorId, errorLink, description ->
+    println("$number. $analyzer : $description ($errorId)\n$file : $line")
 }
 
-appendError = { report, number, analyzer, file, line, errorId, errorLink, description ->
-    report.append("\n\t<tr>")
-
-    report.append("\n\t\t<td>" + number + "</td>")
-
-    report.append("\n\t\t<td>" + analyzer + "</td>")
-
-    report.append("\n\t\t<td>")
-    if (analyzer == "Lint") {
-        report.append("\n\t\t\t<a href='javascript:alert(\"" + errorLink.replace("'", "&apos;") + "\")'>" + description + " (" + errorId + ")</a>")
-    } else if (analyzer == "Detekt") {
-        report.append("\n\t\t\t" + description + " (" + errorId + ")")
-    } else {
-        report.append("\n\t\t\t<a target='_blank' href='" + errorLink + "'>" + description + " (" + errorId + ")</a>")
-    }
-    report.append("\n\t\t</td>")
-
-    def indexOfSrc = file.indexOf("src")
-    def deeplink = (indexOfSrc > 0 ? file.substring(indexOfSrc) : file).replace('\\', '/')
-    report.append("\n\t\t<td>")
-    report.append("\n\t\t\t<a href='javascript:visitPage(\"" + deeplink + "\", " + line + ")'>" + file + ":" + line + "</a>")
-    report.append("\n\t\t</td>")
-
-    report.append("\n\t</tr>")
-    println("\n\u001B[31m" + number + " " + analyzer + ": " + description + " (" + errorId + ")\n\tat " + file + ":" + line + "\u001B[0m")
-}
-
-appendKotlinErrors = { report, count, checkstyleFile ->
+appendKotlinErrors = { count, checkstyleFile ->
     def rootNode = new XmlParser().parse(checkstyleFile)
     for (def fileNode : rootNode.children()) {
         if (!fileNode.name().equals("file")) {
@@ -199,13 +145,13 @@ appendKotlinErrors = { report, count, checkstyleFile ->
             count++
 
             def error = errorNode.attribute("source")
-            appendError(report, count, "Detekt", fileNode.attribute("name"), errorNode.attribute("line"), error, "", errorNode.attribute("message"))
+            appendError(count, "Detekt", fileNode.attribute("name"), errorNode.attribute("line"), error, "", errorNode.attribute("message"))
         }
     }
     return count
 }
 
-appendCpdErrors = { report, count, cpdFile ->
+appendCpdErrors = { count, cpdFile ->
     def rootNode = new XmlParser().parse(cpdFile)
     for (def duplicationNode : rootNode.children()) {
         if (!duplicationNode.name().equals("duplication")) {
@@ -213,44 +159,23 @@ appendCpdErrors = { report, count, cpdFile ->
         }
         count++
 
-        report.append("\n\t<tr>")
-
-        report.append("\n\t\t<td>" + count + "</td>")
-
-        report.append("\n\t\t<td>CPD</td>")
-
-        def fragment = "<b>Code duplication:</b></br></br>"
-        def links = ""
         def duplicationIndex = 0
+
         String duplicationPoints = ""
         for (def filePointNode : duplicationNode.children()) {
             if (filePointNode.name().equals("file")) {
                 def file = filePointNode.attribute("path")
-                def line = filePointNode.attribute("line");
-                def indexOfSrc = file.indexOf("src")
-                def deeplink = (indexOfSrc > 0 ? file.substring(indexOfSrc) : file).replace('\\', '/')
-                if (duplicationIndex > 0) {
-                    links += "\n\t\t\t</br></br>"
-                }
-                links += "Code fragment " + (duplicationIndex + 1) + "</br>"
-                links += "\n\t\t\t<a href='javascript:visitPage(\"" + deeplink + "\", " + line + ")'>" + file + ":" + line + "</a>"
-                duplicationPoints += "\n\tat " + file + ":" + line
+                def line = filePointNode.attribute("line")
+                duplicationPoints += "\n " + file + ":" + line
                 duplicationIndex++
-            } else if (filePointNode.name().equals("codefragment")) {
-                fragment += filePointNode.text().replace("\n", "</br>").replace(" ", "&nbsp;")
             }
         }
-        report.append("\n\t\t<td>" + fragment + "\n\t\t</td>")
-
-        report.append("\n\t\t<td>" + links + "\n\t\t</td>")
-
-        report.append("\n\t</tr>")
-        println("\u001B[31m" + count + " CPD: code duplication" + duplicationPoints + "\u001B[0m")
+        println("$count CPD: code duplication $duplicationPoints")
     }
     return count
 }
 
-appendCheckstyleErrors = { report, count, checkstyleFile ->
+appendCheckstyleErrors = { count, checkstyleFile ->
     def rootNode = new XmlParser().parse(checkstyleFile)
     for (def fileNode : rootNode.children()) {
         if (!fileNode.name().equals("file")) {
@@ -265,13 +190,13 @@ appendCheckstyleErrors = { report, count, checkstyleFile ->
 
             def error = errorNode.attribute("source")
             def link = "http://checkstyle.sourceforge.net/apidocs/" + error.replace('.', '/') + ".html"
-            appendError(report, count, "Checkstyle", fileNode.attribute("name"), errorNode.attribute("line"), error, link, errorNode.attribute("message"))
+            appendError(count, "Checkstyle", fileNode.attribute("name"), errorNode.attribute("line"), error, link, errorNode.attribute("message"))
         }
     }
     return count
 }
 
-appendPmdErrors = { report, count, pmdFile ->
+appendPmdErrors = { count, pmdFile ->
     def rootNode = new XmlParser().parse(pmdFile)
     for (def fileNode : rootNode.children()) {
         if (!fileNode.name().equals("file")) {
@@ -284,14 +209,14 @@ appendPmdErrors = { report, count, pmdFile ->
             }
             count++
 
-            appendError(report, count, "PMD", fileNode.attribute("name"), errorNode.attribute("beginline"),
+            appendError(count, "PMD", fileNode.attribute("name"), errorNode.attribute("beginline"),
                     errorNode.attribute("rule").trim(), errorNode.attribute("externalInfoUrl").trim(), errorNode.text().trim())
         }
     }
     return count
 }
 
-appendLintErrors = { report, count, lintFile ->
+appendLintErrors = { count, lintFile ->
     def rootNode = new XmlParser().parse(lintFile)
     for (def issueNode : rootNode.children()) {
         if (!issueNode.name().equals("issue")
@@ -303,7 +228,7 @@ appendLintErrors = { report, count, lintFile ->
                 continue
             }
             count++
-            appendError(report, count, "Lint", locationNode.attribute("file"), locationNode.attribute("line"),
+            appendError(count, "Lint", locationNode.attribute("file"), locationNode.attribute("line"),
                     issueNode.attribute("id"), issueNode.attribute("explanation"), issueNode.attribute("message"))
         }
     }
@@ -368,8 +293,7 @@ getLintTasks = {
     android.lintOptions.warningsAsErrors = false
     android.lintOptions.xmlReport = true
     android.lintOptions.xmlOutput = file("${project.buildDir}/reports/lint_report.xml")
-    android.lintOptions.htmlReport = true
-    android.lintOptions.htmlOutput = file("${project.buildDir}/reports/lint_report.html")
+    android.lintOptions.htmlReport = false
     android.lintOptions.lintConfig = file("${rootDir}/libraries/BuildScripts/lint/lint.xml")
     return lintTaskNames
 }
