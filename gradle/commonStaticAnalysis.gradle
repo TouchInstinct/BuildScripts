@@ -128,7 +128,7 @@ ext.generateReport = { isAndroidProject ->
 }
 
 appendError = { number, analyzer, file, line, errorId, errorLink, description ->
-    println("$number. $analyzer : $description ($errorId)\n$file : $line")
+    println("$number. $analyzer : $description ($errorId)\n\tat $file: $line")
 }
 
 appendKotlinErrors = { count, checkstyleFile ->
