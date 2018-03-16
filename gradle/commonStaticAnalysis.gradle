@@ -71,7 +71,7 @@ ext.getStaticAnalysisTaskNames = { isAndroidProject, sources ->
     return tasksNames
 }
 
-ext.generateHtmlReport = { isAndroidProject ->
+ext.generateReport = { isAndroidProject ->
     StringBuilder consoleReport = new StringBuilder()
     consoleReport.append("STATIC ANALYSIS RESULTS:")
     def count = 0

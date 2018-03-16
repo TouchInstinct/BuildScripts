@@ -28,14 +28,14 @@ gradle.projectsEvaluated {
         dependsOn androidIdeaFormatTask
         dependsOn androidStaticAnalysisTasks
         doFirst {
-            generateHtmlReport(true)
+            generateReport(true)
         }
     }
 
     task staticAnalysisWithoutFormatting {
         dependsOn androidStaticAnalysisTasks
         doFirst {
-            generateHtmlReport(true)
+            generateReport(true)
         }
     }
 
@@ -48,14 +48,14 @@ gradle.projectsEvaluated {
         dependsOn serverIdeaFormatTask
         dependsOn serverStaticAnalysisTasks
         doFirst {
-            generateHtmlReport(false)
+            generateReport(false)
         }
     }
 
     task serverStaticAnalysisWithoutFormatting {
         dependsOn serverStaticAnalysisTasks
         doFirst {
-            generateHtmlReport(false)
+            generateReport(false)
         }
     }
 }
