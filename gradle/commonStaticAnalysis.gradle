@@ -145,7 +145,9 @@ appendKotlinErrors = { count, checkstyleFile ->
             count++
 
             def error = errorNode.attribute("source")
-            appendError(count, "Detekt", fileNode.attribute("name"), errorNode.attribute("line"), error, "", errorNode.attribute("message"))
+            def rootDir = project.rootDir.toString()
+            def rootDirWithoutAppName = rootDir.substring(0, rootDir.lastIndexOf("/") + 1)
+            appendError(count, "Detekt", "${rootDirWithoutAppName}${fileNode.attribute("name")}", errorNode.attribute("line"), error, "", errorNode.attribute("message"))
         }
     }
     return count
