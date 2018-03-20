@@ -8,7 +8,6 @@ opt_in_rules:
   - extension_access_modifier
 
   - fatal_error_message
-  - file_header
   - first_where
   - force_unwrapping
 
