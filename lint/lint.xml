@@ -52,7 +52,7 @@
     <issue id="AccidentalOctal" severity="error"/>
     <issue id="GridLayout" severity="error"/>
     <issue id="HardcodedDebugMode" severity="error"/>
-    <issue id="IconExpectedSize" severity="error"/>
+    <issue id="IconExpectedSize" severity="warning"/>
     <issue id="IncludeLayoutParam" severity="error"/>
     <issue id="TrustAllX509TrustManager" severity="warning"/>
     <issue id="DefaultLocale" severity="error"/>
