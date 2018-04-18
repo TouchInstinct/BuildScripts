@@ -226,7 +226,6 @@
         <module name="NoLineWrap"/>
         <module name="NonEmptyAtclauseDescription"/>
         <module name="NoWhitespaceAfter">
-            <property name="allowLineBreaks" value="false"/>
             <property name="tokens"
                       value="ARRAY_INIT, INC, DEC, UNARY_MINUS, UNARY_PLUS, BNOT, LNOT, DOT, ARRAY_DECLARATOR, INDEX_OP"/>
         </module>
