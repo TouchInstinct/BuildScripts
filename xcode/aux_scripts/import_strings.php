@@ -11,7 +11,7 @@
     $localization = './'.$PROJECT_NAME.'/Resources/Localization/';
 
     $baseFile = file_get_contents(array_pop(glob($COMMON_STRINGS_PATH.'/default*.json')));
-	$baseJson = json_decode($baseFile, true);
+    $baseJson = json_decode($baseFile, true);
 
     foreach (glob($COMMON_STRINGS_PATH.'/*.json') as $file) {
         $languageName = array_pop(explode('_', basename($file, '.json')));
