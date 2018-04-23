@@ -10,18 +10,21 @@
 
     $localization = './'.$PROJECT_NAME.'/Resources/Localization/';
 
+    $baseFile = file_get_contents(array_pop(glob($COMMON_STRINGS_PATH.'/default*.json')));
+    $baseJson = json_decode($baseFile, true);
+
     foreach (glob($COMMON_STRINGS_PATH.'/*.json') as $file) {
         $languageName = array_pop(explode('_', basename($file, '.json')));
         $isBase = strpos($file, 'default') !== false;
 
         $jsonFile = file_get_contents($file);
-        $json = json_decode($jsonFile);
+        $json = array_merge($baseJson, json_decode($jsonFile, true));
 
         $ios_strings = "";
         foreach ($json as $key=>$value) {
             $ios_strings.='"'.$key.'" = "'.str_replace('%s', '%@', str_replace('"','\"', str_replace("\n", '\n', $value))).'";'.PHP_EOL;
         }
-        $ios_strings = preg_replace('/(\\\\)(u)(\d{4})/', '$1U$3', $ios_strings);
+        $ios_strings = preg_replace('/(\\\\)(u)([0-9a-fA-F]{4})/', '$1U$3', $ios_strings);
 
         $lproj = $localization.$languageName.'.lproj/';
         createFolder($lproj);
