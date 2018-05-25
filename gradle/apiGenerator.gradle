@@ -10,25 +10,24 @@ dependencies {
     apigenerator 'ru.touchin:api-generator:1.1.20'
 }
 
-android.applicationVariants.all {
-    variant ->
-        final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
+android.applicationVariants.all { variant ->
+    final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
 
-        def generateJsonModelsTask = tasks.create("apiGenerator${variant.name}") << {
-            def jarArgs = new ArrayList<String>()
-            jarArgs.add(configurations.apigenerator.asPath)
-            jarArgs.add("generate-client-code")
-            jarArgs.add("--output-language")
-            jarArgs.add("JAVA")
-            jarArgs.add("--specification-path")
-            jarArgs.add(rootProject.extensions.findByName("pathToApiSchemes"))
-            jarArgs.add("--output-path")
-            jarArgs.add("${generatedModelsDirectory.path}")
-            jarArgs.add("--package-name")
-            jarArgs.add("${applicationId}")
-            javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
-        }
+    def generateJsonModelsTask = tasks.create("apiGenerator${variant.name}") doLast {
+        def jarArgs = new ArrayList<String>()
+        jarArgs.add(configurations.apigenerator.asPath)
+        jarArgs.add("generate-client-code")
+        jarArgs.add("--output-language")
+        jarArgs.add("JAVA")
+        jarArgs.add("--specification-path")
+        jarArgs.add(rootProject.extensions.findByName("pathToApiSchemes"))
+        jarArgs.add("--output-path")
+        jarArgs.add("${generatedModelsDirectory.path}")
+        jarArgs.add("--package-name")
+        jarArgs.add("${applicationId}")
+        javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
+    }
 
-        generateJsonModelsTask.description = 'Generates Java classes for JSON models'
-        variant.registerJavaGeneratingTask generateJsonModelsTask, generatedModelsDirectory
+    generateJsonModelsTask.description = 'Generates Java classes for JSON models'
+    variant.registerJavaGeneratingTask generateJsonModelsTask, generatedModelsDirectory
 }
