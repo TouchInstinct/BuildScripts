@@ -34,7 +34,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 ext.getIdeaFormatTask = { isAndroidProject, sources ->
     def ideaPath = System.getenv("IDEA_HOME")
     if (ideaPath == null) {
-        return tasks.create((isAndroidProject ? "android" : "server") + "do nothing")
+        return tasks.create((isAndroidProject ? "android" : "server") + "donothing")
     }
     return tasks.create((isAndroidProject ? "android" : "server") + "IdeaFormat_$project.name", Exec) {
         def inspectionPath
