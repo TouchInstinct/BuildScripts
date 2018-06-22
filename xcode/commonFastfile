@@ -1,6 +1,8 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
 before_all do |lane, options|
+  sh("export LANG=en_US.UTF-8")
+
   appName = options[:appName] || $appName
   podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
   lockFilePath = "#{podsReposPath}/.git/index.lock"
