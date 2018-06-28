@@ -127,13 +127,6 @@ custom_rules:
     message: "Please use `weak` instead. "
     severity: error
 
-  inout_keyword:
-    name: "Inout"
-    regex: 'inout'
-    message: "Don't use inout arguments"
-    severity: error
-    match_kinds: keyword
-
   continue_keyword:
     name: "Continue"
     regex: 'continue'
@@ -146,6 +139,6 @@ custom_rules:
     regex: '[а-яА-Я]+'
     message: "Localize or translate"
     severity: error
-    match_kinds: 
+    match_kinds:
     - identifier
     - string
