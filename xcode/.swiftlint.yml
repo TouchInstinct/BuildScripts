@@ -109,12 +109,6 @@ custom_rules:
       - comment
     message: "Template header comments should be removed."
 
-  delegate:
-    name: "Delegate"
-    regex: '(?<!weak\s)var\s\w*(D|d)elegate\w*:'
-    message: "Please use `weak` for `delegate`. "
-    severity: error
-
   unnecessary_type:
    name: "Unnecessary Type"
    regex: '[ @a-zA-Z]*(?:let|var)\s\w*: ([a-zA-Z0-9]*)\?? = \1'
