@@ -257,7 +257,7 @@ getPmdTask = { sources ->
     def taskName = "pmd_${project.name}"
     tasks.create(taskName, Pmd) {
         pmdClasspath = configurations.pmd.asFileTree
-        ruleSetFiles = files "$rootDir/BuildScripts/pmd/rulesets/java/android.xml"
+        ruleSetFiles = files "$buildScriptsDir/pmd/rulesets/java/android.xml"
         ruleSets = []
         source files(sources)
         ignoreFailures = true
@@ -296,7 +296,7 @@ getLintTasks = {
     android.lintOptions.xmlReport = true
     android.lintOptions.xmlOutput = file "$project.buildDir/reports/lint_report.xml"
     android.lintOptions.htmlReport = false
-    android.lintOptions.lintConfig = file "$rootDir/BuildScripts/lint/lint.xml"
+    android.lintOptions.lintConfig = file "$buildScriptsDir/lint/lint.xml"
     return lintTaskNames
 }
 
@@ -309,7 +309,7 @@ getCheckstyleTask = { sources ->
         ignoreFailures = true
         showViolations = false
         source files(sources)
-        configFile file("$rootDir/BuildScripts/checkstyle/configuration/touchin_checkstyle.xml")
+        configFile file("$buildScriptsDir/checkstyle/configuration/touchin_checkstyle.xml")
         checkstyleClasspath = configurations.checkstyle.asFileTree
         classpath = files(System.getenv("ANDROID_HOME") + "/platforms/" + android.compileSdkVersion + "/android.jar") +
                 files(System.properties.'java.home' + "/lib/rt.jar") +
@@ -332,7 +332,7 @@ getKotlinDetektTask = { isAndroidProject ->
         def input = "${rootDir}"
         def output = "${project.buildDir}/reports"
         def outputName = "kotlin-detekt"
-        def config = "$rootDir/BuildScripts/kotlin/detekt-config.yml"
+        def config = "$buildScriptsDir/kotlin/detekt-config.yml"
 
         // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
         def filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
