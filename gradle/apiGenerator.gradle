@@ -24,7 +24,7 @@ android.applicationVariants.all { variant ->
         jarArgs.add("--output-path")
         jarArgs.add("${generatedModelsDirectory.path}")
         jarArgs.add("--package-name")
-        jarArgs.add("${applicationId}")
+        jarArgs.add("${rootProject.extensions.findByName("applicationId") ?: applicationId}")
         javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
     }
 
