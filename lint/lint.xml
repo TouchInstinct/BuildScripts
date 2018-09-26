@@ -132,7 +132,6 @@
     <issue id="AllowBackup" severity="error"/>
     <issue id="AlwaysShowAction" severity="error"/>
     <issue id="AppCompatMethod" severity="error"/>
-    <issue id="AppIndexingApiWarning" severity="error"/>
     <issue id="Assert" severity="error"/>
     <issue id="CommitPrefEdits" severity="error"/>
     <issue id="CommitTransaction" severity="error"/>
@@ -221,7 +220,6 @@
 
     <!-- DISABLE RULES BELOW -->
     <issue id="GoogleAppIndexingApiWarning" severity="ignore"/>
-    <issue id="GoogleAppIndexingUrlError" severity="ignore"/>
     <issue id="GoogleAppIndexingWarning" severity="ignore"/>
     <issue id="AppLinksAutoVerifyError" severity="ignore"/>
     <issue id="AppLinksAutoVerifyWarning" severity="ignore"/>
