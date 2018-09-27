@@ -7,7 +7,7 @@ configurations {
 }
 
 dependencies {
-    apigenerator 'ru.touchin:api-generator:1.1.26'
+    apigenerator 'ru.touchin:api-generator:1.1.33'
 }
 
 android.applicationVariants.all { variant ->
@@ -24,7 +24,7 @@ android.applicationVariants.all { variant ->
         jarArgs.add("--output-path")
         jarArgs.add("${generatedModelsDirectory.path}")
         jarArgs.add("--package-name")
-        jarArgs.add("${applicationId}")
+        jarArgs.add("${rootProject.extensions.findByName("applicationId") ?: applicationId}")
         javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
     }
 
