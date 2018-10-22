@@ -1,7 +1,7 @@
 def getServerProjectSources
 def getAndroidProjectSources
 
-apply from: "${rootDir}/libraries/BuildScripts/gradle/commonStaticAnalysis.gradle"
+apply from: "$buildScriptsDir/gradle/commonStaticAnalysis.gradle"
 
 gradle.projectsEvaluated {
 
@@ -104,5 +104,3 @@ getAndroidProjectSources = { excludes ->
     }
     return sources
 }
-
-
