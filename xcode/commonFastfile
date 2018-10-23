@@ -25,8 +25,9 @@ end
 after_all do |lane, options|
   if options[:uploadToFabric]
     appName = options[:appName] || $appName
-    token = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\n'")
-    secret = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//' | tr -d '\n'")
+
+    token = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\\n'")
+    secret = sh("printf `cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//'` | tr -d '\\n'")
 
     releaseNotesFile = "release-notes.txt"
     sh("touch ../#{releaseNotesFile}")
