@@ -17,8 +17,6 @@ def appendLintErrors
 
 repositories {
     maven { url "http://dl.bintray.com/touchin/touchin-tools" }
-    maven { url "https://plugins.gradle.org/m2/" }
-    jcenter()
 }
 
 configurations {
@@ -326,22 +324,22 @@ getCheckstyleTask = { sources ->
 
 getKotlinDetektTask = { isAndroidProject ->
     def taskName = (isAndroidProject ? "android" : "server") + "detektCheck_${project.name}"
-    tasks.create(taskName, io.gitlab.arturbosch.detekt.Detekt) {
-        input = file("${rootDir}")
-        output = file("${project.buildDir}/reports")
+    tasks.create(taskName, Detekt) {
+        input = files("${rootDir}")
+        output = files("${project.buildDir}/reports")
         config = file("$buildScriptsDir/kotlin/detekt-config.yml")
 
         // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
         filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
 
         reports {
-            xml {
-                enabled = true
-                destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
-            }
             html {
                 enabled = true
-                destination = file("${project.buildDir}/reports/kotlin-detekt.html")
+                destination file("${project.buildDir}/reports/kotlin-detekt.html")
+            }
+            xml {
+                enabled = true
+                destination file("${project.buildDir}/reports/kotlin-detekt.xml")
             }
         }
     }
@@ -367,11 +365,9 @@ dependencies {
     pmd 'net.sourceforge.pmd:pmd-core:5.5.3'
     pmd 'net.sourceforge.pmd:pmd-java:5.5.3'
 
+    detekt 'io.gitlab.arturbosch.detekt:1.0.0.RC9.2'
+
     checkstyle 'ru.touchin:checkstyle:7.6.2-fork'
 
     pngtastic 'com.github.depsypher:pngtastic:1.2'
-}
-
-plugins {
-    id "io.gitlab.arturbosch.detekt" version "1.0.0.RC9.2"
 }
