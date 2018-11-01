@@ -17,12 +17,12 @@ def appendLintErrors
 
 repositories {
     maven { url "http://dl.bintray.com/touchin/touchin-tools" }
+    maven { url "https://plugins.gradle.org/m2/" }
     jcenter()
 }
 
 configurations {
     pngtastic
-    detekt
 }
 
 cpd {
@@ -326,22 +326,24 @@ getCheckstyleTask = { sources ->
 
 getKotlinDetektTask = { isAndroidProject ->
     def taskName = (isAndroidProject ? "android" : "server") + "detektCheck_${project.name}"
-    tasks.create(taskName, JavaExec) {
-        main = "io.gitlab.arturbosch.detekt.cli.Main"
-        classpath = configurations.detekt
-        def input = "${rootDir}"
-        def output = "${project.buildDir}/reports"
-        def outputName = "kotlin-detekt"
-        def config = "$buildScriptsDir/kotlin/detekt-config.yml"
+    tasks.create(taskName, io.gitlab.arturbosch.detekt.Detekt) {
+        input = file("${rootDir}")
+        output = file("${project.buildDir}/reports")
+        config = file("$buildScriptsDir/kotlin/detekt-config.yml")
 
         // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
-        def filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
-        def params = ['-i', input,
-                      '-o', output,
-                      '-c', config,
-                      '-f', filters,
-                      '--output-name', outputName]
-        args(params)
+        filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
+
+        reports {
+            xml {
+                enabled = true
+                destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
+            }
+            html {
+                enabled = true
+                destination = file("${project.buildDir}/reports/kotlin-detekt.html")
+            }
+        }
     }
     return taskName
 }
@@ -368,6 +370,8 @@ dependencies {
     checkstyle 'ru.touchin:checkstyle:7.6.2-fork'
 
     pngtastic 'com.github.depsypher:pngtastic:1.2'
+}
 
-    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.RC6-2'
+plugins {
+    id "io.gitlab.arturbosch.detekt" version "1.0.0.RC9.2"
 }
