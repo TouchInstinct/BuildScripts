@@ -1,6 +1,7 @@
 apply plugin: 'checkstyle'
-apply plugin: 'pmd'
 apply plugin: 'cpd'
+apply plugin: 'pmd'
+apply plugin: 'io.gitlab.arturbosch.detekt'
 
 def getCpdTask
 def getPmdTask
@@ -324,7 +325,7 @@ getCheckstyleTask = { sources ->
 
 getKotlinDetektTask = { isAndroidProject ->
     def taskName = (isAndroidProject ? "android" : "server") + "detektCheck_${project.name}"
-    tasks.create(taskName, Detekt) {
+    tasks.create(taskName, io.gitlab.arturbosch.detekt.Detekt) {
         input = files("${rootDir}")
         output = files("${project.buildDir}/reports")
         config = file("$buildScriptsDir/kotlin/detekt-config.yml")
@@ -364,8 +365,6 @@ task optimizePng {
 dependencies {
     pmd 'net.sourceforge.pmd:pmd-core:5.5.3'
     pmd 'net.sourceforge.pmd:pmd-java:5.5.3'
-
-    detekt 'io.gitlab.arturbosch.detekt:1.0.0.RC9.2'
 
     checkstyle 'ru.touchin:checkstyle:7.6.2-fork'
 
