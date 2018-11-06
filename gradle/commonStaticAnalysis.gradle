@@ -1,6 +1,7 @@
 apply plugin: 'checkstyle'
-apply plugin: 'pmd'
 apply plugin: 'cpd'
+apply plugin: 'pmd'
+apply plugin: 'io.gitlab.arturbosch.detekt'
 
 def getCpdTask
 def getPmdTask
@@ -17,16 +18,33 @@ def appendLintErrors
 
 repositories {
     maven { url "http://dl.bintray.com/touchin/touchin-tools" }
-    jcenter()
 }
 
 configurations {
     pngtastic
-    detekt
 }
 
 cpd {
     skipLexicalErrors = true
+}
+
+detekt {
+    input = files("${rootDir}")
+    config = files("$buildScriptsDir/kotlin/detekt-config.yml")
+
+    // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
+    filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
+
+    reports {
+        html {
+            enabled = true
+            destination = file("${project.buildDir}/reports/kotlin-detekt.html")
+        }
+        xml {
+            enabled = true
+            destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
+        }
+    }
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -59,7 +77,7 @@ ext.getStaticAnalysisTaskNames = { isAndroidProject, sources ->
     def tasksNames = new ArrayList<String>()
     try {
         tasksNames.add(getCpdTask(isAndroidProject, sources))
-        tasksNames.add(getKotlinDetektTask(isAndroidProject))
+        tasksNames.add(getKotlinDetektTask())
         if (isAndroidProject) {
             tasksNames.add(getCheckstyleTask(sources))
             tasksNames.add(getPmdTask(sources))
@@ -324,26 +342,8 @@ getCheckstyleTask = { sources ->
     return taskName
 }
 
-getKotlinDetektTask = { isAndroidProject ->
-    def taskName = (isAndroidProject ? "android" : "server") + "detektCheck_${project.name}"
-    tasks.create(taskName, JavaExec) {
-        main = "io.gitlab.arturbosch.detekt.cli.Main"
-        classpath = configurations.detekt
-        def input = "${rootDir}"
-        def output = "${project.buildDir}/reports"
-        def outputName = "kotlin-detekt"
-        def config = "$buildScriptsDir/kotlin/detekt-config.yml"
-
-        // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
-        def filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
-        def params = ['-i', input,
-                      '-o', output,
-                      '-c', config,
-                      '-f', filters,
-                      '--output-name', outputName]
-        args(params)
-    }
-    return taskName
+getKotlinDetektTask = {
+    return "detekt"
 }
 
 task optimizePng {
@@ -368,6 +368,4 @@ dependencies {
     checkstyle 'ru.touchin:checkstyle:7.6.2-fork'
 
     pngtastic 'com.github.depsypher:pngtastic:1.2'
-
-    detekt 'io.gitlab.arturbosch.detekt:detekt-cli:1.0.0.RC6-2'
 }
