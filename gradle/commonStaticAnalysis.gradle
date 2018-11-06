@@ -28,6 +28,25 @@ cpd {
     skipLexicalErrors = true
 }
 
+detekt {
+    input = files("${rootDir}")
+    config = files("$buildScriptsDir/kotlin/detekt-config.yml")
+
+    // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
+    filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
+
+    reports {
+        html {
+            enabled = true
+            destination = file("${project.buildDir}/reports/kotlin-detekt.html")
+        }
+        xml {
+            enabled = true
+            destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
+        }
+    }
+}
+
 import org.apache.tools.ant.taskdefs.condition.Os
 
 ext.getIdeaFormatTask = { isAndroidProject, sources ->
@@ -324,27 +343,7 @@ getCheckstyleTask = { sources ->
 }
 
 getKotlinDetektTask = { isAndroidProject ->
-    def taskName = (isAndroidProject ? "android" : "server") + "detektCheck_${project.name}"
-    tasks.create(taskName, io.gitlab.arturbosch.detekt.Detekt) {
-        input = files("${rootDir}")
-        output = files("${project.buildDir}/reports")
-        config = file("$buildScriptsDir/kotlin/detekt-config.yml")
-
-        // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
-        filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
-
-        reports {
-            html {
-                enabled = true
-                destination file("${project.buildDir}/reports/kotlin-detekt.html")
-            }
-            xml {
-                enabled = true
-                destination file("${project.buildDir}/reports/kotlin-detekt.xml")
-            }
-        }
-    }
-    return taskName
+    return "detekt"
 }
 
 task optimizePng {
