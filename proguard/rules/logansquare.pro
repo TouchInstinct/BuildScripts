@@ -1,0 +1,5 @@
+-keep class com.bluelinelabs.logansquare.** { *; }
+-keep @com.bluelinelabs.logansquare.annotation.JsonObject class *
+-keep @com.bluelinelabs.logansquare.annotation.JsonEnum class *
+-keep class **$$JsonObjectMapper { *; }
+-keep class **$$JsonTypeConverter { *; }
