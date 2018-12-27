@@ -45,6 +45,7 @@ opt_in_rules:
   - conditional_returns_on_newline
   - closure_spacing
   - closure_end_indentation
+  - trailing_closure
 
   # lint
 
@@ -89,6 +90,9 @@ identifier_name:
 warning_threshold: 1
 
 custom_rules:
+
+  # General
+
   uiwebview_disabled:
     included: ".*.swift"
     name: "UIWebView Usage Disabled"
@@ -102,16 +106,10 @@ custom_rules:
     message: "Please use CocoaLumberjack instead `print` and `NSlog`"
     severity: error
 
-  zero:
-    name: "Short .zero"
+  uiedge_insets_zero:
+    name: "UIEdgeInsets .zero"
     regex: '\(top: 0, left: 0, bottom: 0, right: 0\)'
     message: "Please use short init `.zero`."
-    severity: error
-
-  private_variable:
-    name: "Private variable"
-    regex: '(?<!private\s\w*)let\s\w*(:|(\s=))\sVariable'
-    message: "Please use (file)private with variable."
     severity: error
 
   let_variable:
@@ -160,3 +158,46 @@ custom_rules:
     match_kinds:
     - identifier
     - string
+
+  too_many_empty_spaces:
+    name: "Too many empty spaces"
+    regex: '(?!\n)[^ \n]+ {2,}.+'
+    message: "Remove excess empty spaces"
+    severity: error
+    match_kinds:
+      - argument
+      - attribute.builtin
+      - attribute.id
+      - buildconfig.id
+      - buildconfig.keyword
+      - comment
+      - comment.mark
+      - comment.url
+      - doccomment
+      - doccomment.field
+      - identifier
+      - keyword
+      - number
+      - objectliteral
+      - parameter
+      - placeholder
+      # - string # all except string literals
+      - string_interpolation_anchor
+      - typeidentifier
+
+  # Rx
+
+  unused_map_parameter:
+    name: "Unused map parameter"
+    regex: '.map\s*\{\s*_\s*in'
+    message: "Replace Rx.map operator with replace(with:) or asVoid(). For Sequence.map consider using forEach."
+    severity: error
+
+  # LeadKit
+
+  multiple_add_subview:
+    name: "Multiple addSubview calls"
+    regex: '(^\s*\w*\.?)(addSubview)\([\w]+\)\n\1\2'
+    message: "Replace multiple addSubview calls with single addSubviews."
+    severity: error
+
