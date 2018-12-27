@@ -45,7 +45,6 @@ opt_in_rules:
   - conditional_returns_on_newline
   - closure_spacing
   - closure_end_indentation
-  - trailing_closure
 
   # lint
 
@@ -163,7 +162,7 @@ custom_rules:
     name: "Too many empty spaces"
     regex: '(?!\n)[^ \n]+ {2,}.+'
     message: "Remove excess empty spaces"
-    severity: error
+    severity: warning
     match_kinds:
       - argument
       - attribute.builtin
@@ -191,7 +190,7 @@ custom_rules:
     name: "Unused map parameter"
     regex: '.map\s*\{\s*_\s*in'
     message: "Replace Rx.map operator with replace(with:) or asVoid(). For Sequence.map consider using forEach."
-    severity: error
+    severity: warning
 
   # LeadKit
 
@@ -199,5 +198,5 @@ custom_rules:
     name: "Multiple addSubview calls"
     regex: '(^\s*\w*\.?)(addSubview)\([\w]+\)\n\1\2'
     message: "Replace multiple addSubview calls with single addSubviews."
-    severity: error
+    severity: warning
 
