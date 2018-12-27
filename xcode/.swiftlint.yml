@@ -169,7 +169,6 @@ custom_rules:
       - attribute.id
       - buildconfig.id
       - buildconfig.keyword
-      - comment
       - comment.mark
       - comment.url
       - doccomment
@@ -181,6 +180,7 @@ custom_rules:
       - parameter
       - placeholder
       # - string # all except string literals
+      # - comment # and comments
       - string_interpolation_anchor
       - typeidentifier
 
