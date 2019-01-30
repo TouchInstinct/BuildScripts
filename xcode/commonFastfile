@@ -10,6 +10,8 @@ before_all do |lane, options|
     sh("rm -rf #{podsReposPath}")
   end
 
+  carthage(platform: "iOS")
+
   cocoapods(
     clean: true,
     repo_update: true
