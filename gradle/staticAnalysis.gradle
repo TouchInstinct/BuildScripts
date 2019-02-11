@@ -19,9 +19,10 @@ gradle.projectsEvaluated {
 
     def excludes = rootProject.extensions.findByName("staticAnalysisExcludes")
 
-    def androidStaticAnalysisTasks = getStaticAnalysisTaskNames(true, getAndroidProjectSources(excludes))
+    def androidStaticAnalysisTasks = getStaticAnalysisTaskNames(true, getAndroidProjectSources(excludes), null)
     def androidIdeaFormatTask = getIdeaFormatTask(true, getAndroidProjectSources(excludes))
-    task staticAnalysis {
+
+    task staticAnalysisWithFormatting {
         androidStaticAnalysisTasks.each { task ->
             tasks.findByName(task).mustRunAfter(androidIdeaFormatTask)
         }
@@ -32,16 +33,17 @@ gradle.projectsEvaluated {
         }
     }
 
-    task staticAnalysisWithoutFormatting {
+    task staticAnalysis {
         dependsOn androidStaticAnalysisTasks
         doFirst {
             generateReport(true)
         }
     }
 
-    def serverStaticAnalysisTasks = getStaticAnalysisTaskNames(false, getServerProjectSources(excludes))
+    def serverStaticAnalysisTasks = getStaticAnalysisTaskNames(false, getServerProjectSources(excludes), null)
     def serverIdeaFormatTask = getIdeaFormatTask(false, getServerProjectSources(excludes))
-    task serverStaticAnalysis {
+
+    task serverStaticAnalysisWithFormatting {
         serverStaticAnalysisTasks.each { task ->
             tasks.findByName(task).mustRunAfter(serverIdeaFormatTask)
         }
@@ -52,10 +54,17 @@ gradle.projectsEvaluated {
         }
     }
 
-    task serverStaticAnalysisWithoutFormatting {
+    task serverStaticAnalysis {
         dependsOn serverStaticAnalysisTasks
         doFirst {
             generateReport(false)
+        }
+    }
+
+    android.applicationVariants.all { variant ->
+        task("staticAnalysis${variant.name.capitalize()}") {
+            dependsOn getStaticAnalysisTaskNames(true, getAndroidProjectSources(excludes), variant)
+            doFirst { generateReport(true) }
         }
     }
 }
