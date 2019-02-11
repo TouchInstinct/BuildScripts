@@ -1,9 +1,14 @@
 VERSION=$1
 SHOULD_GENERATE=$2
 
+echo "Optional Api Generator Build Phase"
+
 if [ "${SHOULD_GENERATE}" == "false" ]; then
+    echo "SHOULD_GENERATE == false"
     exit 0
 fi
+
+echo "SHOULD_GENERATE == true"
 
 FILE_NAME="api-generator-${VERSION}.jar"
 
