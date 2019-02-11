@@ -1,7 +1,7 @@
 VERSION=$1
 SHOULD_GENERATE=$2
 
-if [ "$SHOULD_GENERATE" = "false" ]; then
+if [ "${SHOULD_GENERATE}" == "false" ]; then
     exit 0
 fi
 
