@@ -2,6 +2,7 @@ VERSION=$1
 SHOULD_GENERATE=$2
 
 echo "Optional Api Generator Build Phase"
+echo "SHOULD_GENERATE is ${SHOULD_GENERATE}"
 
 if [ "${SHOULD_GENERATE}" == "false" ]; then
     echo "SHOULD_GENERATE == false"
