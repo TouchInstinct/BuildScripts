@@ -73,14 +73,18 @@ ext.getIdeaFormatTask = { isAndroidProject, sources ->
     }
 }
 
-ext.getStaticAnalysisTaskNames = { isAndroidProject, sources, buildVariant ->
+ext.getStaticAnalysisTaskNames = { isAndroidProject, sources, buildVariant, checkstyleEnabled, pmdEnabled ->
     def tasksNames = new ArrayList<String>()
     try {
         tasksNames.add(getCpdTask(isAndroidProject, sources))
         tasksNames.add(getKotlinDetektTask())
         if (isAndroidProject) {
-            tasksNames.add(getCheckstyleTask(sources))
-            tasksNames.add(getPmdTask(sources))
+            if (checkstyleEnabled) {
+                tasksNames.add(getCheckstyleTask(sources))
+            }
+            if (pmdEnabled) {
+                tasksNames.add(getPmdTask(sources))
+            }
             tasksNames.add(getLintTask(buildVariant))
         }
     } catch (Exception exception) {
@@ -111,10 +115,21 @@ ext.generateReport = { isAndroidProject ->
     }
 
     if (isAndroidProject) {
-        def file = new File("${project.buildDir}/reports/pmd.xml")
-        if (file.exists()) {
+        def checkstyleFile = new File("${project.buildDir}/reports/checkstyle.xml")
+        if (checkstyleFile.exists()) {
             previousCount = count
-            count = appendPmdErrors(count, file)
+            count = appendCheckstyleErrors(count, checkstyleFile)
+            if (count - previousCount > 0) {
+                consoleReport.append("\nCheckstyle: FAILED (" + (count - previousCount) + " errors)")
+            } else {
+                consoleReport.append("\nCheckstyle: PASSED")
+            }
+        }
+
+        def pmdFile = new File("${project.buildDir}/reports/pmd.xml")
+        if (pmdFile.exists()) {
+            previousCount = count
+            count = appendPmdErrors(count, pmdFile)
             if (count - previousCount > 0) {
                 consoleReport.append("\nPMD: FAILED (" + (count - previousCount) + " errors)")
             } else {
@@ -128,14 +143,6 @@ ext.generateReport = { isAndroidProject ->
             consoleReport.append("\nLint: FAILED (" + (count - previousCount) + " errors)")
         } else {
             consoleReport.append("\nLint: PASSED")
-        }
-
-        previousCount = count
-        count = appendCheckstyleErrors(count, new File("${project.buildDir}/reports/checkstyle.xml"))
-        if (count - previousCount > 0) {
-            consoleReport.append("\nCheckstyle: FAILED (" + (count - previousCount) + " errors)")
-        } else {
-            consoleReport.append("\nCheckstyle: PASSED")
         }
     }
 

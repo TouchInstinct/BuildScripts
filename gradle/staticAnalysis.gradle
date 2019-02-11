@@ -18,9 +18,12 @@ gradle.projectsEvaluated {
     }
 
     def excludes = rootProject.extensions.findByName("staticAnalysisExcludes")
+    def checkstyleEnabled = rootProject.extensions.findByName("checkstyleEnabled") ?: false
+    def pmdEnabled = rootProject.extensions.findByName("pmdEnabled") ?: false
 
-    def androidStaticAnalysisTasks = getStaticAnalysisTaskNames(true, getAndroidProjectSources(excludes), null)
-    def androidIdeaFormatTask = getIdeaFormatTask(true, getAndroidProjectSources(excludes))
+    def androidSources = getAndroidProjectSources(excludes)
+    def androidStaticAnalysisTasks = getStaticAnalysisTaskNames(true, androidSources, null, checkstyleEnabled, pmdEnabled)
+    def androidIdeaFormatTask = getIdeaFormatTask(true, androidSources)
 
     task staticAnalysisWithFormatting {
         androidStaticAnalysisTasks.each { task ->
@@ -40,7 +43,7 @@ gradle.projectsEvaluated {
         }
     }
 
-    def serverStaticAnalysisTasks = getStaticAnalysisTaskNames(false, getServerProjectSources(excludes), null)
+    def serverStaticAnalysisTasks = getStaticAnalysisTaskNames(false, getServerProjectSources(excludes), null, checkstyleEnabled, pmdEnabled)
     def serverIdeaFormatTask = getIdeaFormatTask(false, getServerProjectSources(excludes))
 
     task serverStaticAnalysisWithFormatting {
@@ -63,7 +66,7 @@ gradle.projectsEvaluated {
 
     android.applicationVariants.all { variant ->
         task("staticAnalysis${variant.name.capitalize()}") {
-            dependsOn getStaticAnalysisTaskNames(true, getAndroidProjectSources(excludes), variant)
+            dependsOn getStaticAnalysisTaskNames(true, androidSources, variant, checkstyleEnabled, pmdEnabled)
             doFirst { generateReport(true) }
         }
     }
