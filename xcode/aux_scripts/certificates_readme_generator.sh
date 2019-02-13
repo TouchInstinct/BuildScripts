@@ -17,7 +17,8 @@ for config_folder in $CERTS_PATH/*/; do
 
 		DESCRIPTION_FILE_NAME="description.txt"
 
-		DESCRIPTION_FILE_PATH="${CERTS_PATH}/${CONFIG_FOLDER_NAME}/${TYPE_FOLDER_NAME}/${TARGET_FOLDER_NAME}/${DESCRIPTION_FILE_NAME}"
+		TARGET_FOLDER_PATH="${CERTS_PATH}/${CONFIG_FOLDER_NAME}/${TYPE_FOLDER_NAME}/${TARGET_FOLDER_NAME}"
+		DESCRIPTION_FILE_PATH="${TARGET_FOLDER_PATH}/${DESCRIPTION_FILE_NAME}"
 
 		if [ -e "$DESCRIPTION_FILE_PATH" ]
 		then
@@ -27,11 +28,28 @@ for config_folder in $CERTS_PATH/*/; do
 		fi
 
   		for file in $CERTS_PATH/$CONFIG_FOLDER_NAME/$TYPE_FOLDER_NAME/$TARGET_FOLDER_NAME/*; do
- 				FILE_NAME="$(basename "$file")"
+ 			FILE_NAME="$(basename "$file")"
 
-				if ! [ "$FILE_NAME" == "$DESCRIPTION_FILE_NAME" ]
+			if ! [ "$FILE_NAME" == "$DESCRIPTION_FILE_NAME" ]
 			then
-  				echo "|[${TARGET_FOLDER_NAME}](${CONFIG_FOLDER_NAME}/${TYPE_FOLDER_NAME}/${TARGET_FOLDER_NAME}/${FILE_NAME})|${DESCRIPTION}|"
+				FILE_PATH="${TARGET_FOLDER_PATH}/${FILE_NAME}"
+				EXTENSION="${FILE_NAME##*.}"
+				PROPER_FILE_PREFIX="${PROJECT_NAME}${TARGET_FOLDER_NAME}${CONFIG_FOLDER_NAME}"
+
+				if [ "$EXTENSION" == "mobileprovision" ]; then
+					FILE_TYPE="Profile"
+				elif [ "$EXTENSION" == "p12" ]; then
+					FILE_TYPE="Cert"
+				elif [ ]; then
+					echo "Unknown type of file has been found. Not a profile or a certificate."
+					exit 1
+				fi
+
+				PROPER_FILE_NAME="${PROPER_FILE_PREFIX}${FILE_TYPE}"
+
+				mv $FILE_PATH "${TARGET_FOLDER_PATH}/${PROPER_FILE_NAME}.${EXTENSION}"
+
+  				echo "|[${TARGET_FOLDER_NAME}](${CONFIG_FOLDER_NAME}/${TYPE_FOLDER_NAME}/${TARGET_FOLDER_NAME}/${PROPER_FILE_NAME}.${EXTENSION})|${DESCRIPTION}|"
   			fi
   		done
   	done
