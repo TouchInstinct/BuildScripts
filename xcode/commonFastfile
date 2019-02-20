@@ -1,6 +1,6 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
-before_all do |lane, options|
+private_lane :beforeBuild do |options|
   appName = options[:appName] || $appName
   podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
   lockFilePath = "#{podsReposPath}/.git/index.lock"
@@ -24,33 +24,33 @@ before_all do |lane, options|
   )
 end
 
-after_all do |lane, options|
-  if options[:uploadToFabric]
-    appName = options[:appName] || $appName
+private_lane :afterBuild do |options|
+  appName = options[:appName] || $appName
+  podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
+  lockFilePath = "#{podsReposPath}/.git/index.lock"
 
-    token = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\\n'")
-    secret = sh("printf `cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//'` | tr -d '\\n'")
-
-    releaseNotesFile = "release-notes.txt"
-    sh("touch ../#{releaseNotesFile}")
-
-    crashlytics(
-      ipa_path: "./#{appName}.ipa",
-      crashlytics_path: "./Pods/Crashlytics/",
-      api_token: token,
-      build_secret: secret,
-      notes_path: releaseNotesFile,
-      groups: "touch-instinct"
-    )
-
-    upload_symbols_to_crashlytics(
-      dsym_path: "./#{appName}.app.dSYM.zip",
-      api_token: token
-    )
+  # check if .lock file exists in pod repos - then remove all master repo
+  if File.exists? lockFilePath
+    sh("rm -rf #{podsReposPath}")
   end
+
+  carthage(platform: "iOS")
+
+  cocoapods(
+    clean: true,
+    repo_update: true
+  )
+
+  set_info_plist_value(
+    path: "./#{appName}/Info.plist",
+    key: "CFBundleVersion",
+    value: options[:buildNumber] || 10000
+  )
 end
 
 private_lane :buildConfiguration do |options|
+  beforeBuild(options)
+
   configuration = lane_context[SharedValues::LANE_NAME]
   method = configuration.start_with?("Enterprise") ? "enterprise" : "development"
   appName = options[:appName] || $appName
@@ -71,4 +71,6 @@ private_lane :buildConfiguration do |options|
     export_options: exportOptions,
     skip_package_ipa: !uploadToFabric
   )
+
+  afterBuild(options)
 end
