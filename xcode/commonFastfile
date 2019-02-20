@@ -74,3 +74,34 @@ private_lane :buildConfiguration do |options|
 
   afterBuild(options)
 end
+
+private_lane :createPushCertificate do |options|
+  certificates_path = File.expand_path "../certificates"
+  Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
+
+  get_push_certificate(
+    development: true,
+    generate_p12: true,
+    active_days_limit: 30, # create new certificate if old one will expire in 30 days
+    save_private_key: false,
+    app_identifier: options[:app_identifier],
+    p12_password: "123", # empty password won't work with Pusher
+    output_path: certificates_path
+  )
+end
+
+private_lane :syncCodeSignning do |options|
+  keychain_password = prompt(
+    text: "Please enter your keychain password (account password): ",
+    secure_text: true
+  )
+
+  match(
+    app_identifier: options[:app_identifier],
+    type: "development",
+    readonly: true,
+    storage_mode: "git",
+    git_url: "git@github.com:petropavel13/FastlaneCertificates.git",
+    keychain_password: keychain_password
+  )
+end
