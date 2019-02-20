@@ -10,7 +10,9 @@ before_all do |lane, options|
     sh("rm -rf #{podsReposPath}")
   end
 
-  carthage(platform: "iOS")
+  if File.exists? "Cartfile"
+    carthage(platform: "iOS")
+  end
 
   cocoapods(
     clean: true,
