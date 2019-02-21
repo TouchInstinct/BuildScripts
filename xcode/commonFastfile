@@ -76,11 +76,11 @@ private_lane :buildConfiguration do |options|
 end
 
 private_lane :createPushCertificate do |options|
-  certificates_path = File.expand_path "../pushcerts"
+  certificates_path = File.expand_path "../Certificates"
   Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
 
   get_push_certificate(
-    development: true,
+    development: options[:development] || true,
     generate_p12: true,
     active_days_limit: 30, # create new certificate if old one will expire in 30 days
     save_private_key: false,
@@ -93,7 +93,7 @@ end
 private_lane :syncCodeSigning do |options|
   match(
     app_identifier: options[:app_identifier],
-    type: "development",
+    type: options[:type] || "development",
     readonly: options[:readonly] || true,
     storage_mode: "git",
     git_url: options[:git_url],
