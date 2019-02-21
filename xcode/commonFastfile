@@ -75,7 +75,7 @@ private_lane :buildConfiguration do |options|
   afterBuild(options)
 end
 
-private_lane :createPushCertificate do |options|
+lane :createPushCertificate do |options|
   certificates_path = File.expand_path "../Certificates"
   Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
 
