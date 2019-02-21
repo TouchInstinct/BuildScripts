@@ -76,7 +76,7 @@ private_lane :buildConfiguration do |options|
 end
 
 private_lane :createPushCertificate do |options|
-  certificates_path = File.expand_path "../certificates"
+  certificates_path = File.expand_path "../pushcerts"
   Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
 
   get_push_certificate(
@@ -101,7 +101,10 @@ private_lane :syncCodeSignning do |options|
     type: "development",
     readonly: true,
     storage_mode: "git",
-    git_url: "git@github.com:petropavel13/FastlaneCertificates.git",
-    keychain_password: keychain_password
+    git_url: options[:git_url],
+    git_branch: "fastlane_certificates",
+    keychain_password: keychain_password,
+    skip_docs: true,
+    platform: "ios"
   )
 end
