@@ -93,13 +93,8 @@ end
 private_lane :syncCodeSigning do |options|
   type = options[:type] || "development"
 
-  configurations_path = "./fastlane/configurations.yaml"
-  if File.exists? configurations_path
-    require "yaml"
-
-    configurations = YAML.load_file(configurations_path)
-    options.merge(configurations[type])
-  end
+  options_override = load_options_from("configurations.yaml")[type]
+  options.merge(options_override)
 
   match(
     app_identifier: options[:app_identifier],
@@ -130,4 +125,14 @@ end
 private_lane :updateCodeSigning do |options|
   options[:readonly] = false
   syncCodeSigning(options)
+end
+
+def load_options_from(file_path)
+  if File.exists? file_path
+    require "yaml"
+
+    return YAML.load_file(file_path)
+  end
+
+  return nil
 end
