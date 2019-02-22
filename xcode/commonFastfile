@@ -91,9 +91,21 @@ lane :createPushCertificate do |options|
 end
 
 private_lane :syncCodeSigning do |options|
+  type = options[:type] || "development"
+
+  configurations_path = "./fastlane/configurations.yaml"
+  if File.exists? configurations_path
+    require "yaml"
+
+    configurations = YAML.load_file(configurations_path)
+    options.merge(configurations[type])
+  end
+
   match(
     app_identifier: options[:app_identifier],
-    type: options[:type] || "development",
+    username: options[:username] || options[:apple_id],
+    team_id: options[:team_id],
+    type: type,
     readonly: options[:readonly] || true,
     storage_mode: "git",
     git_url: options[:git_url],
