@@ -107,8 +107,7 @@ private_lane :syncCodeSigning do |options|
     git_branch: "fastlane_certificates",
     keychain_password: options[:keychain_password],
     skip_docs: true,
-    platform: "ios",
-    verbose: true
+    platform: "ios"
   )
 end
 
