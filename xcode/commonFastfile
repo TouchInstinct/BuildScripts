@@ -54,8 +54,8 @@ end
 private_lane :buildConfiguration do |options|
   beforeBuild(options)
 
-  configuration = lane_context[SharedValues::LANE_NAME]
-  method = configuration.start_with?("Enterprise") ? "enterprise" : "development"
+  configuration = options[:configuration] || lane_context[SharedValues::LANE_NAME]
+  method = configuration_type_from_lane_name(configuration)
   appName = options[:appName] || $appName
   uploadToFabric = options[:uploadToFabric]
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
@@ -65,7 +65,7 @@ private_lane :buildConfiguration do |options|
   options = options.merge(get_keychain_options(options))
   openKeychain(options)
 
-  options[:type] = method
+  options[:type] = profile_type_from_configuration_type(method)
   syncCodeSigning(options)
 
   gym(
@@ -159,6 +159,21 @@ def get_keychain_options(options)
   end
 
   return {:keychain_name => keychain_name, :keychain_password => keychain_password}
+end
+
+def configuration_type_from_lane_name(lane_name)
+  case
+  when lane_name.start_with?("Enterprise")
+    "enterprise"
+  when lane_name.start_with?("AppStore")
+    "app-store"
+  else
+    "development"
+  end
+end
+
+def profile_type_from_configuration_type(configuration_type)
+  configuration_type.gsub("-", "") # "app-store" => "appstore"
 end
 
 def load_options_from(file_path)
