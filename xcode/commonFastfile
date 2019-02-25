@@ -10,11 +10,12 @@ private_lane :beforeBuild do |options|
     sh("rm -rf #{podsReposPath}")
   end
 
-  carthage(platform: "iOS")
+  if File.exists? "./Cartfile"
+    carthage(platform: "iOS")
+  end
 
   cocoapods(
-    clean: true,
-    repo_update: true
+    repo_update: false
   )
 
   set_info_plist_value(
@@ -61,7 +62,7 @@ private_lane :buildConfiguration do |options|
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
   exportOptions[:compileBitcode] = options[:compileBitcode] || false
 
-  options.merge(get_keychain_options(options))
+  options = options.merge(get_keychain_options(options))
   openKeychain(options)
 
   options[:type] = method
@@ -131,7 +132,7 @@ private_lane :openKeychain do |options|
     )
   else
     unlock_keychain(
-      name: options[:keychain_name],
+      path: options[:keychain_name],
       password: options[:keychain_password]
     )
   end
@@ -149,7 +150,7 @@ def get_keychain_options(options)
 
   if is_ci?
     keychain_name = keychain_name || "ci.keychain"
-    keychain_password = keychain_name ||  ""
+    keychain_password = keychain_password ||  ""
   else
     keychain_password = keychain_password || prompt(
       text: "Please enter your keychain password (account password): ",
