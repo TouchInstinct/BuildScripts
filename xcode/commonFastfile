@@ -96,6 +96,11 @@ private_lane :syncCodeSigning do |options|
   options_override = load_options_from("configurations.yaml")[type.to_sym]
   options = options.merge(options_override)
 
+  keychain_password = options[:keychain_password] || prompt(
+    text: "Please enter your keychain password (account password): ",
+    secure_text: true
+  )
+
   match(
     app_identifier: options[:app_identifier],
     username: options[:username] || options[:apple_id],
@@ -105,26 +110,10 @@ private_lane :syncCodeSigning do |options|
     storage_mode: "git",
     git_url: options[:git_url],
     git_branch: "fastlane_certificates",
-    keychain_password: options[:keychain_password],
+    keychain_password: keychain_password,
     skip_docs: true,
     platform: "ios"
   )
-end
-
-private_lane :getCodeSigning do |options|
-  keychain_password = prompt(
-    text: "Please enter your keychain password (account password): ",
-    secure_text: true
-  )
-
-  options[:readonly] = true
-  options[:keychain_password] = keychain_password
-  syncCodeSigning(options)
-end
-
-private_lane :updateCodeSigning do |options|
-  options[:readonly] = false
-  syncCodeSigning(options)
 end
 
 def load_options_from(file_path)
