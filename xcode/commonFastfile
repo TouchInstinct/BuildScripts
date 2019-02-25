@@ -25,27 +25,29 @@ private_lane :beforeBuild do |options|
 end
 
 private_lane :afterBuild do |options|
-  appName = options[:appName] || $appName
-  podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
-  lockFilePath = "#{podsReposPath}/.git/index.lock"
+  if options[:uploadToFabric]
+    appName = options[:appName] || $appName
 
-  # check if .lock file exists in pod repos - then remove all master repo
-  if File.exists? lockFilePath
-    sh("rm -rf #{podsReposPath}")
+    token = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\\n'")
+    secret = sh("printf `cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//'` | tr -d '\\n'")
+
+    releaseNotesFile = "release-notes.txt"
+    sh("touch ../#{releaseNotesFile}")
+
+    crashlytics(
+      ipa_path: "./#{appName}.ipa",
+      crashlytics_path: "./Pods/Crashlytics/",
+      api_token: token,
+      build_secret: secret,
+      notes_path: releaseNotesFile,
+      groups: "touch-instinct"
+    )
+
+    upload_symbols_to_crashlytics(
+      dsym_path: "./#{appName}.app.dSYM.zip",
+      api_token: token
+    )
   end
-
-  carthage(platform: "iOS")
-
-  cocoapods(
-    clean: true,
-    repo_update: true
-  )
-
-  set_info_plist_value(
-    path: "./#{appName}/Info.plist",
-    key: "CFBundleVersion",
-    value: options[:buildNumber] || 10000
-  )
 end
 
 private_lane :buildConfiguration do |options|
@@ -58,6 +60,12 @@ private_lane :buildConfiguration do |options|
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
   exportOptions[:compileBitcode] = options[:compileBitcode] || false
+
+  options.merge(get_keychain_options(options))
+  openKeychain(options)
+
+  options[:type] = method
+  syncCodeSigning(options)
 
   gym(
     clean: true,
@@ -72,10 +80,12 @@ private_lane :buildConfiguration do |options|
     skip_package_ipa: !uploadToFabric
   )
 
+  closeKeychain(options)
+
   afterBuild(options)
 end
 
-lane :createPushCertificate do |options|
+lane :СreatePushCertificate do |options|
   certificates_path = File.expand_path "../Certificates"
   Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
 
@@ -90,16 +100,11 @@ lane :createPushCertificate do |options|
   )
 end
 
-private_lane :syncCodeSigning do |options|
+lane :syncCodeSigning do |options|
   type = options[:type] || "development"
 
-  options_override = load_options_from("configurations.yaml")[type.to_sym]
-  options = options.merge(options_override)
-
-  keychain_password = options[:keychain_password] || prompt(
-    text: "Please enter your keychain password (account password): ",
-    secure_text: true
-  )
+  options_override = load_options_from("configurations.yaml")
+  options = options.merge(options_override[type.to_sym])
 
   match(
     app_identifier: options[:app_identifier],
@@ -110,10 +115,49 @@ private_lane :syncCodeSigning do |options|
     storage_mode: "git",
     git_url: options[:git_url],
     git_branch: "fastlane_certificates",
-    keychain_password: keychain_password,
+    keychain_name: options[:keychain_name],
+    keychain_password: options[:keychain_password],
     skip_docs: true,
     platform: "ios"
   )
+end
+
+private_lane :openKeychain do |options|
+  if is_ci?
+    create_keychain(
+      name: options[:keychain_name],
+      password: options[:keychain_password],
+      unlock: true
+    )
+  else
+    unlock_keychain(
+      name: options[:keychain_name],
+      password: options[:keychain_password]
+    )
+  end
+end
+
+private_lane :closeKeychain do |options|
+  if is_ci?
+    delete_keychain(name: options[:keychain_name])
+  end
+end
+
+def get_keychain_options(options)
+  keychain_name = options[:keychain_name]
+  keychain_password = options[:keychain_password]
+
+  if is_ci?
+    keychain_name = keychain_name || "ci.keychain"
+    keychain_password = keychain_name ||  ""
+  else
+    keychain_password = keychain_password || prompt(
+      text: "Please enter your keychain password (account password): ",
+      secure_text: true
+    )
+  end
+
+  return {:keychain_name => keychain_name, :keychain_password => keychain_password}
 end
 
 def load_options_from(file_path)
