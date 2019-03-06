@@ -49,13 +49,35 @@ private_lane :afterBuild do |options|
       api_token: token
     )
   end
+
+  if options[:uploadToAppStore]
+    app_version = get_info_plist_value(
+      path: "./#{appName}/Info.plist",
+      key: "CFBundleShortVersionString"
+    )
+
+    upload_to_app_store(
+      username: options[:username] || options[:apple_id],
+      app_identifier: options[:app_identifier],
+      app_version: options[:app_version] || app_version,
+      ipa: "#{appName}.ipa",
+      build_number: options[:buildNumber],
+      skip_metadata: true,
+      team_id: options[:itc_team_id],
+      dev_portal_team_id: options[:team_id]
+    )
+  end
 end
 
 private_lane :buildConfiguration do |options|
-  beforeBuild(options)
-
   configuration = options[:configuration] || lane_context[SharedValues::LANE_NAME]
   method = configuration_type_from_lane_name(configuration)
+  options[:type] = profile_type_from_configuration_type(method)
+
+  options = merge_options_with_config_file(options)
+
+  beforeBuild(options)
+
   appName = options[:appName] || $appName
   uploadToFabric = options[:uploadToFabric]
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
@@ -102,11 +124,6 @@ lane :СreatePushCertificate do |options|
 end
 
 lane :syncCodeSigning do |options|
-  type = options[:type] || "development"
-
-  options_override = load_options_from("configurations.yaml")
-  options = options.merge(options_override[type.to_sym])
-
   match(
     app_identifier: options[:app_identifier],
     username: options[:username] || options[:apple_id],
@@ -174,6 +191,13 @@ end
 
 def profile_type_from_configuration_type(configuration_type)
   configuration_type.gsub("-", "") # "app-store" => "appstore"
+end
+
+def merge_options_with_config_file(options)
+  type = options[:type] || "development"
+
+  options_override = load_options_from("configurations.yaml")
+  return options.merge(options_override[type.to_sym])
 end
 
 def load_options_from(file_path)
