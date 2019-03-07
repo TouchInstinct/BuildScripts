@@ -52,21 +52,16 @@ end
 
 private_lane :buildConfiguration do |options|
   appName = options[:appName] || $appName
-  configuration = options[:configuration] || lane_context[SharedValues::LANE_NAME]
-  method = configuration_type_from_lane_name(configuration)
 
   options[:scheme] = appName
-  options[:configuration] = configuration
-  options[:method] = method
-  options[:type] = profile_type_from_configuration_type(method)
 
+  configuration = options[:configuration] || lane_context[SharedValues::LANE_NAME]
+  options = options.merge(make_options_for_lane_name(configuration))
   options = merge_options_with_config_file(options)
 
-  installDependencies(options)
+  options = options.merge(get_keychain_options(options))
 
   openKeychain(options)
-
-  syncCodeSigning(options)
 
   if is_ci
     increment_build_number(
@@ -83,18 +78,29 @@ private_lane :buildConfiguration do |options|
   options[:xcodeproj_path] = "../#{appName}.xcodeproj"
   options[:workspace] = "./#{appName}.xcworkspace"
 
+  installDependencies(options)
+
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
     options[:skip_package_ipa] = true
+
+    syncCodeSigning(options)
+
     buildArchive(options) # check build failures and static analysis
   end
 
   if options[:uploadToFabric]
     buildArchive(options)
+
+    syncCodeSigning(options)
+
     uploadToFabric(options)
   end
 
   if options[:uploadToAppStore]
     options[:compileBitcode] = true
+    options = options.merge(make_options_for_lane_name("AppStore"))
+
+    syncCodeSigning(options)
 
     buildArchive(options)
     uploadToAppStore(options)
@@ -205,6 +211,15 @@ end
 
 def profile_type_from_configuration_type(configuration_type)
   configuration_type.gsub("-", "") # "app-store" => "appstore"
+end
+
+def make_options_for_lane_name(lane_name)
+  method = configuration_type_from_lane_name(lane_name)
+  return {
+    :configuration => lane_name,
+    :method => method,
+    :type => profile_type_from_configuration_type(method)
+  }
 end
 
 def merge_options_with_config_file(options)
