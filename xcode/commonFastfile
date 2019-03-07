@@ -1,7 +1,6 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
-private_lane :beforeBuild do |options|
-  appName = options[:appName] || $appName
+private_lane :installDependencies do |options|
   podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
   lockFilePath = "#{podsReposPath}/.git/index.lock"
 
@@ -17,95 +16,110 @@ private_lane :beforeBuild do |options|
   cocoapods(
     repo_update: false
   )
+end
 
-  set_info_plist_value(
-    path: "./#{appName}/Info.plist",
-    key: "CFBundleVersion",
-    value: options[:buildNumber] || 10000
+private_lane :uploadToFabric do |options|
+  token, secret = fabric_keys_from_xcodeproj(options[:xcodeproj_path])
+
+  releaseNotesFile = "release-notes.txt"
+  sh("touch ../#{releaseNotesFile}")
+
+  crashlytics(
+    ipa_path: options[:ipa_path],
+    crashlytics_path: "./Pods/Crashlytics/",
+    api_token: token,
+    build_secret: secret,
+    notes_path: releaseNotesFile,
+    groups: "touch-instinct"
+  )
+
+  upload_symbols_to_crashlytics(
+    dsym_path: options[:dsym_path],
+    api_token: token
   )
 end
 
-private_lane :afterBuild do |options|
-  if options[:uploadToFabric]
-    appName = options[:appName] || $appName
-
-    token = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\\n'")
-    secret = sh("printf `cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//'` | tr -d '\\n'")
-
-    releaseNotesFile = "release-notes.txt"
-    sh("touch ../#{releaseNotesFile}")
-
-    crashlytics(
-      ipa_path: "./#{appName}.ipa",
-      crashlytics_path: "./Pods/Crashlytics/",
-      api_token: token,
-      build_secret: secret,
-      notes_path: releaseNotesFile,
-      groups: "touch-instinct"
-    )
-
-    upload_symbols_to_crashlytics(
-      dsym_path: "./#{appName}.app.dSYM.zip",
-      api_token: token
-    )
-  end
-
-  if options[:uploadToAppStore]
-    app_version = get_info_plist_value(
-      path: "./#{appName}/Info.plist",
-      key: "CFBundleShortVersionString"
-    )
-
-    upload_to_app_store(
-      username: options[:username] || options[:apple_id],
-      app_identifier: options[:app_identifier],
-      app_version: options[:app_version] || app_version,
-      ipa: "#{appName}.ipa",
-      build_number: options[:buildNumber],
-      skip_metadata: true,
-      team_id: options[:itc_team_id],
-      dev_portal_team_id: options[:team_id]
-    )
-  end
+private_lane :uploadToAppStore do |options|
+  upload_to_app_store(
+    username: options[:username] || options[:apple_id],
+    ipa: options[:ipa_path],
+    force: true, # skip metainfo prompt
+    skip_metadata: true,
+    team_id: options[:itc_team_id],
+    dev_portal_team_id: options[:team_id]
+  )
 end
 
 private_lane :buildConfiguration do |options|
+  appName = options[:appName] || $appName
   configuration = options[:configuration] || lane_context[SharedValues::LANE_NAME]
   method = configuration_type_from_lane_name(configuration)
+
+  options[:scheme] = appName
+  options[:configuration] = configuration
+  options[:method] = method
   options[:type] = profile_type_from_configuration_type(method)
 
   options = merge_options_with_config_file(options)
 
-  beforeBuild(options)
+  installDependencies(options)
 
-  appName = options[:appName] || $appName
-  uploadToFabric = options[:uploadToFabric]
-  icloudEnvironment = options[:iCloudContainerEnvironment] || ""
-  exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
-  exportOptions[:compileBitcode] = options[:compileBitcode] || false
-
-  options = options.merge(get_keychain_options(options))
   openKeychain(options)
 
-  options[:type] = profile_type_from_configuration_type(method)
   syncCodeSigning(options)
+
+  if is_ci
+    increment_build_number(
+      build_number: options[:buildNumber]
+    )
+  end
+
+  ipa_name = "#{appName}.ipa"
+  options[:output_name] = ipa_name
+
+  options[:ipa_path] = "./#{ipa_name}"
+  options[:dsym_path] = "./#{appName}.app.dSYM.zip"
+
+  options[:xcodeproj_path] = "../#{appName}.xcodeproj"
+  options[:workspace] = "./#{appName}.xcworkspace"
+
+  if !(options[:uploadToFabric] || options[:uploadToAppStore])
+    options[:skip_package_ipa] = true
+    buildArchive(options) # check build failures and static analysis
+  end
+
+  if options[:uploadToFabric]
+    buildArchive(options)
+    uploadToFabric(options)
+  end
+
+  if options[:uploadToAppStore]
+    options[:compileBitcode] = true
+
+    buildArchive(options)
+    uploadToAppStore(options)
+  end
+
+  closeKeychain(options)
+end
+
+private_lane :buildArchive do |options|
+  exportOptions = {compileBitcode: options[:compileBitcode] || false}
 
   gym(
     clean: true,
-    workspace: "./#{appName}.xcworkspace",
-    scheme: appName,
+    workspace: options[:workspace],
+    scheme: options[:scheme],
     archive_path: "./",
     output_directory: "./",
-    output_name: "#{appName}.ipa",
-    configuration: configuration,
-    export_method: method,
+    output_name: options[:output_name],
+    configuration: options[:configuration],
+    export_method: options[:method],
     export_options: exportOptions,
-    skip_package_ipa: !uploadToFabric
+    skip_package_ipa: options[:skip_package_ipa],
+    include_symbols: options[:compileBitcode] || false,
+    include_bitcode: options[:compileBitcode] || false,
   )
-
-  closeKeychain(options)
-
-  afterBuild(options)
 end
 
 lane :СreatePushCertificate do |options|
@@ -128,7 +142,7 @@ lane :syncCodeSigning do |options|
     app_identifier: options[:app_identifier],
     username: options[:username] || options[:apple_id],
     team_id: options[:team_id],
-    type: type,
+    type: options[:type],
     readonly: options[:readonly] || true,
     storage_mode: "git",
     git_url: options[:git_url],
@@ -226,4 +240,12 @@ def symbolize_keys(hash)
     result[new_key] = new_value
     result
   }
+end
+
+def fabric_keys_from_xcodeproj(xcodeproj_path)
+  fabric_keys_from_shell_script(sh("cat ../#{xcodeproj_path}/project.pbxproj | grep 'Fabric/run'"))
+end
+
+def fabric_keys_from_shell_script(shell_script_contents)
+  shell_script_contents.partition('Fabric/run\" ').last.partition('";').first.split(" ")
 end
