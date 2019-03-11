@@ -9,7 +9,7 @@ private_lane :installDependencies do |options|
     sh("rm -rf #{podsReposPath}")
   end
 
-  if File.exists? "./Cartfile"
+  if File.exists? "../Cartfile"
     carthage(platform: "iOS")
   end
 
@@ -258,7 +258,7 @@ def symbolize_keys(hash)
 end
 
 def fabric_keys_from_xcodeproj(xcodeproj_path)
-  fabric_keys_from_shell_script(sh("cat ../#{xcodeproj_path}/project.pbxproj | grep 'Fabric/run'"))
+  fabric_keys_from_shell_script(sh("cat #{xcodeproj_path}/project.pbxproj | grep 'Fabric/run'"))
 end
 
 def fabric_keys_from_shell_script(shell_script_contents)
