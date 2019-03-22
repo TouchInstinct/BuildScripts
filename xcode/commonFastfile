@@ -108,7 +108,9 @@ private_lane :buildConfiguration do |options|
 end
 
 private_lane :buildArchive do |options|
-  exportOptions = {compileBitcode: options[:compileBitcode] || false}
+  icloudEnvironment = options[:iCloudContainerEnvironment] || ""
+  exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
+  exportOptions[:compileBitcode] = options[:compileBitcode] || false
 
   gym(
     clean: true,
