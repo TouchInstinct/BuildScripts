@@ -105,8 +105,6 @@ private_lane :buildConfiguration do |options|
     buildArchive(options)
     uploadToAppStore(options)
   end
-
-  closeKeychain(options)
 end
 
 private_lane :buildArchive do |options|
@@ -172,12 +170,6 @@ private_lane :openKeychain do |options|
       path: options[:keychain_name],
       password: options[:keychain_password]
     )
-  end
-end
-
-private_lane :closeKeychain do |options|
-  if is_ci?
-    delete_keychain(name: options[:keychain_name])
   end
 end
 
