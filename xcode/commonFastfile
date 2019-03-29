@@ -13,7 +13,7 @@ private_lane :installDependencies do |options|
     # wipe swift 4.x builded binaries
     sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
 
-    carthage(platform: "iOS")
+    carthage(command: "update", platform: "iOS")
   end
 
   cocoapods(
