@@ -102,7 +102,8 @@ private_lane :buildConfiguration do |options|
   end
 
   if options[:uploadToAppStore]
-    options[:compileBitcode] = true
+    options[:compileBitcode] = options[:compileBitcode] || true
+    options[:include_symbols] = options[:include_symbols] || true
     options = options.merge(make_options_for_lane_name("AppStore"))
     options = merge_options_with_config_file(options)
 
@@ -129,7 +130,7 @@ private_lane :buildArchive do |options|
     export_method: options[:method],
     export_options: exportOptions,
     skip_package_ipa: options[:skip_package_ipa],
-    include_symbols: options[:compileBitcode] || false,
+    include_symbols: options[:include_symbols] || false,
     include_bitcode: options[:compileBitcode] || false,
   )
 end
