@@ -10,10 +10,7 @@ private_lane :installDependencies do |options|
   end
 
   if File.exists? "../Cartfile"
-    # wipe swift 4.x builded binaries
-    sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
-
-    carthage(command: "update", platform: "iOS")
+    carthage(platform: "iOS")
   end
 
   cocoapods(
