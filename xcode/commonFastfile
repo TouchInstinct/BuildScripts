@@ -84,6 +84,7 @@ private_lane :buildConfiguration do |options|
   installDependencies(options)
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
+    options = merge_options_with_config_file(options)
     options[:skip_package_ipa] = true
 
     syncCodeSigning(options)
@@ -92,8 +93,9 @@ private_lane :buildConfiguration do |options|
   end
 
   if options[:uploadToFabric]
-    buildArchive(options)
+    options = merge_options_with_config_file(options)
 
+    buildArchive(options)
     syncCodeSigning(options)
 
     uploadToFabric(options)
@@ -102,6 +104,7 @@ private_lane :buildConfiguration do |options|
   if options[:uploadToAppStore]
     options[:compileBitcode] = true
     options = options.merge(make_options_for_lane_name("AppStore"))
+    options = merge_options_with_config_file(options)
 
     syncCodeSigning(options)
 
