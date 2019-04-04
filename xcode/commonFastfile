@@ -99,8 +99,8 @@ private_lane :buildConfiguration do |options|
   end
 
   if options[:uploadToAppStore]
-    options[:compileBitcode] = options[:compileBitcode] || true
-    options[:include_symbols] = options[:include_symbols] || true
+    options[:compileBitcode] = options[:compileBitcode].nil? true : options[:compileBitcode]
+    options[:include_symbols] = options[:include_symbols].nil? true : options[:include_symbols]
     options = options.merge(make_options_for_lane_name("AppStore"))
     options = merge_options_with_config_file(options)
 
