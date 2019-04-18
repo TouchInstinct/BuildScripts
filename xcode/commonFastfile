@@ -11,10 +11,7 @@ before_all do |lane, options|
   end
 
   if File.exists? "../Cartfile"
-    # wipe swift 4.x builded binaries
-    sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
-
-    carthage(command: "update", platform: "iOS")
+    carthage(command: "bootstrap", platform: "iOS")
   end
 
   cocoapods(
