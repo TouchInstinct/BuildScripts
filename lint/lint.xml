@@ -4,9 +4,6 @@
     <issue id="InvalidPackage" severity="error">
         <ignore regexp="Invalid package reference in library.*not included in Android.*java.*"/>
     </issue>
-    <issue id="NewerVersionAvailable" severity="error">
-        <ignore regexp="A newer version of de.ruedigermoeller:fst than .+ is available: .+"/>
-    </issue>
     <issue id="GradleCompatible" severity="error">
         <ignore regexp="All com.android.support libraries must use the exact same version specification (mixing versions can lead to runtime crashes). Found versions *. Examples include *"/>
     </issue>
@@ -149,7 +146,7 @@
     <issue id="ExtraText" severity="error"/>
     <issue id="GetInstance" severity="error"/>
     <issue id="GifUsage" severity="warning"/>
-    <issue id="GradleDependency" severity="error"/>
+    <issue id="GradleDependency" severity="warning"/>
     <issue id="GradleDeprecated" severity="error"/>
     <issue id="GradleDynamicVersion" severity="error"/>
     <issue id="GradleOverrides" severity="error"/>
@@ -181,6 +178,7 @@
     <issue id="MissingId" severity="error"/>
     <issue id="MissingVersion" severity="error"/>
     <issue id="NestedWeights" severity="warning"/>
+    <issue id="NewerVersionAvailable" severity="warning"/>
     <issue id="ObsoleteLayoutParam" severity="error"/>
     <issue id="OldTargetApi" severity="error"/>
     <issue id="PackageManagerGetSignatures" severity="error"/>

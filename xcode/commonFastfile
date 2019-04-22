@@ -10,7 +10,7 @@ private_lane :installDependencies do |options|
   end
 
   if File.exists? "../Cartfile"
-    carthage(platform: "iOS")
+    carthage(command: "bootstrap", platform: "iOS")
   end
 
   cocoapods(
