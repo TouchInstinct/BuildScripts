@@ -26,7 +26,7 @@ private_lane :uploadToFabric do |options|
 
   crashlytics(
     ipa_path: options[:ipa_path],
-    crashlytics_path: "./Pods/Crashlytics/",
+    crashlytics_path: "./Pods/Crashlytics/submit",
     api_token: token,
     build_secret: secret,
     notes_path: releaseNotesFile,
