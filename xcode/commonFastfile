@@ -132,12 +132,12 @@ private_lane :buildArchive do |options|
   )
 end
 
-lane :СreatePushCertificate do |options|
+lane :createPushCertificate do |options|
   certificates_path = File.expand_path "../Certificates"
   Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
 
   get_push_certificate(
-    development: options[:development] || true,
+    development: options[:development].nil? ? true : options[:development],
     generate_p12: true,
     active_days_limit: 30, # create new certificate if old one will expire in 30 days
     save_private_key: false,
