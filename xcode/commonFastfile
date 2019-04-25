@@ -153,7 +153,7 @@ lane :syncCodeSigning do |options|
     username: options[:username] || options[:apple_id],
     team_id: options[:team_id],
     type: options[:type],
-    readonly: options[:readonly] || true,
+    readonly: options[:readonly].nil? ? true : options[:readonly],
     storage_mode: "git",
     git_url: options[:git_url],
     git_branch: "fastlane_certificates",
