@@ -143,7 +143,9 @@ lane :createPushCertificate do |options|
     generate_p12: true,
     active_days_limit: 30, # create new certificate if old one will expire in 30 days
     save_private_key: false,
-    app_identifier: app_identifier.is_a? Array ? app_identifier.first : app_identifier,
+    app_identifier: (app_identifier.is_a? Array) ? app_identifier.first : app_identifier,
+    username: options[:username] || options[:apple_id],
+    team_id: options[:team_id],
     p12_password: "123", # empty password won't work with Pusher
     output_path: certificates_path
   )
