@@ -136,12 +136,14 @@ lane :createPushCertificate do |options|
   certificates_path = File.expand_path "../Certificates"
   Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
 
+  app_identifier = options[:app_identifier] is_a? Array ? options[:app_identifier].first : options[:app_identifier]
+
   get_push_certificate(
     development: options[:development].nil? ? true : options[:development],
     generate_p12: true,
     active_days_limit: 30, # create new certificate if old one will expire in 30 days
     save_private_key: false,
-    app_identifier: options[:app_identifier],
+    app_identifier: app_identifier,
     p12_password: "123", # empty password won't work with Pusher
     output_path: certificates_path
   )
