@@ -92,8 +92,8 @@ private_lane :buildConfiguration do |options|
   if options[:uploadToFabric]
     options = merge_options_with_config_file(options)
 
-    buildArchive(options)
     syncCodeSigning(options)
+    buildArchive(options)
 
     uploadToFabric(options)
   end
