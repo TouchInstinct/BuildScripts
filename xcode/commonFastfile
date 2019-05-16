@@ -170,11 +170,16 @@ end
 
 private_lane :openKeychain do |options|
   if is_ci?
+    # workaround to avoid duplication problem
+    # https://apple.stackexchange.com/questions/350633/multiple-duplicate-keychain-dbs-that-dont-get-cleaned-up
+    keychain_exists = File.exists?("~/Library/Keychains/#{options[:keychain_name]}.keychain-db")
+
     create_keychain(
       name: options[:keychain_name],
       password: options[:keychain_password],
       unlock: true,
-      timeout: false
+      timeout: false,
+      add_to_search_list: !keychain_exists
     )
   else
     unlock_keychain(
