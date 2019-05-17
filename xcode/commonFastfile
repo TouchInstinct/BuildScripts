@@ -270,5 +270,5 @@ def fabric_keys_from_xcodeproj(xcodeproj_path)
 end
 
 def fabric_keys_from_shell_script(shell_script_contents)
-  shell_script_contents.partition('Fabric/run\" ').last.partition('";').first.split(" ")
+  shell_script_contents.gsub("\\n", "").partition('Fabric/run\" ').last.partition('";').first.split(" ")
 end
