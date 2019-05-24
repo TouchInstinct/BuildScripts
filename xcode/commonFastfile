@@ -178,7 +178,8 @@ private_lane :openKeychain do |options|
   if is_ci?
     # workaround to avoid duplication problem
     # https://apple.stackexchange.com/questions/350633/multiple-duplicate-keychain-dbs-that-dont-get-cleaned-up
-    keychain_exists = File.exists?("~/Library/Keychains/#{options[:keychain_name]}.keychain-db")
+    keychain_path = File.expand_path("~/Library/Keychains/#{options[:keychain_name]}.keychain")
+    keychain_exists = File.exist?("#{keychain_path}-db") || File.exist?(keychain_path)
 
     create_keychain(
       name: options[:keychain_name],
