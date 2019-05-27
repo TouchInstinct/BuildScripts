@@ -1,0 +1,1 @@
+. build-scripts/xcode/aux_scripts/certificates_readme_generator.sh > $PROJECT_DIR/Certificates/README.md

@@ -1,7 +1,6 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
-before_all do |lane, options|
-  appName = options[:appName] || $appName
+private_lane :installDependencies do |options|
   podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
   lockFilePath = "#{podsReposPath}/.git/index.lock"
 
@@ -10,63 +9,273 @@ before_all do |lane, options|
     sh("rm -rf #{podsReposPath}")
   end
 
-  cocoapods(
-    clean: true,
-    repo_update: true
-  )
+  if File.exists? "../Cartfile"
+    begin
+      carthage(command: "bootstrap", platform: "iOS")
+    rescue
+      # workaround for https://github.com/Carthage/Carthage/issues/2298
+      sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
+      carthage(command: "update", platform: "iOS")
+    end
+  end
 
-  set_info_plist_value(
-    path: "./#{appName}/Info.plist",
-    key: "CFBundleVersion",
-    value: options[:buildNumber] || 10000
+  cocoapods(
+    repo_update: false
   )
 end
 
-after_all do |lane, options|
-  if options[:uploadToFabric]
-    appName = options[:appName] || $appName
+private_lane :uploadToFabric do |options|
+  token, secret = fabric_keys_from_xcodeproj(options[:xcodeproj_path])
 
-    token = sh("cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $4}' | tr -d '\\n'")
-    secret = sh("printf `cat ../#{appName}.xcodeproj/project.pbxproj | grep 'Fabric/run' | awk '{print $5}' | sed 's/..$//'` | tr -d '\\n'")
+  releaseNotesFile = "release-notes.txt"
+  sh("touch ../#{releaseNotesFile}")
 
-    releaseNotesFile = "release-notes.txt"
-    sh("touch ../#{releaseNotesFile}")
+  crashlytics(
+    ipa_path: options[:ipa_path],
+    crashlytics_path: "./Pods/Crashlytics/submit",
+    api_token: token,
+    build_secret: secret,
+    notes_path: releaseNotesFile,
+    groups: "touch-instinct"
+  )
 
-    crashlytics(
-      ipa_path: "./#{appName}.ipa",
-      crashlytics_path: "./Pods/Crashlytics/",
-      api_token: token,
-      build_secret: secret,
-      notes_path: releaseNotesFile,
-      groups: "touch-instinct"
-    )
+  upload_symbols_to_crashlytics(
+    dsym_path: options[:dsym_path],
+    api_token: token
+  )
+end
 
-    upload_symbols_to_crashlytics(
-      dsym_path: "./#{appName}.app.dSYM.zip",
-      api_token: token
-    )
-  end
+private_lane :uploadToAppStore do |options|
+  upload_to_app_store(
+    username: options[:username] || options[:apple_id],
+    ipa: options[:ipa_path],
+    force: true, # skip metainfo prompt
+    skip_metadata: true,
+    team_id: options[:itc_team_id],
+    dev_portal_team_id: options[:team_id]
+  )
 end
 
 private_lane :buildConfiguration do |options|
-  configuration = lane_context[SharedValues::LANE_NAME]
-  method = configuration.start_with?("Enterprise") ? "enterprise" : "development"
   appName = options[:appName] || $appName
-  uploadToFabric = options[:uploadToFabric]
+
+  options[:scheme] = appName
+
+  configuration = options[:configuration] || lane_context[SharedValues::LANE_NAME]
+  options = options.merge(make_options_for_lane_name(configuration))
+  options = merge_options_with_config_file(options)
+
+  options = options.merge(get_keychain_options(options))
+
+  openKeychain(options)
+
+  if is_ci
+    increment_build_number(
+      build_number: options[:buildNumber]
+    )
+  end
+
+  ipa_name = "#{appName}.ipa"
+  options[:output_name] = ipa_name
+
+  options[:ipa_path] = "./#{ipa_name}"
+  options[:dsym_path] = "./#{appName}.app.dSYM.zip"
+
+  options[:xcodeproj_path] = "../#{appName}.xcodeproj"
+  options[:workspace] = "./#{appName}.xcworkspace"
+
+  installDependencies(options)
+
+  if !(options[:uploadToFabric] || options[:uploadToAppStore])
+    options = merge_options_with_config_file(options)
+    options[:skip_package_ipa] = true
+
+    syncCodeSigning(options)
+
+    buildArchive(options) # check build failures and static analysis
+  end
+
+  if options[:uploadToFabric]
+    options = merge_options_with_config_file(options)
+
+    syncCodeSigning(options)
+    buildArchive(options)
+
+    uploadToFabric(options)
+  end
+
+  if options[:uploadToAppStore]
+    options[:compileBitcode] = options[:compileBitcode].nil? ? true : options[:compileBitcode]
+    options[:include_symbols] = options[:include_symbols].nil? ? true : options[:include_symbols]
+    options = options.merge(make_options_for_lane_name("AppStore"))
+    options = merge_options_with_config_file(options)
+
+    syncCodeSigning(options)
+
+    buildArchive(options)
+    uploadToAppStore(options)
+  end
+end
+
+private_lane :buildArchive do |options|
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
   exportOptions[:compileBitcode] = options[:compileBitcode] || false
 
   gym(
     clean: true,
-    workspace: "./#{appName}.xcworkspace",
-    scheme: appName,
+    workspace: options[:workspace],
+    scheme: options[:scheme],
     archive_path: "./",
     output_directory: "./",
-    output_name: "#{appName}.ipa",
-    configuration: configuration,
-    export_method: method,
+    output_name: options[:output_name],
+    configuration: options[:configuration],
+    export_method: options[:method],
     export_options: exportOptions,
-    skip_package_ipa: !uploadToFabric
+    skip_package_ipa: options[:skip_package_ipa],
+    include_symbols: options[:include_symbols] || false,
+    include_bitcode: options[:compileBitcode] || false,
   )
+end
+
+lane :createPushCertificate do |options|
+  certificates_path = File.expand_path "../Certificates"
+  Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
+
+  app_identifier = options[:app_identifier]
+
+  get_push_certificate(
+    development: options[:development].nil? ? true : options[:development],
+    generate_p12: true,
+    active_days_limit: 30, # create new certificate if old one will expire in 30 days
+    save_private_key: false,
+    app_identifier: (app_identifier.is_a? Array) ? app_identifier.first : app_identifier,
+    username: options[:username] || options[:apple_id],
+    team_id: options[:team_id],
+    p12_password: "123", # empty password won't work with Pusher
+    output_path: certificates_path
+  )
+end
+
+lane :syncCodeSigning do |options|
+  match(
+    app_identifier: options[:app_identifier],
+    username: options[:username] || options[:apple_id],
+    team_id: options[:team_id],
+    type: options[:type],
+    readonly: options[:readonly].nil? ? true : options[:readonly],
+    storage_mode: "git",
+    git_url: options[:git_url],
+    git_branch: "fastlane_certificates",
+    keychain_name: options[:keychain_name],
+    keychain_password: options[:keychain_password],
+    skip_docs: true,
+    platform: "ios"
+  )
+end
+
+private_lane :openKeychain do |options|
+  if is_ci?
+    # workaround to avoid duplication problem
+    # https://apple.stackexchange.com/questions/350633/multiple-duplicate-keychain-dbs-that-dont-get-cleaned-up
+    keychain_path = File.expand_path("~/Library/Keychains/#{options[:keychain_name]}.keychain")
+    keychain_exists = File.exist?("#{keychain_path}-db") || File.exist?(keychain_path)
+
+    create_keychain(
+      name: options[:keychain_name],
+      password: options[:keychain_password],
+      unlock: true,
+      timeout: false,
+      add_to_search_list: !keychain_exists
+    )
+  else
+    unlock_keychain(
+      path: options[:keychain_name],
+      password: options[:keychain_password]
+    )
+  end
+end
+
+def get_keychain_options(options)
+  keychain_name = options[:keychain_name]
+  keychain_password = options[:keychain_password]
+
+  if is_ci?
+    keychain_name = keychain_name || "ci.keychain"
+    keychain_password = keychain_password ||  ""
+  else
+    keychain_password = keychain_password || prompt(
+      text: "Please enter your keychain password (account password): ",
+      secure_text: true
+    )
+  end
+
+  return {:keychain_name => keychain_name, :keychain_password => keychain_password}
+end
+
+def configuration_type_from_lane_name(lane_name)
+  case
+  when lane_name.start_with?("Enterprise")
+    "enterprise"
+  when lane_name.start_with?("AppStore")
+    "app-store"
+  else
+    "development"
+  end
+end
+
+def profile_type_from_configuration_type(configuration_type)
+  configuration_type.gsub("-", "") # "app-store" => "appstore"
+end
+
+def make_options_for_lane_name(lane_name)
+  method = configuration_type_from_lane_name(lane_name)
+  return {
+    :configuration => lane_name,
+    :method => method,
+    :type => profile_type_from_configuration_type(method)
+  }
+end
+
+def merge_options_with_config_file(options)
+  type = options[:type] || "development"
+
+  options_override = load_options_from("configurations.yaml")
+  return options.merge(options_override[type.to_sym])
+end
+
+def load_options_from(file_path)
+  if File.exists? file_path
+    require "yaml"
+
+    options = YAML.load_file(file_path)
+
+    return symbolize_keys(options)
+  end
+
+  return nil
+end
+
+# http://www.virtuouscode.com/2009/07/14/recursively-symbolize-keys/
+def symbolize_keys(hash)
+  hash.inject({}){|result, (key, value)|
+    new_key = case key
+              when String then key.to_sym
+              else key
+              end
+    new_value = case value
+                when Hash then symbolize_keys(value)
+                else value
+                end
+    result[new_key] = new_value
+    result
+  }
+end
+
+def fabric_keys_from_xcodeproj(xcodeproj_path)
+  fabric_keys_from_shell_script(sh("cat #{xcodeproj_path}/project.pbxproj | grep 'Fabric/run'"))
+end
+
+def fabric_keys_from_shell_script(shell_script_contents)
+  shell_script_contents.gsub("\\n", "").partition('Fabric/run\" ').last.partition('";').first.split(" ")
 end
