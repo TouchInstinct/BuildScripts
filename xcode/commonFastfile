@@ -196,6 +196,34 @@ private_lane :openKeychain do |options|
   end
 end
 
+lane :ManuallyUpdateCodeSigning do |options|
+  # based on this article https://medium.com/@jonathancardoso/using-fastlane-match-with-existing-certificates-without-revoking-them-a325be69dac6
+  require 'fastlane_core'
+  require 'match'
+
+  conf = FastlaneCore::Configuration.create(Match::Options.available_options, {})
+  conf.load_configuration_file("Matchfile")
+
+  git_url = conf.config_file_options[:git_url]
+  shallow_clone = false
+  branch = 'fastlane_certificates'
+  storage = Match::Storage.for_mode('git', { git_url: git_url, shallow_clone: shallow_clone, git_branch: branch, clone_branch_directly: false})
+  storage.download
+  encryption = Match::Encryption.for_storage_mode('git', { git_url: git_url, working_directory: storage.working_directory})
+  encryption.decrypt_files
+
+  sh("open #{storage.working_directory}")
+
+  # we are not using prompt() since it requires non-empty input which is not a case for Enter (\n)
+  puts "Enter any key when you're done"
+  STDIN.gets
+
+  encryption.encrypt_files
+
+  files_to_commit = Dir[File.join(storage.working_directory, "**", "*.{cer,p12,mobileprovision}")]
+  storage.save_changes!(files_to_commit: files_to_commit)
+end
+
 def get_keychain_options(options)
   keychain_name = options[:keychain_name]
   keychain_password = options[:keychain_password]
