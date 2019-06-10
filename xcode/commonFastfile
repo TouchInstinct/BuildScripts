@@ -45,6 +45,11 @@ private_lane :uploadToFabric do |options|
   )
 end
 
+lane :screenshots do
+   path = File.expand_path "../build-scripts/xcode/aux_scripts/download_screenshots.sh"
+   sh "bash #{path}"
+   end
+
 private_lane :uploadToAppStore do |options|
   upload_to_app_store(
     username: options[:username] || options[:apple_id],
@@ -113,6 +118,7 @@ private_lane :buildConfiguration do |options|
     syncCodeSigning(options)
 
     buildArchive(options)
+    screenshots()
     uploadToAppStore(options)
   end
 end
