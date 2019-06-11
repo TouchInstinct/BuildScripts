@@ -8,7 +8,8 @@ cd ${PROJECT_PATH}
 
 bundle install
 
-# install Homebrew
+# Install Homebrew
+
 if [[ $(command -v brew) == "" ]]; then
 
     # Prevent "Press RETURN to continue or any other key to abort" message when installing Homebrew
@@ -30,3 +31,14 @@ bundle exec pod install
 # Install carthage dependencies
 
 carthage bootstrap --platform iOS
+
+case $2 in
+    --InstallDevelopmentCodeSigning)
+        # Install certificates & provision profiles for development
+
+        cd ${PROJECT_PATH}/fastlane
+
+        bundle exec fastlane SyncCodeSigning
+    ;;
+esac
+
