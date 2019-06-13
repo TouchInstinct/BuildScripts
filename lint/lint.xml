@@ -98,7 +98,7 @@
     <issue id="CheckResult" severity="warning"/>
     <issue id="ResourceAsColor" severity="error"/>
     <issue id="Range" severity="error"/>
-    <issue id="ResourceType" severity="error"/>
+    <issue id="ResourceType" severity="warning"/>
     <issue id="WrongThread" severity="error"/>
     <issue id="WrongConstant" severity="error"/>
     <issue id="ProtectedPermissions" severity="error"/>
