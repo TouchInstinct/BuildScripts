@@ -1,10 +1,10 @@
-#!/bin/zsh
+#!/bin/sh
 
 PROJECT_NAME=$1
 SRC_FOLDER_NAME=${PROJECT_NAME}-src-$(date +%F)
 SRC_DIR=/tmp/${SRC_FOLDER_NAME}
 
-PLATFORMS=("$@")
+PLATFORMS=$@
 
 clone_platform() {
     PROJECT_DIR=$1
@@ -18,7 +18,7 @@ cd ${SRC_DIR}
 
 for platform in ${PLATFORMS}
 do
-  if [ "$platform" != "$PROJECT_NAME" ]
+  if [ $platform != $PROJECT_NAME ]
   then
     clone_platform ${PROJECT_NAME} ${platform}
   fi
