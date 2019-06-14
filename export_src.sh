@@ -20,6 +20,7 @@ for argument in ${COMMAND_LINE_ARGUMENTS}
 do
   if [ $argument != $PROJECT_NAME ]
   then
+    platform=argument # all arguments after project name treated as platforms
     clone_platform ${PROJECT_NAME} ${platform}
   fi
 done
