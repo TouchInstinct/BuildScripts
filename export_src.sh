@@ -4,7 +4,7 @@ PROJECT_NAME=$1
 SRC_FOLDER_NAME=${PROJECT_NAME}-src-$(date +%F)
 SRC_DIR=./${SRC_FOLDER_NAME}
 
-PLATFORMS=$@
+COMMAND_LINE_ARGUMENTS=$@
 
 clone_platform() {
     PROJECT_DIR=$1
@@ -16,9 +16,9 @@ clone_platform() {
 mkdir -p ${SRC_DIR}
 cd ${SRC_DIR}
 
-for platform in ${PLATFORMS}
+for argument in ${COMMAND_LINE_ARGUMENTS}
 do
-  if [ $platform != $PROJECT_NAME ]
+  if [ $argument != $PROJECT_NAME ]
   then
     clone_platform ${PROJECT_NAME} ${platform}
   fi
