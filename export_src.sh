@@ -4,6 +4,8 @@ PROJECT_NAME=$1
 SRC_FOLDER_NAME=${PROJECT_NAME}-src-$(date +%F)
 SRC_DIR=/tmp/${SRC_FOLDER_NAME}
 
+PLATFORMS=${@:2}
+
 clone_platform() {
     PROJECT_DIR=$1
     PLATFORM=$2
@@ -14,8 +16,10 @@ clone_platform() {
 mkdir -p ${SRC_DIR}
 cd ${SRC_DIR}
 
-clone_platform ${PROJECT_NAME} ios
-clone_platform ${PROJECT_NAME} android
+for platform in ${PLATFORMS}
+do
+    clone_platform ${PROJECT_NAME} ${platform}
+done
 
 find . -name ".git*" -print0 | xargs -0 rm -rf
 zip -r ${SRC_FOLDER_NAME}.zip .
