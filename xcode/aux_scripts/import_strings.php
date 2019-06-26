@@ -33,8 +33,7 @@
         if($isBase) {
             createFolder($localization.'Base.lproj/');
             file_put_contents($localization.'Base.lproj/Localizable.strings', $ios_strings);
-            $ios_swift_strings = 'import Foundation'.PHP_EOL.
-                                 'import LeadKit'.PHP_EOL.PHP_EOL.
+            $ios_swift_strings = 'import Foundation'.PHP_EOL.PHP_EOL.
                                  '// swiftlint:disable superfluous_disable_command'.PHP_EOL.
                                  '// swiftlint:disable line_length'.PHP_EOL.
                                  '// swiftlint:disable file_length'.PHP_EOL.
@@ -42,7 +41,7 @@
                                  'extension String {'.PHP_EOL;
             foreach ($json as $key=>$value) {
                 $value_without_linefeed = preg_replace("/\r|\n/", " ", $value);
-                $ios_swift_strings .= "\t/// ".$value_without_linefeed."\n\t".'static let '.preg_replace_callback('/_(.?)/', function ($m) { return strtoupper($m[1]); }, $key).' = "'.$key.'".localized()'."\n".PHP_EOL;
+                $ios_swift_strings .= "\t/// ".$value_without_linefeed."\n\t".'static let '.preg_replace_callback('/_(.?)/', function ($m) { return strtoupper($m[1]); }, $key).' = NSLocalizedString("'.$key.'", comment: "")'."\n".PHP_EOL;
             }
             $ios_swift_strings .= '}'.PHP_EOL;
             file_put_contents($localization.'String+Localization.swift', $ios_swift_strings);
