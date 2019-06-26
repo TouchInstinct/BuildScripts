@@ -1,5 +1,6 @@
 LOCALIZATION_PATH="${PROJECT_NAME}/Resources/Localization"
-STRINGS_FOLDER="common/strings"
+#first argument set strings folder path
+STRINGS_FOLDER=${1:-"common/strings"}
 
 if ! [ -e ${LOCALIZATION_PATH} ]; then
 	echo "${PROJECT_DIR}/${LOCALIZATION_PATH} path does not exist. Add these folders and try again."
@@ -11,4 +12,5 @@ if ! [ -e "${PROJECT_DIR}/${STRINGS_FOLDER}" ]; then
 	exit 1
 fi
 
-php build-scripts/xcode/aux_scripts/import_strings.php ${PROJECT_NAME} ${STRINGS_FOLDER}
+#second argument set strings script path
+php ${2:-build-scripts/xcode/aux_scripts/import_strings.php} ${PROJECT_NAME} ${STRINGS_FOLDER}
