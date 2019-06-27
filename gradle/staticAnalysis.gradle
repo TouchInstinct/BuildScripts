@@ -64,10 +64,12 @@ gradle.projectsEvaluated {
         }
     }
 
-    android.applicationVariants.all { variant ->
-        task("staticAnalysis${variant.name.capitalize()}") {
-            dependsOn getStaticAnalysisTaskNames(true, androidSources, variant, checkstyleEnabled, pmdEnabled)
-            doFirst { generateReport(true) }
+    pluginManager.withPlugin('com.android.application') {
+        android.applicationVariants.all { variant ->
+            task("staticAnalysis${variant.name.capitalize()}") {
+                dependsOn getStaticAnalysisTaskNames(true, androidSources, variant, checkstyleEnabled, pmdEnabled)
+                doFirst { generateReport(true) }
+            }
         }
     }
 }
