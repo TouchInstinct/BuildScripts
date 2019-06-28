@@ -19,9 +19,11 @@ task apiGeneratorKotlinServer doLast {
     jarArgs.add("--specification-path")
     jarArgs.add(rootProject.extensions.findByName("pathToApiSchemes"))
     jarArgs.add("--output-path")
-    jarArgs.add("${rootDir}/src/main/generated")
+    jarArgs.add("${rootDir}/src/main/kotlin")
     jarArgs.add("--package-name")
     jarArgs.add(rootProject.extensions.findByName("apiPackageName"))
+    jarArgs.add("--recreate_output_dirs")
+    jarArgs.add(false)
     javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
 }
 
