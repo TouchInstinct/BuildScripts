@@ -2,8 +2,6 @@ import groovy.json.JsonSlurper
 import groovy.xml.MarkupBuilder
 
 task stringGenerator {
-    final Map<String, String> languageMap = android.extensions.findByName("languageMap")
-
     generate(languageMap)
     println("Strings generated!")
 }
