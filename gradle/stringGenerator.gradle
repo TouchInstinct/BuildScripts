@@ -2,7 +2,7 @@ import groovy.json.JsonSlurper
 import groovy.xml.MarkupBuilder
 
 task stringGenerator {
-    generate(languageMap)
+    generate(android.languageMap)
     println("Strings generated!")
 }
 
