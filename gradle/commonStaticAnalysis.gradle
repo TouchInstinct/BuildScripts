@@ -33,7 +33,7 @@ detekt {
     config = files("$buildScriptsDir/kotlin/detekt-config.yml")
 
     // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
-    filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
+    filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*,.*/build/.*"
 
     reports {
         html {
