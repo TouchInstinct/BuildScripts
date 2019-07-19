@@ -267,5 +267,6 @@
     <issue id="ViewHolder" severity="ignore"/>
     <issue id="WebViewLayout" severity="ignore"/>
     <issue id="TypographyEllipsis" severity="ignore"/>
+    <issue id="PermissionImpliesUnsupportedChromeOsHardware" severity="ignore"/>
 
 </lint>
