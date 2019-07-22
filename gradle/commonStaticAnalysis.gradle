@@ -29,6 +29,7 @@ cpd {
 }
 
 detekt {
+    input = files("${rootDir}")
     config = files("$buildScriptsDir/kotlin/detekt-config.yml")
     parallel = true
 
@@ -43,6 +44,14 @@ detekt {
         }
     }
 
+}
+
+// without subprojects gradle doesn't see io.gitlab.arturbosch.detekt.Detekt
+subprojects {
+    tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
+        include("src/main/java/**")
+        include("src/main/kotlin/**")
+    }
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
