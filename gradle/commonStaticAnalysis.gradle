@@ -29,11 +29,8 @@ cpd {
 }
 
 detekt {
-    input = files("${rootDir}")
     config = files("$buildScriptsDir/kotlin/detekt-config.yml")
-
-    // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
-    filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*,.*/build/.*"
+    parallel = true
 
     reports {
         html {
@@ -45,6 +42,7 @@ detekt {
             destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
         }
     }
+
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -351,7 +349,10 @@ getCheckstyleTask = { sources ->
     return task.name
 }
 
-getKotlinDetektTask = { "detekt" }
+getKotlinDetektTask = {
+    // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
+    "detekt"
+}
 
 task optimizePng {
     doFirst {
