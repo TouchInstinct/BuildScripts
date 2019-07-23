@@ -1,0 +1,62 @@
+def getServerProjectSources
+
+apply from: "$buildScriptsDir/gradle/commonStaticAnalysis.gradle"
+
+gradle.projectsEvaluated {
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs <<
+                "-Xlint:cast" <<
+                "-Xlint:divzero" <<
+                "-Xlint:empty" <<
+                "-Xlint:deprecation" <<
+                "-Xlint:finally" <<
+                "-Xlint:overrides" <<
+                "-Xlint:path" <<
+                "-Werror"
+    }
+
+    def excludes = rootProject.extensions.findByName("staticAnalysisExcludes")
+    def pmdEnabled = rootProject.extensions.findByName("pmdEnabled") ?: false
+
+    def serverStaticAnalysisTasks = getStaticAnalysisTaskNames(false, getServerProjectSources(excludes), null, pmdEnabled)
+    def serverIdeaFormatTask = getIdeaFormatTask(getServerProjectSources(excludes))
+
+    task staticAnalysisWithFormatting {
+        if (serverIdeaFormatTask != null) {
+            serverStaticAnalysisTasks.each { task ->
+                tasks.findByName(task).mustRunAfter(serverIdeaFormatTask)
+            }
+            dependsOn serverIdeaFormatTask
+        }
+        dependsOn serverStaticAnalysisTasks
+        doFirst {
+            generateReport(false)
+        }
+    }
+
+    task staticAnalysis {
+        dependsOn staticAnalysisTasks
+        doFirst {
+            generateReport(false)
+        }
+    }
+}
+
+getServerProjectSources = { excludes ->
+    def sources = new ArrayList<String>()
+    def sourcesDirectory = new File(project.projectDir.path, 'src')
+
+    for (def sourceFlavorDirectory : sourcesDirectory.listFiles()) {
+        def javaSourceDirectory = new File(sourceFlavorDirectory.path, 'java')
+        def kotlinSourceDirectory = new File(sourceFlavorDirectory.path, 'kotlin')
+
+        if (javaSourceDirectory.exists() && javaSourceDirectory.isDirectory()) {
+            sources.add(javaSourceDirectory.absolutePath)
+        }
+        if (kotlinSourceDirectory.exists() && kotlinSourceDirectory.isDirectory()) {
+            sources.add(kotlinSourceDirectory.absolutePath)
+        }
+    }
+    return sources
+}

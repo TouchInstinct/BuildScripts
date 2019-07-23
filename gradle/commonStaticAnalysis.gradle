@@ -1,94 +1,148 @@
-apply plugin: 'checkstyle'
-apply plugin: 'cpd'
-apply plugin: 'pmd'
-apply plugin: 'io.gitlab.arturbosch.detekt'
+import org.apache.tools.ant.taskdefs.condition.Os
 
 def getCpdTask
 def getPmdTask
-def getCheckstyleTask
 def getLintTask
 def getKotlinDetektTask
 
 def appendError
 def appendCpdErrors
 def appendKotlinErrors
-def appendCheckstyleErrors
 def appendPmdErrors
 def appendLintErrors
 
-repositories {
-    maven { url "http://dl.bintray.com/touchin/touchin-tools" }
-}
+abstract class StaticAnalysis implements Plugin<Project> {
 
-configurations {
-    pngtastic
-}
+    @Override
+    void apply(final Project target) {
+        project.configure(target) {
+            apply plugin: 'cpd'
+            apply plugin: 'pmd'
+            apply plugin: 'io.gitlab.arturbosch.detekt'
 
-cpd {
-    skipLexicalErrors = true
-}
+            repositories {
+                maven { url "http://dl.bintray.com/touchin/touchin-tools" }
+            }
 
-detekt {
-    input = files("${rootDir}")
-    config = files("$buildScriptsDir/kotlin/detekt-config.yml")
-    parallel = true
+            cpd {
+                skipLexicalErrors = true
+            }
 
-    reports {
-        html {
-            enabled = true
-            destination = file("${project.buildDir}/reports/kotlin-detekt.html")
+            detekt {
+                input = files("${rootDir}")
+                config = files("$buildScriptsDir/kotlin/detekt-config.yml")
+                parallel = true
+
+                reports {
+                    html {
+                        enabled = true
+                        destination = file("${project.buildDir}/reports/kotlin-detekt.html")
+                    }
+                    xml {
+                        enabled = true
+                        destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
+                    }
+                }
+
+            }
+
         }
-        xml {
-            enabled = true
-            destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
+
+        project.tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
+            include("src/main/java/**")
+            include("src/main/kotlin/**")
         }
     }
 
-}
+    private Task getIdeaFormatTask() {
 
-// without subprojects gradle doesn't see io.gitlab.arturbosch.detekt.Detekt
-subprojects {
-    tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
-        include("src/main/java/**")
-        include("src/main/kotlin/**")
-    }
-}
-
-import org.apache.tools.ant.taskdefs.condition.Os
-
-ext.getIdeaFormatTask = { isAndroidProject, sources ->
-    def ideaPath = System.getenv("IDEA_HOME")
-    if (ideaPath == null) {
-        return tasks.create((isAndroidProject ? "android" : "server") + "donothing")
-    }
-    return tasks.create((isAndroidProject ? "android" : "server") + "IdeaFormat_$project.name", Exec) {
-        def inspectionPath
-        def params = ["-r", "-mask", "*.java,*.kt,*.xml"]
-        for (String source : sources) {
-            params.add(source)
+        if (System.getenv("IDEA_HOME") == null) {
+            return null
         }
+        return tasks.create("ideaFormat_$project.name", Exec) {
+            def inspectionPath
+            def params = ["-r", "-mask", "*.java,*.kt,*.xml"]
+            for (String source : getSources()) {
+                params.add(source)
+            }
 
-        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            inspectionPath = ['cmd', '/c', "\"${ideaPath}\\bin\\format.bat\" ${params.join(" ")}"]
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                inspectionPath = ['cmd', '/c', "\"${ideaPath}\\bin\\format.bat\" ${params.join(" ")}"]
+            } else {
+                inspectionPath = ["$ideaPath/bin/format.sh"]
+            }
+            commandLine inspectionPath
+            if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+                args = params
+            }
+        }
+    }
+
+    private void generateReport() {
+        StringBuilder consoleReport = new StringBuilder()
+        consoleReport.append("STATIC ANALYSIS RESULTS:")
+        def count = 0
+
+        def previousCount = count
+        count = appendCpdErrors(count, new File("${project.buildDir}/reports/cpd.xml"))
+        if (count - previousCount > 0) {
+            consoleReport.append("\nCPD: FAILED (" + (count - previousCount) + " errors)")
         } else {
-            inspectionPath = ["$ideaPath/bin/format.sh"]
+            consoleReport.append("\nCPD: PASSED")
         }
-        commandLine inspectionPath
-        if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-            args = params
+
+        previousCount = count
+        count = appendKotlinErrors(count, new File("${project.buildDir}/reports/kotlin-detekt.xml"))
+        if (count - previousCount > 0) {
+            consoleReport.append("\nKotlin-detekt: FAILED (" + (count - previousCount) + " errors)")
+        } else {
+            consoleReport.append("\nKotlin-detekt: PASSED")
+        }
+
+        def pmdFile = new File("${project.buildDir}/reports/pmd.xml")
+        def lintFile = new File("${project.buildDir}/reports/lint_report.xml")
+
+        if (pmdFile.exists()) {
+            previousCount = count
+            count = appendPmdErrors(count, pmdFile)
+            if (count - previousCount > 0) {
+                consoleReport.append("\nPMD: FAILED (" + (count - previousCount) + " errors)")
+            } else {
+                consoleReport.append("\nPMD: PASSED")
+            }
+        }
+
+        if (lintFile.exists()) {
+            previousCount = count
+            count = appendLintErrors(count,)
+            if (count - previousCount > 0) {
+                consoleReport.append("\nLint: FAILED (" + (count - previousCount) + " errors)")
+            } else {
+                consoleReport.append("\nLint: PASSED")
+            }
+        }
+
+        if (count > 0) {
+            consoleReport.append("\nOverall: FAILED (" + count + " errors)")
+            throw new Exception(consoleReport.toString())
+        } else {
+            consoleReport.append("\nOverall: PASSED")
+            println(consoleReport.toString())
         }
     }
+
+    abstract List<String> getSources()
+
+    abstract boolean isAndroidProject()
 }
 
-ext.getStaticAnalysisTaskNames = { isAndroidProject, sources, buildVariant, checkstyleEnabled, pmdEnabled ->
+
+ext.getStaticAnalysisTaskNames = { isAndroidProject, sources, buildVariant, pmdEnabled ->
     def tasksNames = new ArrayList<String>()
     try {
-        tasksNames.add(getCpdTask(isAndroidProject, sources))
+        tasksNames.add(getCpdTask(sources))
         tasksNames.add(getKotlinDetektTask())
         if (isAndroidProject) {
-            if (checkstyleEnabled) {
-                tasksNames.add(getCheckstyleTask(sources))
-            }
             if (pmdEnabled) {
                 tasksNames.add(getPmdTask(sources))
             }
@@ -100,67 +154,6 @@ ext.getStaticAnalysisTaskNames = { isAndroidProject, sources, buildVariant, chec
     return tasksNames
 }
 
-ext.generateReport = { isAndroidProject ->
-    StringBuilder consoleReport = new StringBuilder()
-    consoleReport.append("STATIC ANALYSIS RESULTS:")
-    def count = 0
-
-    def previousCount = count
-    count = appendCpdErrors(count, new File("${project.buildDir}/reports/cpd.xml"))
-    if (count - previousCount > 0) {
-        consoleReport.append("\nCPD: FAILED (" + (count - previousCount) + " errors)")
-    } else {
-        consoleReport.append("\nCPD: PASSED")
-    }
-
-    previousCount = count
-    count = appendKotlinErrors(count, new File("${project.buildDir}/reports/kotlin-detekt.xml"))
-    if (count - previousCount > 0) {
-        consoleReport.append("\nKotlin-detekt: FAILED (" + (count - previousCount) + " errors)")
-    } else {
-        consoleReport.append("\nKotlin-detekt: PASSED")
-    }
-
-    if (isAndroidProject) {
-        def checkstyleFile = new File("${project.buildDir}/reports/checkstyle.xml")
-        if (checkstyleFile.exists()) {
-            previousCount = count
-            count = appendCheckstyleErrors(count, checkstyleFile)
-            if (count - previousCount > 0) {
-                consoleReport.append("\nCheckstyle: FAILED (" + (count - previousCount) + " errors)")
-            } else {
-                consoleReport.append("\nCheckstyle: PASSED")
-            }
-        }
-
-        def pmdFile = new File("${project.buildDir}/reports/pmd.xml")
-        if (pmdFile.exists()) {
-            previousCount = count
-            count = appendPmdErrors(count, pmdFile)
-            if (count - previousCount > 0) {
-                consoleReport.append("\nPMD: FAILED (" + (count - previousCount) + " errors)")
-            } else {
-                consoleReport.append("\nPMD: PASSED")
-            }
-        }
-
-        previousCount = count
-        count = appendLintErrors(count, new File("${project.buildDir}/reports/lint_report.xml"))
-        if (count - previousCount > 0) {
-            consoleReport.append("\nLint: FAILED (" + (count - previousCount) + " errors)")
-        } else {
-            consoleReport.append("\nLint: PASSED")
-        }
-    }
-
-    if (count > 0) {
-        consoleReport.append("\nOverall: FAILED (" + count + " errors)")
-        throw new Exception(consoleReport.toString())
-    } else {
-        consoleReport.append("\nOverall: PASSED")
-        println(consoleReport.toString())
-    }
-}
 
 appendError = { number, analyzer, file, line, errorId, errorLink, description ->
     println("$number. $analyzer : $description ($errorId)\n\tat $file: $line")
@@ -209,27 +202,6 @@ appendCpdErrors = { count, cpdFile ->
     return count
 }
 
-appendCheckstyleErrors = { count, checkstyleFile ->
-    def rootNode = new XmlParser().parse(checkstyleFile)
-    for (def fileNode : rootNode.children()) {
-        if (!fileNode.name().equals("file")) {
-            continue
-        }
-
-        for (def errorNode : fileNode.children()) {
-            if (!errorNode.name().equals("error")) {
-                continue
-            }
-            count++
-
-            def error = errorNode.attribute("source")
-            def link = "http://checkstyle.sourceforge.net/apidocs/" + error.replace('.', '/') + ".html"
-            appendError(count, "Checkstyle", fileNode.attribute("name"), errorNode.attribute("line"), error, link, errorNode.attribute("message"))
-        }
-    }
-    return count
-}
-
 appendPmdErrors = { count, pmdFile ->
     def rootNode = new XmlParser().parse(pmdFile)
     for (def fileNode : rootNode.children()) {
@@ -269,8 +241,8 @@ appendLintErrors = { count, lintFile ->
     return count
 }
 
-getCpdTask = { isAndroidProject, sources ->
-    def taskName = (isAndroidProject ? "android" : "server") + "cpd_${project.name}"
+getCpdTask = { sources ->
+    def taskName = "cpd_${project.name}"
     def task = tasks.findByName(taskName)
     if (task == null) {
         task = tasks.create(taskName, tasks.findByName('cpdCheck').getClass().getSuperclass()) {
@@ -331,58 +303,13 @@ getLintTask = { buildVariant ->
     return lintTaskName
 }
 
-getCheckstyleTask = { sources ->
-    def taskName = "checkstyle_$project.name"
-    def task = tasks.findByName(taskName)
-    if (task == null) {
-        def compileReleaseTask = tasks.matching {
-            it.getName().contains("compile") && it.getName().contains("Release") && it.getName().contains("Java") && !it.getName().contains("UnitTest")
-        }.last()
-        task = tasks.create(taskName, Checkstyle) {
-            ignoreFailures = true
-            showViolations = false
-            source files(sources)
-            configFile file("$buildScriptsDir/checkstyle/configuration/touchin_checkstyle.xml")
-            checkstyleClasspath = configurations.checkstyle.asFileTree
-            classpath = files(System.getenv("ANDROID_HOME") + "/platforms/" + android.compileSdkVersion + "/android.jar") +
-                    files(System.properties.'java.home' + "/lib/rt.jar") +
-                    compileReleaseTask.classpath
-            reports {
-                xml {
-                    enabled = true
-                    destination file("${project.buildDir}/reports/checkstyle.xml")
-                }
-            }
-        }
-    }
-    return task.name
-}
 
 getKotlinDetektTask = {
     // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
     "detekt"
 }
 
-task optimizePng {
-    doFirst {
-        def jarArgs = new ArrayList<String>()
-        jarArgs.add(configurations.pngtastic.asPath)
-        def relatedPathIndex = "${rootDir}".length() + 1
-        for (def file : fileTree(dir: "${rootDir}", include: '**/src/**/res/drawable**/*.png')) {
-            jarArgs.add(file.absolutePath.substring(relatedPathIndex))
-        }
-        for (def file : fileTree(dir: "${rootDir}", include: '**/src/**/res/mipmap**/*.png')) {
-            jarArgs.add(file.absolutePath.substring(relatedPathIndex))
-        }
-        javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
-    }
-}
-
 dependencies {
-    pmd 'net.sourceforge.pmd:pmd-core:5.5.3'
-    pmd 'net.sourceforge.pmd:pmd-java:5.5.3'
-
-    checkstyle 'ru.touchin:checkstyle:7.6.2-fork'
-
-    pngtastic 'com.github.depsypher:pngtastic:1.2'
+    pmd 'net.sourceforge.pmd:pmd-core:6.13.0'
+    pmd 'net.sourceforge.pmd:pmd-java:6.13.0'
 }
