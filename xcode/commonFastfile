@@ -207,10 +207,26 @@ lane :ManuallyUpdateCodeSigning do |options|
   git_url = conf.config_file_options[:git_url]
   shallow_clone = false
   branch = 'fastlane_certificates'
-  storage = Match::Storage.for_mode('git', { git_url: git_url, shallow_clone: shallow_clone, git_branch: branch, clone_branch_directly: false})
-  storage.download
-  encryption = Match::Encryption.for_storage_mode('git', { git_url: git_url, working_directory: storage.working_directory})
-  encryption.decrypt_files
+
+  storage_conf = lambda do 
+    new_storage = Match::Storage.for_mode('git', { git_url: git_url, shallow_clone: shallow_clone, git_branch: branch, clone_branch_directly: false})
+    new_storage.download
+    return new_storage
+  end
+
+  encryption_conf = lambda do |stor|
+    new_encryption = Match::Encryption.for_storage_mode('git', { git_url: git_url, working_directory: stor.working_directory})
+    new_encryption.decrypt_files
+    return new_encryption
+  end
+
+  get_all_files = lambda do |stor|
+    return Dir[File.join(stor.working_directory, "**", "*.{cer,p12,mobileprovision}")]
+  end
+
+  storage = storage_conf.call
+  encryption = encryption_conf.call(storage)
+  old_files = get_all_files.call(storage)
 
   sh("open #{storage.working_directory}")
 
@@ -220,9 +236,32 @@ lane :ManuallyUpdateCodeSigning do |options|
 
   encryption.encrypt_files
 
-  files_to_commit = Dir[File.join(storage.working_directory, "**", "*.{cer,p12,mobileprovision}")]
+  files_to_commit = get_all_files.call(storage)
+  old_directory = storage.working_directory
   storage.save_changes!(files_to_commit: files_to_commit)
+
+
+  # need to check, because saving changes with delete is another function (update repo if needed)
+  files_diff = old_files - files_to_commit
+
+  if files_diff.length > 0
+    storage = storage_conf.call
+    encryption = encryption_conf.call(storage)
+
+    files_to_delete = files_diff.map do |file| 
+      old_file = file
+      old_file.slice! old_directory
+      new_file = File.join(storage.working_directory, old_file)
+      File.delete(new_file) if File.exist?(new_file)
+      file = new_file
+    end
+
+    encryption.encrypt_files
+    storage.save_changes!(files_to_delete: files_to_delete)
+  end
+
 end
+
 
 def get_keychain_options(options)
   keychain_name = options[:keychain_name]
