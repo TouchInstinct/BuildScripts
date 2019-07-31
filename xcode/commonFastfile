@@ -214,18 +214,18 @@ lane :ManuallyUpdateCodeSigning do |options|
     return new_storage
   end
 
-  encryption_conf = lambda do |stor|
+  encryption_conf_for_storage = lambda do |stor|
     new_encryption = Match::Encryption.for_storage_mode('git', { git_url: git_url, working_directory: stor.working_directory})
     new_encryption.decrypt_files
     return new_encryption
   end
 
   get_all_files = lambda do |stor|
-    return Dir[File.join(stor.working_directory, "**", "*.{cer,p12,mobileprovision}")]
+    Dir[File.join(stor.working_directory, "**", "*.{cer,p12,mobileprovision}")]
   end
 
   storage = storage_conf.call
-  encryption = encryption_conf.call(storage)
+  encryption = encryption_conf_for_storage.call(storage)
   old_files = get_all_files.call(storage)
 
   sh("open #{storage.working_directory}")
@@ -246,7 +246,7 @@ lane :ManuallyUpdateCodeSigning do |options|
 
   if files_diff.length > 0
     storage = storage_conf.call
-    encryption = encryption_conf.call(storage)
+    encryption = encryption_conf_for_storage.call(storage)
 
     files_to_delete = files_diff.map do |file| 
       old_file = file
