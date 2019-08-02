@@ -104,7 +104,7 @@ class Unused
             options[:ignore] = []
 
             opts.on("-c", "--config=FileName") { |c| options[:config] = c }
-            opts.on("-i", "--ignore=a, b, c", Array) { |i| options[:ignore] += i }
+            opts.on("-i", "--ignore [a, b, c]", Array) { |i| options[:ignore] += i if !i.nil? }
 
         end.parse!
 
