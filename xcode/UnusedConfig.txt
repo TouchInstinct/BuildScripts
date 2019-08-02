@@ -1,5 +1,0 @@
---ignored-resources:
-Generated/
-Resources/Localization
-Carthage/
-Pods/
