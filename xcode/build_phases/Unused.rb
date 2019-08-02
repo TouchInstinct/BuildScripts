@@ -49,8 +49,8 @@ class Item
         "#{@type.to_s} #{@name.to_s} from: #{@file}:#{@at} is unused"
     end
 
-    def to_xcode
-        "#{full_file_path}:#{@at}:0: warning: #{@type.to_s} #{@name.to_s} is unused"
+    def to_xcode(count)
+        "Unused Code Warning! Total Count #{count}: warning: #{serialize} is unused"
     end
 
 
@@ -87,7 +87,7 @@ class Unused
 
         if unused_warnings.length > 0
             # show warning
-            puts "#{unused_warnings.map { |e| e.to_xcode }.join("\n")}"
+            puts "#{unused_warnings.map { |e| e.to_xcode unused_warnings.length }.join("\n")}"
             # write log
             File.open("UnusedLog.txt", "w") do |file|
                 file.write("Unused code warnings count: #{unused_warnings.length}\n\n")
