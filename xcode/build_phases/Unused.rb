@@ -1,3 +1,4 @@
+# source: https://github.com/PaulTaykalo/swift-scripts/blob/master/unused.rb
 #!/usr/bin/ruby
 #encoding: utf-8
 require 'yaml'
@@ -46,11 +47,10 @@ class Item
     end
 
     def serialize
-        "#{@type.to_s} #{@name.to_s} from: #{@file}:#{@at} is unused"
+        "#{@full_file_path}:#{@at} #{@type.to_s} #{@name.to_s} is unused"
     end
-
-    def to_xcode(count)
-        "Unused Code Warning! Total Count #{count}: warning: #{serialize} is unused"
+    def to_xcode
+        "#{full_file_path}:#{@at}:0: warning: #{@type.to_s} #{@name.to_s} is unused"
     end
 
 
@@ -87,7 +87,8 @@ class Unused
 
         if unused_warnings.length > 0
             # show warning
-            puts "#{unused_warnings.map { |e| e.to_xcode unused_warnings.length }.join("\n")}"
+            puts "Unused Code Warning!: warning: Total Count #{unused_warnings.length}"
+            puts "#{unused_warnings.map { |e| e.to_xcode}.join("\n")}"
             # write log
             File.open("UnusedLog.txt", "w") do |file|
                 file.write("Unused code warnings count: #{unused_warnings.length}\n\n")
