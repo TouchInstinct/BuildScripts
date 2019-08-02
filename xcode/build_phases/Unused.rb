@@ -47,7 +47,7 @@ class Item
     end
 
     def serialize
-        "#{@file}:#{@at} #{@type.to_s} #{@name.to_s} is unused"
+        "#{@file} has unused \"#{@type.to_s} #{@name.to_s}\""
     end
     def to_xcode
         "#{full_file_path}:#{@at}:0: warning: #{@type.to_s} #{@name.to_s} is unused"
