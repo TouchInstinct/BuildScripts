@@ -112,9 +112,9 @@ class Unused
         # find --config file
         if !options[:config].nil?
             fileName = options[:config]
-            resources += YAML.load_file(fileName).fetch("--ignored-resources")
+            resources += YAML.load_file(fileName).fetch("ignored-resources")
             elsif
-            puts "---------\n Warning: Config file is now provided \n---------"
+            puts "---------\n Warning: Config file is not provided \n---------"
         end
 
         # find --ignored files

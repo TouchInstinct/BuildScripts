@@ -1,4 +1,4 @@
---ignored-resources:
+ignored-resources:
   - Generated/
   - Resources/Localization
   - Carthage/
