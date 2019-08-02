@@ -96,7 +96,7 @@ class Unused
         end
     end
 
-    def parse_arguments()
+    def parse_arguments
         resources = []
 
         options = {}
@@ -123,6 +123,17 @@ class Unused
 
         # create and return Regexp
         resources.map { |r| Regexp.new(r) }
+    end
+
+    def grab_items(file)
+        lines = File.readlines(file).map {|line| line.gsub(/^\s*\/\/.*/, "")  }
+        items = lines.each_with_index.select { |line, i| line[/(func|let|var|class|enum|struct|protocol)\s+\w+/] }.map { |line, i| Item.new(file, line, i)}
+    end
+
+    def filter_items(items)
+        items.select { |f|
+            !f.name.start_with?("test") && !f.modifiers.include?("@IBAction") && !f.modifiers.include?("override") && !f.modifiers.include?("@objc") && !f.modifiers.include?("@IBInspectable")
+        }
     end
 
     # remove files, that maches ignored Regexps array
@@ -171,18 +182,6 @@ class Unused
 
         items = ignore_files_with_regexps(items, regexps)
     end
-
-    def grab_items(file)
-        lines = File.readlines(file).map {|line| line.gsub(/^\s*\/\/.*/, "")  }
-        items = lines.each_with_index.select { |line, i| line[/(func|let|var|class|enum|struct|protocol)\s+\w+/] }.map { |line, i| Item.new(file, line, i)}
-    end
-
-    def filter_items(items)
-        items.select { |f|
-            !f.name.start_with?("test") && !f.modifiers.include?("@IBAction") && !f.modifiers.include?("override") && !f.modifiers.include?("@objc") && !f.modifiers.include?("@IBInspectable")
-        }
-    end
-
 end
 
 
