@@ -1,0 +1,6 @@
+excluded-resources:
+  - Generated/
+  - Resources/Localization
+  - Carthage/
+  - Pods/
+  - FormattingService.swift
