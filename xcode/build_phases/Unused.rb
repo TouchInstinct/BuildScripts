@@ -102,24 +102,24 @@ class Unused
 
         options = {}
         OptionParser.new do |opts|
-            options[:ignore] = []
+            options[:exclude] = []
 
             opts.on("-c", "--config=FileName") { |c| options[:config] = c }
-            opts.on("-i", "--ignore [a, b, c]", Array) { |i| options[:ignore] += i if !i.nil? }
+            opts.on("-i", "--exclude [a, b, c]", Array) { |i| options[:exclude] += i if !i.nil? }
 
         end.parse!
 
         # find --config file
         if !options[:config].nil?
             fileName = options[:config]
-            resources += YAML.load_file(fileName).fetch("ignored-resources")
+            resources += YAML.load_file(fileName).fetch("excluded-resources")
             elsif
             puts "---------\n Warning: Config file is not provided \n---------"
         end
 
-        # find --ignored files
-        if !options[:ignore].nil?
-            resources += options[:ignore]
+        # find --exclude files
+        if !options[:exclude].nil?
+            resources += options[:exclude]
         end
 
         # create and return Regexp
@@ -137,7 +137,7 @@ class Unused
         }
     end
 
-    # remove files, that maches ignored Regexps array
+    # remove files, that maches excluded Regexps array
     def ignore_files_with_regexps(files, regexps)
         files.select { |f| regexps.all? { |r| r.match(f.file).nil? } }
     end
