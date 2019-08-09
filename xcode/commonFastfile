@@ -20,7 +20,7 @@ private_lane :installDependencies do |options|
   end
 
   cocoapods(
-    repo_update: false
+    repo_update: true
   )
 end
 
