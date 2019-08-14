@@ -1,0 +1,68 @@
+apply plugin: 'checkstyle'
+apply plugin: 'cpd'
+apply plugin: 'pmd'
+apply plugin: 'io.gitlab.arturbosch.detekt'
+
+configurations {
+    pngtastic
+}
+
+cpd {
+    skipLexicalErrors = true
+}
+
+detekt {
+    input = files("${rootDir}")
+    config = files("$buildScriptsDir/kotlin/detekt-config.yml")
+
+    // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
+    filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*,.*/build/.*,.*\\.kts"
+
+    reports {
+        html {
+            enabled = true
+            destination = file("${project.buildDir}/reports/kotlin-detekt.html")
+        }
+        xml {
+            enabled = true
+            destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
+        }
+    }
+}
+
+ext.getCpdTask = { isAndroidProject, sources ->
+    def taskName = (isAndroidProject ? "android" : "server") + "cpd_${project.name}"
+    def task = tasks.findByName(taskName)
+    if (task == null) {
+        task = tasks.create(taskName, tasks.findByName('cpdCheck').getClass().getSuperclass()) {
+            minimumTokenCount = 60
+            source = files(sources)
+            ignoreFailures = true
+            reports {
+                xml {
+                    enabled = true
+                    destination = file("${project.buildDir}/reports/cpd.xml")
+                }
+            }
+        }
+    }
+    return task.name
+}
+
+ext.getLintTask = { buildVariant ->
+    def lintTaskName
+    if (buildVariant != null) {
+        lintTaskName = "lint${buildVariant.name.capitalize()}"
+    } else {
+        def lintDebugTask = tasks.matching { it.getName().contains("lint") && it.getName().contains("Debug") }.first()
+        lintTaskName = lintDebugTask.getName()
+    }
+    android.lintOptions.abortOnError = false
+    android.lintOptions.checkAllWarnings = true
+    android.lintOptions.warningsAsErrors = false
+    android.lintOptions.xmlReport = true
+    android.lintOptions.xmlOutput = file "$project.buildDir/reports/lint_report.xml"
+    android.lintOptions.htmlReport = false
+    android.lintOptions.lintConfig = file "$buildScriptsDir/lint/lint.xml"
+    return lintTaskName
+}
