@@ -122,7 +122,11 @@ private_lane :buildArchive do |options|
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
   exportOptions[:compileBitcode] = options[:compileBitcode] || false
 
-  set_xcconfig_for_configuration_of_project(options[:configuration], "Release", options[:xcodeproj_path])
+  xcconfig_name = options[:configuration]
+  configuration_name = options[:configuration_name]
+  xcodeproj_path = options[:xcodeproj_path]
+
+  set_xcconfig_for_configuration_of_project(xcconfig_name, configuration_name, xcodeproj_path)
 
   gym(
     clean: true,
@@ -131,7 +135,7 @@ private_lane :buildArchive do |options|
     archive_path: "./",
     output_directory: "./",
     output_name: options[:output_name],
-    configuration: "Release",
+    configuration: configuration_name,
     export_method: options[:method],
     export_options: exportOptions,
     skip_package_ipa: options[:skip_package_ipa],
@@ -304,6 +308,7 @@ def make_options_for_lane_name(lane_name)
   method = configuration_type_from_lane_name(lane_name)
   return {
     :configuration => lane_name,
+    :configuration_name => lane_name.start_with?("AppStore") ? "AppStore" : "Release",
     :method => method,
     :type => profile_type_from_configuration_type(method)
   }
