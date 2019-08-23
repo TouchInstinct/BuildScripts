@@ -307,7 +307,7 @@ end
 def make_options_for_lane_name(lane_name)
   method = configuration_type_from_lane_name(lane_name)
   return {
-    :configuration => lane_name,
+    :configuration => lane_name.start_with?("AppStore") ? "AppStore" : lane_name,
     :configuration_name => lane_name.start_with?("AppStore") ? "AppStore" : "Release",
     :method => method,
     :type => profile_type_from_configuration_type(method)
