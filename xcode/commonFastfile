@@ -9,7 +9,7 @@ private_lane :installDependencies do |options|
     sh("rm -rf #{podsReposPath}")
   end
 
-  bundle_install()
+  bundle_install(path: "../.gem")
 
   if File.exists? "../Cartfile"
     begin
