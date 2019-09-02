@@ -364,15 +364,15 @@ def set_xcconfig_for_configuration_of_project(xcconfig_name, configuration_name,
 
   project = Xcodeproj::Project.open(xcodeproj_path)
 
-  is_app_target = lambda do |t| 
-    application_const = Xcodeproj::Constants::PRODUCT_TYPE_UTI[:application]
-    extension_const = Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension]
-    
-    is_valid_id = [application_const, extension_const].include?(t.product_type)
-    return !t.test_target_type? && is_valid_id
-  end
+  target_to_modify_selector = lambda do |t| 
+    supported_product_types = [
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:application]
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension]
+    ]
+    return !t.test_target_type? && supported_product_types.include?(t.product_type)
+end
 
-  application_targets = project.native_targets.select(&is_app_target)
+  application_targets = project.native_targets.select(&target_to_modify_selector)
 
   application_targets.each do |target|
     build_configuration = target.build_configuration_list[configuration_name]
