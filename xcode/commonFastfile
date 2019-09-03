@@ -366,7 +366,7 @@ def set_xcconfig_for_configuration_of_project(xcconfig_name, configuration_name,
 
   target_to_modify_selector = lambda do |t| 
     supported_product_types = [
-        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:application]
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:application],
         Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension]
     ]
     return !t.test_target_type? && supported_product_types.include?(t.product_type)
