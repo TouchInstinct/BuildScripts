@@ -1,7 +1,7 @@
 {
     "targets": [
         {
-            "target_name": {
+            "YOUR_TARGET_NAME": {
                 "Standard": {
                     "PROVISIONING_PROFILE_SPECIFIER": "",
                     "PRODUCT_BUNDLE_IDENTIFIER": "",

@@ -1,10 +1,14 @@
 require 'json'
 require 'mustache'
 
+# Constants
+configs_folder_name = "TargetConfigurations"
+standard_dev_team = "D4HA43V467"
+enterprise_dev_team = "228J5MMU7S"
 
 # create config files if needed
-system("touch configs_data.json") unless File.exist?("configs_data")
-system("mkdir TargetConfigurations") unless Dir.exist?("TargetConfigurations")
+File.new("configs_data.json", 'a')
+Dir.mkdir(configs_folder_name) unless Dir.exist?(configs_folder_name)
 
 # call python script and generate configs to config file
 system("python gen_configurations.py > configs_data.json")
@@ -30,7 +34,7 @@ def development_team_if_needed(properties, account_type)
         return []
     end
 
-    team_value = account_type == "Standard" ? "D4HA43V467" : "228J5MMU7S"
+    team_value = account_type == "Standard" ? standard_dev_team : enterprise_dev_team
     return [config_option(development_team_key, team_value)]
 end
 
@@ -87,7 +91,7 @@ targets.each do |target|
         }
 
         # create file for every setting in loop
-        File.open("TargetConfigurations/" + target_name + config["name"] + ".xcconfig", 'w') { |file|
+        File.open(configs_folder_name + "/" + target_name + config["name"] + ".xcconfig", 'w') { |file|
             file.puts(Mustache.render(target_xcconfig_tempate, config_data))
         }
     end
@@ -95,4 +99,4 @@ targets.each do |target|
 end
 
 # remove config file, it's trash
-system("rm configs_data.json") if File.exist?("configs_data.json")
+File.delete("configs_data.json") if File.exist?("configs_data.json")
