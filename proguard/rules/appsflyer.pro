@@ -1,0 +1,5 @@
+-dontwarn com.google.android.gms.iid.**
+-keep class com.appsflyer.** { *; }
+-dontwarn android.app.job.JobParameters
+-dontwarn com.android.installreferrer.**
+-dontwarn com.appsflyer.**
