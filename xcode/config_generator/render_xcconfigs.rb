@@ -28,37 +28,35 @@ def config_option(key, value)
 end
 
 # return empty array or generated dev team hash
-def development_team_if_needed(properties, account_type)
-    development_team_key = "DEVELOPMENT_TEAM"
-    if properties.key?(development_team_key)
-        return []
-    end
-
+def generate_development_team(account_type)
     team_value = account_type == "Standard" ? standard_dev_team : enterprise_dev_team
-    return [config_option(development_team_key, team_value)]
+    return config_option(development_team_key, team_value)
 end
 
 # return empty array or generated provisioning profile hash
-def provisioning_profile_if_needed(properties, account_type)
-    provisioning_key = "PROVISIONING_PROFILE_SPECIFIER"
-    if properties.key?(provisioning_key)
-        return []
-    end
-
-    bundle_id = properties["PRODUCT_BUNDLE_IDENTIFIER"]
+def generate_provisioning_profile(bundle_id, account_type)
     if account_type == "AppStore"
         app_store_profiile = "match AppStore " + bundle_id
         return [config_option(provisioning_key, app_store_profiile)]
     else
-        return [config_option(provisioning_key, bundle_id)]
+        return config_option(provisioning_key, bundle_id)
     end
 end
 
 # generate missing properties if needed
 def generate_missing_properties(properties, account_type)
     result = []
-    result.concat(development_team_if_needed(properties, account_type))
-    result.concat(provisioning_profile_if_needed(properties, account_type))
+    development_team_key = "DEVELOPMENT_TEAM"
+    provisioning_key = "PROVISIONING_PROFILE_SPECIFIER"
+
+    unless properties.key?(development_team_key)
+        result.append(generate_development_team(account_type))
+    end
+
+    unless properties.key?(provisioning_key)
+        result.append(generate_provisioning_profile(properties["PRODUCT_BUNDLE_IDENTIFIER"], account_type))
+    end
+
     return result
 end
 
