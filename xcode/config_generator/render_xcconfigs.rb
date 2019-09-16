@@ -2,20 +2,19 @@ require 'json'
 require 'mustache'
 
 # Constants
-configs_folder_name = "TargetConfigurations"
-standard_dev_team = "D4HA43V467"
-enterprise_dev_team = "228J5MMU7S"
+$configs_folder_name = "TargetConfigurations"
+$standard_dev_team = "D4HA43V467"
+$enterprise_dev_team = "228J5MMU7S"
 
-# create config files if needed
-File.new("configs_data.json", 'a')
-Dir.mkdir(configs_folder_name) unless Dir.exist?(configs_folder_name)
+# create config directory if needed
+Dir.mkdir($configs_folder_name) unless Dir.exist?($configs_folder_name)
 
 # call python script and generate configs to config file
 system("python gen_configurations.py > configs_data.json")
 
 
 # open settings + template file
-settings = JSON.load(File.open("settings.json"))
+settings = JSON.load(File.open("custom_settings.json"))
 target_xcconfig_tempate = File.read("target_xcconfig.mustache")
 
 
@@ -28,13 +27,13 @@ def config_option(key, value)
 end
 
 # return empty array or generated dev team hash
-def generate_development_team(account_type)
-    team_value = account_type == "Standard" ? standard_dev_team : enterprise_dev_team
+def generate_development_team(development_team_key, account_type)
+    team_value = account_type == "Standard" ? $standard_dev_team : $enterprise_dev_team
     return config_option(development_team_key, team_value)
 end
 
 # return empty array or generated provisioning profile hash
-def generate_provisioning_profile(bundle_id, account_type)
+def generate_provisioning_profile(provisioning_key, bundle_id, account_type)
     if account_type == "AppStore"
         app_store_profiile = "match AppStore " + bundle_id
         return [config_option(provisioning_key, app_store_profiile)]
@@ -50,11 +49,11 @@ def generate_missing_properties(properties, account_type)
     provisioning_key = "PROVISIONING_PROFILE_SPECIFIER"
 
     unless properties.key?(development_team_key)
-        result.append(generate_development_team(account_type))
+        result.append(generate_development_team(development_team_key, account_type))
     end
 
     unless properties.key?(provisioning_key)
-        result.append(generate_provisioning_profile(properties["PRODUCT_BUNDLE_IDENTIFIER"], account_type))
+        result.append(generate_provisioning_profile(provisioning_key, properties["PRODUCT_BUNDLE_IDENTIFIER"], account_type))
     end
 
     return result
@@ -89,7 +88,7 @@ targets.each do |target|
         }
 
         # create file for every setting in loop
-        File.open(configs_folder_name + "/" + target_name + config["name"] + ".xcconfig", 'w') { |file|
+        File.open($configs_folder_name + "/" + target_name + config["name"] + ".xcconfig", 'w') { |file|
             file.puts(Mustache.render(target_xcconfig_tempate, config_data))
         }
     end
