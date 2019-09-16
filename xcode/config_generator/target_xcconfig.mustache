@@ -1,0 +1,7 @@
+#include "Pods/Target Support Files/Pods-{{target_name}}/Pods-{{target_name}}.{{configuration.build_type}}.xcconfig"
+
+{{#configuration.xcconfig_options}}
+{{key}} = {{value}}
+{{/configuration.xcconfig_options}}
+
+CODE_SIGN_STYLE = Manual
