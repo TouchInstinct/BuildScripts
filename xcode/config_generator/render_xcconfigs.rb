@@ -5,6 +5,9 @@ require 'mustache'
 $configs_folder_name = "TargetConfigurations"
 $standard_dev_team = "D4HA43V467"
 $enterprise_dev_team = "228J5MMU7S"
+$standard_bundle_prefix = "ru.touchin."
+$enterprise_bundle_prefix = "com.touchin."
+$bundle_id_key = "PRODUCT_BUNDLE_IDENTIFIER"
 
 # create config directory if needed
 Dir.mkdir($configs_folder_name) unless Dir.exist?($configs_folder_name)
@@ -36,24 +39,38 @@ end
 def generate_provisioning_profile(provisioning_key, bundle_id, account_type)
     if account_type == "AppStore"
         app_store_profiile = "match AppStore " + bundle_id
-        return [config_option(provisioning_key, app_store_profiile)]
+        return config_option(provisioning_key, app_store_profiile)
     else
         return config_option(provisioning_key, bundle_id)
     end
 end
 
+def generate_bundle_id(target_name, account_type)
+    bundle_id_prefix = account_type == "Standard" ? $standard_bundle_prefix : $enterprise_bundle_prefix
+    bundle_id = bundle_id_prefix + target_name
+    return config_option($bundle_id_key, bundle_id)
+end
+
 # generate missing properties if needed
-def generate_missing_properties(properties, account_type)
+def generate_missing_properties(target_name, properties, account_type)
     result = []
     development_team_key = "DEVELOPMENT_TEAM"
     provisioning_key = "PROVISIONING_PROFILE_SPECIFIER"
+
+    unless properties.key?($bundle_id_key)
+        bundle_id_config = generate_bundle_id(target_name, account_type)
+        bundle_id = bundle_id_config["value"]
+        result.append(bundle_id_config)
+    else
+        bundle_id = properties[$bundle_id_key]
+    end
 
     unless properties.key?(development_team_key)
         result.append(generate_development_team(development_team_key, account_type))
     end
 
     unless properties.key?(provisioning_key)
-        result.append(generate_provisioning_profile(provisioning_key, properties["PRODUCT_BUNDLE_IDENTIFIER"], account_type))
+        result.append(generate_provisioning_profile(provisioning_key, bundle_id, account_type))
     end
 
     return result
@@ -79,7 +96,7 @@ targets.each do |target|
         end
 
         # add missing properties if needed
-        config["xcconfig_options"].concat(generate_missing_properties(properties, account_type))
+        config["xcconfig_options"].concat(generate_missing_properties(target_name, properties, account_type))
 
         # create settings pack
         config_data = {
