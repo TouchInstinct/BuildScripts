@@ -9,6 +9,10 @@ private_lane :installDependencies do |options|
     sh("rm -rf #{podsReposPath}")
   end
 
+  if File.exists? "../Gemfile"
+    bundle_install(path: "../.gem")
+  end
+
   if File.exists? "../Cartfile"
     begin
       carthage(command: "bootstrap", platform: "iOS")
