@@ -94,6 +94,7 @@ private_lane :buildConfiguration do |options|
   options[:workspace] = "./#{appName}.xcworkspace"
 
   installDependencies(options)
+  addBadge(options)
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
     options = merge_options_with_config_file(options)
@@ -183,6 +184,12 @@ lane :syncCodeSigning do |options|
     skip_docs: true,
     platform: "ios"
   )
+end
+
+lane :addBadge do |options|
+  versionNumber = options[:versionNumber]
+  buildNumber = options[:buildNumber]
+  add_badge(shield: "#{versionNumber}-#{buildNumber}-blue", dark: false)
 end
 
 private_lane :openKeychain do |options|
