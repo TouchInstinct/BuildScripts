@@ -1,5 +1,5 @@
 <?php
-    $PROJECT_NAME = $argv[1];
+    $PRODUCT_NAME = $argv[1];
     $COMMON_STRINGS_PATH = $argv[2];
 
     function createFolder($path) {
@@ -8,7 +8,7 @@
         }
     }
 
-    $localization = './'.$PROJECT_NAME.'/Resources/Localization/';
+    $localization = './'.$PRODUCT_NAME.'/Resources/Localization/';
 
     $baseFile = file_get_contents(array_pop(glob($COMMON_STRINGS_PATH.'/default*.json')));
     $baseJson = json_decode($baseFile, true);
