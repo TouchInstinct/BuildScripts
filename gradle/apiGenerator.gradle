@@ -7,7 +7,7 @@ configurations {
 }
 
 dependencies {
-    apigenerator 'ru.touchin:api-generator:1.4.0-alpha1'
+    apigenerator 'ru.touchin:api-generator:1.4.0-beta1'
 }
 
 android.applicationVariants.all { variant ->
@@ -18,7 +18,7 @@ android.applicationVariants.all { variant ->
         jarArgs.add(configurations.apigenerator.asPath)
         jarArgs.add("generate-client-code")
         jarArgs.add("--output-language")
-        jarArgs.add("JAVA")
+        jarArgs.add("KOTLIN")
         jarArgs.add("--specification-path")
         jarArgs.add(rootProject.extensions.findByName("pathToApiSchemes"))
         jarArgs.add("--output-path")
@@ -28,6 +28,6 @@ android.applicationVariants.all { variant ->
         javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
     }
 
-    generateJsonModelsTask.description = 'Generates Java classes for JSON models'
+    generateJsonModelsTask.description = 'Generates Kotlin classes for JSON models and api methods implementations'
     variant.registerJavaGeneratingTask generateJsonModelsTask, generatedModelsDirectory
 }
