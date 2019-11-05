@@ -7,7 +7,7 @@ configurations {
 }
 
 dependencies {
-    apigenerator 'ru.touchin:api-generator:1.4.0-alpha1'
+    apigenerator 'ru.touchin:api-generator:1.4.0-beta1'
 }
 
 android.applicationVariants.all { variant ->
