@@ -1,4 +1,4 @@
-LOCALIZATION_PATH="${PROJECT_NAME}/Resources/Localization"
+LOCALIZATION_PATH="${PRODUCT_NAME}/Resources/Localization"
 #first argument set strings folder path
 STRINGS_FOLDER=${1:-"common/strings"}
 
@@ -13,4 +13,4 @@ if ! [ -e "${PROJECT_DIR}/${STRINGS_FOLDER}" ]; then
 fi
 
 #second argument set strings script path
-php ${2:-build-scripts/xcode/aux_scripts/import_strings.php} ${PROJECT_NAME} ${STRINGS_FOLDER}
+php ${2:-build-scripts/xcode/aux_scripts/import_strings.php} ${PRODUCT_NAME} ${STRINGS_FOLDER}
