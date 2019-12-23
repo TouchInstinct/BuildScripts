@@ -5,5 +5,4 @@
 -include rules/logansquare.pro
 -include rules/crashlytics.pro
 -include rules/glide.pro
--include rules/kaspersky.pro
 -include rules/appsflyer.pro
