@@ -19,7 +19,7 @@ private_lane :installDependencies do |options|
     rescue
       # workaround for https://github.com/Carthage/Carthage/issues/2298
       sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
-      carthage(command: "update", platform: "iOS")
+      carthage(command: "update", platform: "iOS", cache_builds: true)
     end
   end
 
@@ -366,7 +366,7 @@ def set_xcconfig_for_configuration_of_project(xcconfig_name, configuration_name,
 
   project = Xcodeproj::Project.open(xcodeproj_path)
 
-  target_to_modify_selector = lambda do |t| 
+  target_to_modify_selector = lambda do |t|
     supported_product_types = [
         Xcodeproj::Constants::PRODUCT_TYPE_UTI[:application],
         Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension]
