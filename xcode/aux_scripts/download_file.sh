@@ -4,7 +4,7 @@ folder=$3
 flag_of_delete=$4
 
 readonly key_of_delete="--remove-cached"
-readonly default_folder="Downloads"
+readonly default_folder="./Downloads"
 
 if [[ ${folder} = ${key_of_delete} ]]; then
     folder="${default_folder}"
@@ -15,7 +15,7 @@ if ! [ -n "$folder" ]; then
     folder="${default_folder}"
 fi
 
-file_path="./${folder}/${file_name}"
+file_path="${folder}/${file_name}"
 
 if [[ ${flag_of_delete} = ${key_of_delete} ]]; then
     rm ${file_path}
