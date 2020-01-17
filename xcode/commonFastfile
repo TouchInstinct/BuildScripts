@@ -21,7 +21,7 @@ private_lane :installDependencies do |options|
     use_rome = File.exists? "../Romefile"
 
     swift_version = sh("xcrun swift --version | head -1 | sed 's/.*\\(\(.*\)\\).*/\\1/' | tr -d \"()\" | tr \" \" \"-\"").chop
-    rome_path = "Pods/Rome/rome"
+    rome_path = "../Pods/Rome/rome"
     rome_options = "--platform iOS --cache-prefix #{swift_version} --romefile ../Romefile"
 
     carthage_install = lambda do
