@@ -60,6 +60,7 @@ excluded:
   - Carthage
   - Pods
   - Generated
+  - Localization
 
 line_length: 128
 
