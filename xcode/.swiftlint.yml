@@ -3,7 +3,6 @@ opt_in_rules:
   # performance
 
   - first_where
-  - last_where
   - empty_string
   - empty_count
 
@@ -60,6 +59,7 @@ excluded:
   - Carthage
   - Pods
   - Generated
+  - Localization
 
 line_length: 128
 
