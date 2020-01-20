@@ -3,6 +3,7 @@ opt_in_rules:
   # performance
 
   - first_where
+  - last_where
   - empty_string
   - empty_count
 
