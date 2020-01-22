@@ -21,18 +21,18 @@ private_lane :installDependencies do |options|
     use_rome = File.exists? "../Romefile"
 
     swift_version = sh("xcrun swift --version | head -1 | sed 's/.*\\(\(.*\)\\).*/\\1/' | tr -d \"()\" | tr \" \" \"-\"").chop
-    rome_path = "../Pods/Rome/rome"
-    rome_options = "--platform iOS --cache-prefix #{swift_version} --romefile ../Romefile"
+    rome_path = "Pods/Rome/rome"
+    rome_options = "--platform iOS --cache-prefix #{swift_version} --romefile Romefile"
 
     carthage_install = lambda do
       if use_rome
-        sh("#{rome_path} download #{rome_options}")
+        sh("cd .. && #{rome_path} download #{rome_options}")
       end
 
       carthage(command: "bootstrap", platform: "iOS", cache_builds: true)
 
       if use_rome
-        sh("#{rome_path} list --missing #{rome_options} | awk '{print $1}' | xargs #{rome_path} upload #{rome_options}")
+        sh("cd .. && #{rome_path} list --missing #{rome_options} | awk '{print $1}' | xargs -I framework_name #{rome_path} upload framework_name #{rome_options}")
       end
     end
 
