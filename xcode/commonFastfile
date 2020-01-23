@@ -36,15 +36,13 @@ private_lane :installDependencies do |options|
       end
     end
 
-    carthage_install.call
-
-    # begin
-
-    # rescue
-    #   # workaround for https://github.com/Carthage/Carthage/issues/2298
-    #   sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
-    #   carthage_install()
-    # end
+    begin
+      carthage_install.call
+    rescue
+      # workaround for https://github.com/Carthage/Carthage/issues/2298
+      sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
+      carthage_install.call
+    end
   end
 end
 
