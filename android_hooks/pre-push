@@ -1,0 +1,20 @@
+#!/bin/sh
+
+echo "Pre push static analysis"
+
+output=$(./gradlew staticAnalysis --daemon 2>&1)
+
+status=$?
+
+if [ "$status" = 0 ] ; then
+	exit 0
+else
+	build_date=$(date +'%Y-%m-%d_%T')
+	file_name="build_$build_date"
+	folder_name="./build_log/"
+	file_path="${folder_name}${file_name}"
+	mkdir -p "$folder_name"
+	echo "$output" >> "$file_path"
+	echo "Pre push static failed. Full log path: ${file_path}" 
+	exit 1
+fi   
