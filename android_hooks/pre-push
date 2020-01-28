@@ -4,7 +4,6 @@ echo "Pre push static analysis"
 
 output=$(./gradlew staticAnalysis --daemon 2>&1)
 
-
 status=$?
 
 if [ "$status" = 0 ] ; then
