@@ -1,0 +1,10 @@
+android {
+    defaultConfig {
+        setProperty(
+                "archivesBaseName",
+                "${project.android.defaultConfig.applicationId}" +
+                        "-" +
+                        "${project.android.defaultConfig.versionName}"
+        )
+    }
+}
