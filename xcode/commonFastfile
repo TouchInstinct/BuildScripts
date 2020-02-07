@@ -9,6 +9,10 @@ private_lane :installDependencies do |options|
     sh("rm -rf #{podsReposPath}")
   end
 
+  if File.exists? "../Gemfile"
+    bundle_install(path: "../.gem")
+  end
+
   if File.exists? "../Cartfile"
     begin
       carthage(command: "bootstrap", platform: "iOS")
@@ -20,7 +24,7 @@ private_lane :installDependencies do |options|
   end
 
   cocoapods(
-    repo_update: false
+    repo_update: true
   )
 end
 
@@ -195,6 +199,76 @@ private_lane :openKeychain do |options|
     )
   end
 end
+
+lane :ManuallyUpdateCodeSigning do |options|
+  # based on this article https://medium.com/@jonathancardoso/using-fastlane-match-with-existing-certificates-without-revoking-them-a325be69dac6
+  require 'fastlane_core'
+  require 'match'
+
+  conf = FastlaneCore::Configuration.create(Match::Options.available_options, {})
+  conf.load_configuration_file("Matchfile")
+
+  git_url = conf.config_file_options[:git_url]
+  shallow_clone = false
+  branch = 'fastlane_certificates'
+
+  storage_conf = lambda do 
+    new_storage = Match::Storage.for_mode('git', { git_url: git_url, shallow_clone: shallow_clone, git_branch: branch, clone_branch_directly: false})
+    new_storage.download
+    return new_storage
+  end
+
+  encryption_conf_for_storage = lambda do |stor|
+    new_encryption = Match::Encryption.for_storage_mode('git', { git_url: git_url, working_directory: stor.working_directory})
+    new_encryption.decrypt_files
+    return new_encryption
+  end
+
+  get_all_files = lambda do |stor|
+    Dir[File.join(stor.working_directory, "**", "*.{cer,p12,mobileprovision}")]
+  end
+
+  storage = storage_conf.call
+  encryption = encryption_conf_for_storage.call(storage)
+  old_files = get_all_files.call(storage)
+
+  sh("open #{storage.working_directory}")
+
+  # we are not using prompt() since it requires non-empty input which is not a case for Enter (\n)
+  puts "Enter any key when you're done"
+  STDIN.gets
+
+  encryption.encrypt_files
+
+  files_to_commit = get_all_files.call(storage)
+  old_directory = storage.working_directory
+  storage.save_changes!(files_to_commit: files_to_commit)
+
+
+  # need to check, because saving changes with delete is another function (update repo if needed)
+  files_diff = old_files - files_to_commit
+
+  # match can not work with both save/delete functionality `You can't provide both files_to_delete and files_to_commit right now`
+  # to avoid this we use storage twice if needed
+
+  if files_diff.length > 0
+    storage = storage_conf.call
+    encryption = encryption_conf_for_storage.call(storage)
+
+    files_to_delete = files_diff.map do |file| 
+      old_file = file
+      old_file.slice! old_directory
+      new_file = File.join(storage.working_directory, old_file)
+      File.delete(new_file) if File.exist?(new_file)
+      file = new_file
+    end
+
+    encryption.encrypt_files
+    storage.save_changes!(files_to_delete: files_to_delete)
+  end
+
+end
+
 
 def get_keychain_options(options)
   keychain_name = options[:keychain_name]
