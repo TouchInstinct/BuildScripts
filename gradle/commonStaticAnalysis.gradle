@@ -1,19 +1,13 @@
-apply plugin: 'checkstyle'
 apply plugin: 'cpd'
-apply plugin: 'pmd'
 apply plugin: 'io.gitlab.arturbosch.detekt'
 
 def getCpdTask
-def getPmdTask
-def getCheckstyleTask
 def getLintTask
-def getKotlinDetektTask
+def getKotlinDetektTasks
 
 def appendError
 def appendCpdErrors
 def appendKotlinErrors
-def appendCheckstyleErrors
-def appendPmdErrors
 def appendLintErrors
 
 repositories {
@@ -26,25 +20,6 @@ configurations {
 
 cpd {
     skipLexicalErrors = true
-}
-
-detekt {
-    input = files("${rootDir}")
-    config = files("$buildScriptsDir/kotlin/detekt-config.yml")
-
-    // TODO add excludes from rootProject.extensions.findByName("staticAnalysisExcludes")
-    filters = ".*src/test.*,.*/resources/.*,.*/tmp/.*"
-
-    reports {
-        html {
-            enabled = true
-            destination = file("${project.buildDir}/reports/kotlin-detekt.html")
-        }
-        xml {
-            enabled = true
-            destination = file("${project.buildDir}/reports/kotlin-detekt.xml")
-        }
-    }
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -73,18 +48,12 @@ ext.getIdeaFormatTask = { isAndroidProject, sources ->
     }
 }
 
-ext.getStaticAnalysisTaskNames = { isAndroidProject, sources, buildVariant, checkstyleEnabled, pmdEnabled ->
+ext.getStaticAnalysisTaskNames = { isAndroidProject, sources, buildVariant ->
     def tasksNames = new ArrayList<String>()
     try {
         tasksNames.add(getCpdTask(isAndroidProject, sources))
-        tasksNames.add(getKotlinDetektTask())
+        tasksNames.addAll(getKotlinDetektTasks())
         if (isAndroidProject) {
-            if (checkstyleEnabled) {
-                tasksNames.add(getCheckstyleTask(sources))
-            }
-            if (pmdEnabled) {
-                tasksNames.add(getPmdTask(sources))
-            }
             tasksNames.add(getLintTask(buildVariant))
         }
     } catch (Exception exception) {
@@ -107,7 +76,12 @@ ext.generateReport = { isAndroidProject ->
     }
 
     previousCount = count
-    count = appendKotlinErrors(count, new File("${project.buildDir}/reports/kotlin-detekt.xml"))
+    subprojects.forEach { subproject ->
+        def reportFile = new File("${rootProject.buildDir}/reports/kotlin-detekt-${subproject.name}.xml")
+        if (reportFile.exists()) {
+            count = count + appendKotlinErrors(count, reportFile)
+        }
+    }
     if (count - previousCount > 0) {
         consoleReport.append("\nKotlin-detekt: FAILED (" + (count - previousCount) + " errors)")
     } else {
@@ -115,30 +89,8 @@ ext.generateReport = { isAndroidProject ->
     }
 
     if (isAndroidProject) {
-        def checkstyleFile = new File("${project.buildDir}/reports/checkstyle.xml")
-        if (checkstyleFile.exists()) {
-            previousCount = count
-            count = appendCheckstyleErrors(count, checkstyleFile)
-            if (count - previousCount > 0) {
-                consoleReport.append("\nCheckstyle: FAILED (" + (count - previousCount) + " errors)")
-            } else {
-                consoleReport.append("\nCheckstyle: PASSED")
-            }
-        }
-
-        def pmdFile = new File("${project.buildDir}/reports/pmd.xml")
-        if (pmdFile.exists()) {
-            previousCount = count
-            count = appendPmdErrors(count, pmdFile)
-            if (count - previousCount > 0) {
-                consoleReport.append("\nPMD: FAILED (" + (count - previousCount) + " errors)")
-            } else {
-                consoleReport.append("\nPMD: PASSED")
-            }
-        }
-
         previousCount = count
-        count = appendLintErrors(count, new File("${project.buildDir}/reports/lint_report.xml"))
+        count = appendLintErrors(count, new File("${rootProject.buildDir}/reports/lint_report.xml"))
         if (count - previousCount > 0) {
             consoleReport.append("\nLint: FAILED (" + (count - previousCount) + " errors)")
         } else {
@@ -202,47 +154,6 @@ appendCpdErrors = { count, cpdFile ->
     return count
 }
 
-appendCheckstyleErrors = { count, checkstyleFile ->
-    def rootNode = new XmlParser().parse(checkstyleFile)
-    for (def fileNode : rootNode.children()) {
-        if (!fileNode.name().equals("file")) {
-            continue
-        }
-
-        for (def errorNode : fileNode.children()) {
-            if (!errorNode.name().equals("error")) {
-                continue
-            }
-            count++
-
-            def error = errorNode.attribute("source")
-            def link = "http://checkstyle.sourceforge.net/apidocs/" + error.replace('.', '/') + ".html"
-            appendError(count, "Checkstyle", fileNode.attribute("name"), errorNode.attribute("line"), error, link, errorNode.attribute("message"))
-        }
-    }
-    return count
-}
-
-appendPmdErrors = { count, pmdFile ->
-    def rootNode = new XmlParser().parse(pmdFile)
-    for (def fileNode : rootNode.children()) {
-        if (!fileNode.name().equals("file")) {
-            continue
-        }
-
-        for (def errorNode : fileNode.children()) {
-            if (!errorNode.name().equals("violation")) {
-                continue
-            }
-            count++
-
-            appendError(count, "PMD", fileNode.attribute("name"), errorNode.attribute("beginline"),
-                    errorNode.attribute("rule").trim(), errorNode.attribute("externalInfoUrl").trim(), errorNode.text().trim())
-        }
-    }
-    return count
-}
-
 appendLintErrors = { count, lintFile ->
     def rootNode = new XmlParser().parse(lintFile)
     for (def issueNode : rootNode.children()) {
@@ -263,7 +174,7 @@ appendLintErrors = { count, lintFile ->
 }
 
 getCpdTask = { isAndroidProject, sources ->
-    def taskName = (isAndroidProject ? "android" : "server") + "cpd_${project.name}"
+    def taskName = (isAndroidProject ? "android" : "server") + "cpd_${rootProject.name}"
     def task = tasks.findByName(taskName)
     if (task == null) {
         task = tasks.create(taskName, tasks.findByName('cpdCheck').getClass().getSuperclass()) {
@@ -273,85 +184,39 @@ getCpdTask = { isAndroidProject, sources ->
             reports {
                 xml {
                     enabled = true
-                    destination = file("${project.buildDir}/reports/cpd.xml")
+                    destination = file("${rootProject.buildDir}/reports/cpd.xml")
                 }
             }
         }
     }
-    return task.name
-}
-
-getPmdTask = { sources ->
-    def taskName = "pmd_${project.name}"
-    def task = tasks.findByName(taskName)
-    if (task == null) {
-        task = tasks.create(taskName, Pmd) {
-            pmdClasspath = configurations.pmd.asFileTree
-            ruleSetFiles = files "$buildScriptsDir/pmd/rulesets/java/android.xml"
-            ruleSets = []
-            source files(sources)
-            ignoreFailures = true
-            reports {
-                html {
-                    enabled = true
-                    destination file("${project.buildDir}/reports/pmd.html")
-                }
-                xml {
-                    enabled = true
-                    destination file("${project.buildDir}/reports/pmd.xml")
-                }
-            }
-        }
-    }
-    return task.name
+    return task.path
 }
 
 getLintTask = { buildVariant ->
-    def lintTaskName
+    def lintTaskPath = null
     if (buildVariant != null) {
-        lintTaskName = "lint${buildVariant.name.capitalize()}"
+        def projectWithTask = subprojects.find { it.plugins.hasPlugin("com.android.application") }
+        if (projectWithTask != null) {
+            lintTaskPath = ":${projectWithTask.name}:lint${buildVariant.name.capitalize()}"
+        }
     } else {
-        def lintDebugTask = tasks.matching { it.getName().contains("lint") && it.getName().contains("Debug") }.first()
-        lintTaskName = lintDebugTask.getName()
-    }
-    android.lintOptions.abortOnError = false
-    android.lintOptions.checkAllWarnings = true
-    android.lintOptions.warningsAsErrors = false
-    android.lintOptions.xmlReport = true
-    android.lintOptions.xmlOutput = file "$project.buildDir/reports/lint_report.xml"
-    android.lintOptions.htmlReport = false
-    android.lintOptions.lintConfig = file "$buildScriptsDir/lint/lint.xml"
-    return lintTaskName
-}
-
-getCheckstyleTask = { sources ->
-    def taskName = "checkstyle_$project.name"
-    def task = tasks.findByName(taskName)
-    if (task == null) {
-        def compileReleaseTask = tasks.matching {
-            it.getName().contains("compile") && it.getName().contains("Release") && it.getName().contains("Java") && !it.getName().contains("UnitTest")
-        }.last()
-        task = tasks.create(taskName, Checkstyle) {
-            ignoreFailures = true
-            showViolations = false
-            source files(sources)
-            configFile file("$buildScriptsDir/checkstyle/configuration/touchin_checkstyle.xml")
-            checkstyleClasspath = configurations.checkstyle.asFileTree
-            classpath = files(System.getenv("ANDROID_HOME") + "/platforms/" + android.compileSdkVersion + "/android.jar") +
-                    files(System.properties.'java.home' + "/lib/rt.jar") +
-                    compileReleaseTask.classpath
-            reports {
-                xml {
-                    enabled = true
-                    destination file("${project.buildDir}/reports/checkstyle.xml")
-                }
+        subprojects.find { subproject ->
+            def lintDebugTasks = subproject.tasks.matching { it.getName().contains("lint") && it.getName().contains("Debug") }
+            if (lintDebugTasks.isEmpty()) {
+                return false
+            } else {
+                lintTaskPath = lintDebugTasks.first().path
+                return true
             }
         }
     }
-    return task.name
+    if (lintTaskPath == null) {
+        throw IllegalStateException("Unable to find lint debug task for build variant: ${buildVariant}")
+    }
+    return lintTaskPath
 }
 
-getKotlinDetektTask = { "detekt" }
+getKotlinDetektTasks = { subprojects.collect { it.tasks.findByName("detekt").path }.findAll { !it.contains(":libs") } }
 
 task optimizePng {
     doFirst {
@@ -369,10 +234,5 @@ task optimizePng {
 }
 
 dependencies {
-    pmd 'net.sourceforge.pmd:pmd-core:5.5.3'
-    pmd 'net.sourceforge.pmd:pmd-java:5.5.3'
-
-    checkstyle 'ru.touchin:checkstyle:7.6.2-fork'
-
     pngtastic 'com.github.depsypher:pngtastic:1.2'
 }

@@ -1,13 +1,10 @@
-autoCorrect: true
-failFast: false
-
 build:
   # maxIssues: 10
   weights:
-    # complexity: 2
-    # LongParameterList: 1
-    # style: 1
-    # comments: 1
+  # complexity: 2
+  # LongParameterList: 1
+  # style: 1
+  # comments: 1
 
 processors:
   active: true
@@ -18,6 +15,13 @@ processors:
   # - 'PackageCountProcessor'
   # - 'KtFileCountProcessor'
 
+formatting:
+  active: true
+  android: true
+  autoCorrect: true
+  MaximumLineLength:
+    active: false
+
 console-reports:
   active: true
   exclude:
@@ -26,12 +30,6 @@ console-reports:
   #  - 'NotificationReport'
   #  - 'FindingsReport'
   #  - 'BuildFailureReport'
-
-output-reports:
-  active: true
-  exclude:
-  - 'PlainOutputReport'
-  - 'HtmlOutputReport'
 
 comments:
   active: false
@@ -71,7 +69,7 @@ complexity:
     active: true
     threshold: 800
   LongMethod:
-    active: true
+    active: false
     threshold: 40
   LongParameterList:
     active: true
@@ -118,7 +116,7 @@ empty-blocks:
     active: true
   EmptyFunctionBlock:
     active: true
-    ignoreOverriddenFunctions: false
+    ignoreOverridden: false
   EmptyIfBlock:
     active: true
   EmptyInitBlock:
@@ -161,22 +159,22 @@ exceptions:
   TooGenericExceptionCaught:
     active: true
     exceptionNames:
-     - ArrayIndexOutOfBoundsException
-     - Error
-     - Exception
-     - IllegalMonitorStateException
-     - NullPointerException
-     - IndexOutOfBoundsException
-     - RuntimeException
-     - Throwable
+      - ArrayIndexOutOfBoundsException
+      - Error
+      - Exception
+      - IllegalMonitorStateException
+      - NullPointerException
+      - IndexOutOfBoundsException
+      - RuntimeException
+      - Throwable
     allowedExceptionNameRegex: "^(_|(ignore|expected).*)"
   TooGenericExceptionThrown:
     active: true
     exceptionNames:
-     - Error
-     - Exception
-     - Throwable
-     - RuntimeException
+      - Error
+      - Exception
+      - Throwable
+      - RuntimeException
 
 naming:
   active: true
@@ -209,12 +207,12 @@ naming:
     active: true
     parameterPattern: '[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
-    ignoreOverriddenFunctions: true
+    ignoreOverridden: true
   MatchingDeclarationName:
     active: true
   MemberNameEqualsClassName:
     active: false
-    ignoreOverriddenFunction: true
+    ignoreOverridden: true
   ObjectPropertyNaming:
     active: true
     constantPattern: '[A-Za-z][_A-Za-z0-9]*'
