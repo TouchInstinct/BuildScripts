@@ -3,9 +3,6 @@ def getAndroidProjectSources
 
 apply from: "$buildScriptsDir/gradle/commonStaticAnalysis.gradle"
 
-apply plugin: 'cpd'
-apply plugin: 'io.gitlab.arturbosch.detekt'
-
 gradle.projectsEvaluated {
 
     tasks.withType(JavaCompile) {
