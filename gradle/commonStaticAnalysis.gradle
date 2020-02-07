@@ -79,7 +79,7 @@ ext.generateReport = { isAndroidProject ->
     subprojects.forEach { subproject ->
         def reportFile = new File("${rootProject.buildDir}/reports/kotlin-detekt-${subproject.name}.xml")
         if (reportFile.exists()) {
-            count = count + appendKotlinErrors(count, reportFile)
+            count = appendKotlinErrors(count, reportFile).toInteger()
         }
     }
     if (count - previousCount > 0) {
@@ -193,22 +193,13 @@ getCpdTask = { isAndroidProject, sources ->
 }
 
 getLintTask = { buildVariant ->
-    def lintTaskPath = null
+    def appProject = subprojects.find { it.plugins.hasPlugin("com.android.application") }
+    def lintTaskPath
     if (buildVariant != null) {
-        def projectWithTask = subprojects.find { it.plugins.hasPlugin("com.android.application") }
-        if (projectWithTask != null) {
-            lintTaskPath = ":${projectWithTask.name}:lint${buildVariant.name.capitalize()}"
-        }
+        lintTaskPath = ":${appProject.name}:lint${buildVariant.name.capitalize()}"
     } else {
-        subprojects.find { subproject ->
-            def lintDebugTasks = subproject.tasks.matching { it.getName().contains("lint") && it.getName().contains("Debug") }
-            if (lintDebugTasks.isEmpty()) {
-                return false
-            } else {
-                lintTaskPath = lintDebugTasks.first().path
-                return true
-            }
-        }
+        def lintDebugTasks = appProject.tasks.matching { it.getName().contains("lint") && it.getName().contains("Debug") }
+        lintTaskPath = lintDebugTasks.first().path
     }
     if (lintTaskPath == null) {
         throw IllegalStateException("Unable to find lint debug task for build variant: ${buildVariant}")
