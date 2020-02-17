@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2" }
+    }
+    dependencies {
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.5.1"
+    }
+}
+
 def getServerProjectSources
 def getAndroidProjectSources
 
@@ -62,12 +71,33 @@ gradle.projectsEvaluated {
         }
     }
 
-    subprojects {
+    subprojects { subproject ->
         pluginManager.withPlugin('com.android.application') {
             android.applicationVariants.all { variant ->
                 task("staticAnalysis${variant.name.capitalize()}") {
                     dependsOn getStaticAnalysisTaskNames(true, androidSources, variant)
                     doFirst { generateReport(true) }
+                }
+            }
+        }
+
+        tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
+            exclude '**/test/'
+            exclude 'resources/'
+            exclude 'build/'
+            exclude 'tmp/'
+            jvmTarget = "1.8"
+        }
+
+        detekt {
+            config = files("$buildScriptsDir/kotlin/detekt-config.yml")
+
+            reports {
+                txt.enabled = false
+                html.enabled = false
+                xml {
+                    enabled = true
+                    destination = file("${rootProject.buildDir}/reports/kotlin-detekt-${subproject.name}.xml")
                 }
             }
         }
