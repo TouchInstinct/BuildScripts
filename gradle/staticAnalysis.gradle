@@ -81,12 +81,16 @@ gradle.projectsEvaluated {
             }
         }
 
-        tasks.withType(io.gitlab.arturbosch.detekt.Detekt) {
-            exclude '**/test/'
-            exclude 'resources/'
-            exclude 'build/'
-            exclude 'tmp/'
-            jvmTarget = "1.8"
+        def regex = ~':detekt$'
+        tasks.forEach  { task ->
+            if (!task.name.contains(":libs") && task.path =~ regex) {
+                task.exclude '**/test/**'
+                task.exclude 'resources/'
+                task.exclude 'build/'
+                task.exclude 'tmp/'
+
+                task.jvmTarget = "1.8"
+            }
         }
 
         detekt {

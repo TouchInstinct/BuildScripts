@@ -207,7 +207,7 @@ getLintTask = { buildVariant ->
     return lintTaskPath
 }
 
-getKotlinDetektTasks = { subprojects.collect { it.tasks.findByName("detekt").path }.findAll { !it.contains(":libs") } }
+getKotlinDetektTasks = { subprojects.findResults { it.tasks.findByName("detekt")?.path }.findAll { !it.contains(":libs") } }
 
 task optimizePng {
     doFirst {
