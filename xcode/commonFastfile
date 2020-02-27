@@ -46,24 +46,18 @@ private_lane :installDependencies do |options|
   end
 end
 
-private_lane :uploadToFabric do |options|
-  token, secret = fabric_keys_from_xcodeproj(options[:xcodeproj_path])
-
+private_lane :uploadToFirebase do |options|
   releaseNotesFile = "release-notes.txt"
   sh("touch ../#{releaseNotesFile}")
 
-  crashlytics(
-    ipa_path: options[:ipa_path],
-    crashlytics_path: "./Pods/Crashlytics/submit",
-    api_token: token,
-    build_secret: secret,
-    notes_path: releaseNotesFile,
-    groups: "touch-instinct"
-  )
+  sh("yarn install")
 
-  upload_symbols_to_crashlytics(
-    dsym_path: options[:dsym_path],
-    api_token: token
+  firebase_app_distribution(
+      app: get_google_app_identifier(options),
+      ipa_path: options[:ipa_path],
+      groups: "touch-instinct",
+      release_notes_file: releaseNotesFile,
+      firebase_cli_path: File.expand_path("../node_modules/firebase-tools/lib/bin/firebase.js")
   )
 end
 
@@ -123,7 +117,7 @@ private_lane :buildConfiguration do |options|
     syncCodeSigning(options)
     buildArchive(options)
 
-    uploadToFabric(options)
+    uploadToFirebase(options)
   end
 
   if options[:uploadToAppStore]
@@ -371,12 +365,11 @@ def symbolize_keys(hash)
   }
 end
 
-def fabric_keys_from_xcodeproj(xcodeproj_path)
-  fabric_keys_from_shell_script(sh("cat #{xcodeproj_path}/project.pbxproj | grep 'Fabric/run'"))
-end
-
-def fabric_keys_from_shell_script(shell_script_contents)
-  shell_script_contents.gsub("\\n", "").partition('Fabric/run\" ').last.partition('";').first.split(" ")
+def get_google_app_identifier(options)
+  file_name_prefix = options[:type].capitalize
+  appName = options[:appName] || $appName
+  file_path = File.expand_path "../#{appName}/Resources/#{file_name_prefix}-GoogleService-Info.plist"
+  get_info_plist_value(path: file_path, key: "GOOGLE_APP_ID")
 end
 
 def set_xcconfig_for_configuration_of_project(xcconfig_name, configuration_name, xcodeproj_path)
