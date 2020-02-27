@@ -53,7 +53,7 @@ private_lane :uploadToFirebase do |options|
   sh("yarn install")
 
   firebase_app_distribution(
-      app: get_firebase_app_identifier(options),
+      app: get_google_app_identifier(options),
       ipa_path: options[:ipa_path],
       groups: "touch-instinct",
       release_notes_file: releaseNotesFile,
@@ -365,11 +365,11 @@ def symbolize_keys(hash)
   }
 end
 
-def get_firebase_app_identifier(options)
+def get_google_app_identifier(options)
   file_name_prefix = options[:type].capitalize
   appName = options[:appName] || $appName
   file_path = File.expand_path "../#{appName}/Resources/#{file_name_prefix}-GoogleService-Info.plist"
-  get_info_plist_value(path: file_path, key: "FIREBASE_APP_ID")
+  get_info_plist_value(path: file_path, key: "GOOGLE_APP_ID")
 end
 
 def set_xcconfig_for_configuration_of_project(xcconfig_name, configuration_name, xcodeproj_path)
