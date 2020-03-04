@@ -72,15 +72,6 @@ gradle.projectsEvaluated {
     }
 
     subprojects { subproject ->
-        pluginManager.withPlugin('com.android.application') {
-            android.applicationVariants.all { variant ->
-                task("staticAnalysis${variant.name.capitalize()}") {
-                    dependsOn getStaticAnalysisTaskNames(true, androidSources, variant)
-                    doFirst { generateReport(true) }
-                }
-            }
-        }
-
         if (subproject.plugins.hasPlugin("com.android.application")) {
             subproject.android {
                 lintOptions.abortOnError = false
@@ -91,6 +82,13 @@ gradle.projectsEvaluated {
                 lintOptions.htmlReport = false
                 lintOptions.lintConfig = file "$buildScriptsDir/lint/lint.xml"
                 lintOptions.checkDependencies true
+
+                applicationVariants.all { variant ->
+                    task("staticAnalysis${variant.name.capitalize()}") {
+                        dependsOn getStaticAnalysisTaskNames(true, androidSources, variant)
+                        doFirst { generateReport(true) }
+                    }
+                }
             }
         }
 
