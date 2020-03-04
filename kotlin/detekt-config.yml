@@ -20,7 +20,7 @@ formatting:
   android: true
   autoCorrect: true
   MaximumLineLength:
-    active: false
+    active: true
 
 console-reports:
   active: true
@@ -69,8 +69,8 @@ complexity:
     active: true
     threshold: 800
   LongMethod:
-    active: false
-    threshold: 40
+    active: true
+    threshold: 80
   LongParameterList:
     active: true
     threshold: 10
