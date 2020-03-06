@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2" }
+    }
+    dependencies {
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.5.1"
+    }
+}
+
 def getServerProjectSources
 def getAndroidProjectSources
 
@@ -18,16 +27,14 @@ gradle.projectsEvaluated {
     }
 
     def excludes = rootProject.extensions.findByName("staticAnalysisExcludes")
-    def checkstyleEnabled = rootProject.extensions.findByName("checkstyleEnabled") ?: false
-    def pmdEnabled = rootProject.extensions.findByName("pmdEnabled") ?: false
 
     def androidSources = getAndroidProjectSources(excludes)
-    def androidStaticAnalysisTasks = getStaticAnalysisTaskNames(true, androidSources, null, checkstyleEnabled, pmdEnabled)
+    def androidStaticAnalysisTasks = getStaticAnalysisTaskNames(true, androidSources, null)
     def androidIdeaFormatTask = getIdeaFormatTask(true, androidSources)
 
     task staticAnalysisWithFormatting {
         androidStaticAnalysisTasks.each { task ->
-            tasks.findByName(task).mustRunAfter(androidIdeaFormatTask)
+            tasks.findByName(task)?.mustRunAfter(androidIdeaFormatTask)
         }
         dependsOn androidIdeaFormatTask
         dependsOn androidStaticAnalysisTasks
@@ -43,12 +50,12 @@ gradle.projectsEvaluated {
         }
     }
 
-    def serverStaticAnalysisTasks = getStaticAnalysisTaskNames(false, getServerProjectSources(excludes), null, checkstyleEnabled, pmdEnabled)
+    def serverStaticAnalysisTasks = getStaticAnalysisTaskNames(false, getServerProjectSources(excludes), null)
     def serverIdeaFormatTask = getIdeaFormatTask(false, getServerProjectSources(excludes))
 
     task serverStaticAnalysisWithFormatting {
         serverStaticAnalysisTasks.each { task ->
-            tasks.findByName(task).mustRunAfter(serverIdeaFormatTask)
+            tasks.findByName(task)?.mustRunAfter(serverIdeaFormatTask)
         }
         dependsOn serverIdeaFormatTask
         dependsOn serverStaticAnalysisTasks
@@ -64,11 +71,49 @@ gradle.projectsEvaluated {
         }
     }
 
-    pluginManager.withPlugin('com.android.application') {
-        android.applicationVariants.all { variant ->
-            task("staticAnalysis${variant.name.capitalize()}") {
-                dependsOn getStaticAnalysisTaskNames(true, androidSources, variant, checkstyleEnabled, pmdEnabled)
-                doFirst { generateReport(true) }
+    subprojects { subproject ->
+        if (subproject.plugins.hasPlugin("com.android.application")) {
+            subproject.android {
+                lintOptions.abortOnError = false
+                lintOptions.checkAllWarnings = true
+                lintOptions.warningsAsErrors = false
+                lintOptions.xmlReport = true
+                lintOptions.xmlOutput = file "$rootProject.buildDir/reports/lint_report.xml"
+                lintOptions.htmlReport = false
+                lintOptions.lintConfig = file "$buildScriptsDir/lint/lint.xml"
+                lintOptions.checkDependencies true
+
+                applicationVariants.all { variant ->
+                    task("staticAnalysis${variant.name.capitalize()}") {
+                        dependsOn getStaticAnalysisTaskNames(true, androidSources, variant)
+                        doFirst { generateReport(true) }
+                    }
+                }
+            }
+        }
+
+        def regex = ~':detekt$'
+        tasks.forEach  { task ->
+            if (!task.name.contains(":libs") && task.path =~ regex) {
+                task.exclude '**/test/**'
+                task.exclude 'resources/'
+                task.exclude 'build/'
+                task.exclude 'tmp/'
+
+                task.jvmTarget = "1.8"
+            }
+        }
+
+        detekt {
+            config = files("$buildScriptsDir/kotlin/detekt-config.yml")
+
+            reports {
+                txt.enabled = false
+                html.enabled = false
+                xml {
+                    enabled = true
+                    destination = file("${rootProject.buildDir}/reports/kotlin-detekt-${subproject.name}.xml")
+                }
             }
         }
     }
