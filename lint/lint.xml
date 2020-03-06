@@ -63,7 +63,6 @@
     <issue id="WrongManifestParent" severity="error"/>
     <issue id="ManifestResource" severity="error"/>
     <issue id="ManifestTypo" severity="error"/>
-    <issue id="FloatMath" severity="error"/>
     <issue id="Instantiatable" severity="error"/>
     <issue id="LibraryCustomView" severity="error"/>
     <issue id="ResAuto" severity="error"/>
