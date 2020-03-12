@@ -21,7 +21,7 @@
         $json = array_merge($baseJson, json_decode($jsonFile, true));
         
         if ($json == null) {
-            echo "JSON is not valid\n";
+            echo "Invalid JSON format\n";
             exit(1);
         }
 
