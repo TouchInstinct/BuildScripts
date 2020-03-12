@@ -7,7 +7,7 @@
             mkdir($path, 0777, true);
         }
     }
-
+    
     $localization = './'.$PRODUCT_NAME.'/Resources/Localization/';
 
     $baseFile = file_get_contents(array_pop(glob($COMMON_STRINGS_PATH.'/default*.json')));
@@ -19,6 +19,11 @@
 
         $jsonFile = file_get_contents($file);
         $json = array_merge($baseJson, json_decode($jsonFile, true));
+        
+        if ($json == null) {
+            echo "JSON is not valid\n";
+            exit(1);
+        }
 
         $ios_strings = "";
         foreach ($json as $key=>$value) {
