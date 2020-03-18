@@ -82,7 +82,7 @@ gradle.projectsEvaluated {
                 lintOptions.htmlReport = false
                 lintOptions.lintConfig = file "$buildScriptsDir/lint/lint.xml"
                 lintOptions.checkDependencies true
-                lintOptions.disable 'MissingConstraints', 'VectorRaster', 'LockedOrientationActivity'
+                lintOptions.disable 'MissingConstraints', 'VectorRaster'
 
                 applicationVariants.all { variant ->
                     task("staticAnalysis${variant.name.capitalize()}") {
