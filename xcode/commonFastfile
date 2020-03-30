@@ -1,3 +1,5 @@
+import '../build-scripts/xcode/aux_scripts/screenshots.rb'
+
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
 private_lane :installDependencies do |options|
@@ -61,6 +63,13 @@ private_lane :uploadToFirebase do |options|
   )
 end
 
+lane :exportStoreScreenshots do |options|
+  figmaToken = options[:figmaToken]
+  figmaFile = options[:figmaFile]
+  imagesFolder = File.expand_path "../fastlane/screenshots"
+  screenshots(figmaToken, figmaFile, imagesFolder)
+ end
+
 private_lane :uploadToAppStore do |options|
   upload_to_app_store(
     username: options[:username] || options[:apple_id],
@@ -123,12 +132,14 @@ private_lane :buildConfiguration do |options|
   if options[:uploadToAppStore]
     options[:compileBitcode] = options[:compileBitcode].nil? ? true : options[:compileBitcode]
     options[:include_symbols] = options[:include_symbols].nil? ? true : options[:include_symbols]
+    options = options.merge(get_screenshots_options())
     options = options.merge(make_options_for_lane_name("AppStore"))
     options = merge_options_with_config_file(options)
 
     syncCodeSigning(options)
 
     buildArchive(options)
+    exportStoreScreenshots(options)
     uploadToAppStore(options)
   end
 end
@@ -303,6 +314,11 @@ def get_keychain_options(options)
   end
 
   return {:keychain_name => keychain_name, :keychain_password => keychain_password}
+end
+
+def get_screenshots_options()
+  figmaTokenAndFileOptions = load_options_from("screenshots.yaml")
+  return figmaTokenAndFileOptions
 end
 
 def configuration_type_from_lane_name(lane_name)
