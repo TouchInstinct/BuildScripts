@@ -94,6 +94,10 @@ function_parameter_count:
 colon:
   flexible_right_spacing: true
 
+enum_case_associated_values_count:
+  warning: 4
+  error: 5
+
 identifier_name:
   excluded:
     - id
