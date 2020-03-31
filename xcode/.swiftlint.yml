@@ -6,10 +6,17 @@ opt_in_rules:
   - last_where
   - empty_string
   - empty_count
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - empty_collection_literal
+  - contains_over_range_nil_comparison
+  - contains_over_first_not_nil
+  - flatmap_over_map_reduce
 
   # idiomatic
 
   - legacy_random
+  - legacy_multiple
   - pattern_matching_keywords
   - redundant_nil_coalescing
   - redundant_type_annotation
@@ -45,6 +52,7 @@ opt_in_rules:
   - conditional_returns_on_newline
   - closure_spacing
   - closure_end_indentation
+  - prefer_self_type_over_type_of_self
 
   # lint
 
@@ -52,9 +60,14 @@ opt_in_rules:
   - private_outlet
   - prohibited_super_call
   - unused_import
-  - unused_private_declaration
+  - unused_declaration
   - identical_operands
   - overridden_super_call
+  - unowned_variable_capture
+
+  # metrics
+
+  - enum_case_associated_values_count
 
 excluded:
   - Carthage
@@ -76,6 +89,13 @@ file_length:
   error: 1200
 
 function_parameter_count:
+  error: 5
+
+colon:
+  flexible_right_spacing: true
+
+enum_case_associated_values_count:
+  warning: 4
   error: 5
 
 identifier_name:
