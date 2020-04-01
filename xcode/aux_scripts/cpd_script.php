@@ -1,5 +1,5 @@
 <?php
-$CPD_XML_PATH = $argv[2];
+$CPD_XML_PATH = $argv[1];
 
 foreach (simplexml_load_file($CPD_XML_PATH)->duplication as $duplication) {
     $files = $duplication->xpath('file');
