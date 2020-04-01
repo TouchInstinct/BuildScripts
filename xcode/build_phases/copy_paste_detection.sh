@@ -9,7 +9,7 @@ if which pmd >/dev/null; then
     pmd cpd --files ${SOURCES_DIR} --exclude ${FILES_TO_EXCLUDE} --minimum-tokens 50 --language swift --encoding UTF-8 --format net.sourceforge.pmd.cpd.XMLRenderer > ${REPORTS_DIR}/cpd-output.xml --failOnViolation true
 
     # running script
-    php ./build-scripts/xcode/aux_scripts/cpd_script.php -cpd-xml ${REPORTS_DIR}/cpd-output.xml | tee ${REPORTS_DIR}/CPDLog.txt
+    php ./build-scripts/xcode/aux_scripts/cpd_script.php ${REPORTS_DIR}/cpd-output.xml | tee ${REPORTS_DIR}/CPDLog.txt
 else
     echo "warning: pmd not installed, install using 'brew install pmd'"
     exit 1
