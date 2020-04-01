@@ -75,7 +75,9 @@ excluded:
   - Generated
   - Localization
 
-line_length: 128
+line_length:
+  warning: 128
+  ignores_urls: true
 
 cyclomatic_complexity:
   ignores_case_statements: true
