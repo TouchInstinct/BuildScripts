@@ -90,7 +90,8 @@ class Unused
             puts "Unused Code Warning!: warning: Total Count #{unused_warnings.length}"
             puts "#{unused_warnings.map { |e| e.to_xcode}.join("\n")}"
             # write log
-            File.open("UnusedLog.txt", "w") do |file|
+            Dir.mkdir(directory_name) unless File.exists?("code-quality-reports")
+            File.open("code-quality-reports/UnusedLog.txt", "w") do |file|
                 file.write("Unused code warnings count: #{unused_warnings.length}\n\n")
                 file.write("#{unused_warnings.map { |e| e.serialize }.join("\n")}")
             end
