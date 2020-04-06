@@ -2,7 +2,7 @@ if which pmd >/dev/null; then
     # running CPD
     readonly SOURCES_DIR=${1:-${PROJECT_DIR}} # first argument or PROJECT_DIR
     readonly REPORTS_DIR=${PROJECT_DIR}/code-quality-reports
-    readonly FILES_TO_EXCLUDE=`find ${SOURCES_DIR} -type d -name Localization -or -name Generated -or -name Pods | paste -sd " " -`
+    readonly FILES_TO_EXCLUDE=`find ${SOURCES_DIR} -type d -name Localization -or -name Generated -or -name Carthage -or -name Pods | paste -sd " " -`
 
     mkdir ${REPORTS_DIR}
 
