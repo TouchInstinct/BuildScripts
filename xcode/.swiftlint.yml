@@ -236,9 +236,3 @@ custom_rules:
     regex: "(== true)|(== false)|(!= true)|(!= false)"
     message: "Comparing a boolean to true is redundant (use `?? false` for optionals), and `!`-syntax is preferred over comparing to false."
     severity: error
-
-  closing_brace_vertical_spacing:
-    name: "Closing Brace Vertical Spacing"
-    regex: "\\n{2,}\\}"
-    message: "Closing braces should not be followed by a new line before another closing brace."
-    severity: error
