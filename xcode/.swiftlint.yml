@@ -237,31 +237,8 @@ custom_rules:
     message: "Comparing a boolean to true is redundant (use `?? false` for optionals), and `!`-syntax is preferred over comparing to false."
     severity: error
 
-  final_class:
-    name: "Final Class"
-    regex: "(?<!final )class Base (?!(\\{|private|func|var))"
-    message: "Classes without subclasses should be marked as `final`."
-    match_kinds:
-    - identifier
-    - keyword
-    - typeidentifier
-    severity: error
-
   closing_brace_vertical_spacing:
     name: "Closing Brace Vertical Spacing"
     regex: "\\n{2,}\\}"
     message: "Closing braces should not be followed by a new line before another closing brace."
     severity: error
-    
-  # Custom rule violating when type inference is not used.
-  # Violating:
-  #   let view: UIView = UIView()
-  #   view.backgroundColor = UIColor.red()
-  # Non-violating:
-  #   let view = UIView()
-  #   view.backgroundColor = .red
-  type_inferred_context:
-    name: "type_inferred_context"
-    regex: "(\\:\\s(\\w+)\\s\\=\\s\\1|UIViewAutoResizing\\.|(?!AttributedStringKey.\\.\\*)UIFont\\.|UIControlState\\.|UIColor.\\.\\*(?!.cgColor)|CGPoint\\.|CGRect\\.)"
-    message: "Type inferred context is preferred over explicit types."
-    severity: warning
