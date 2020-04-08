@@ -239,7 +239,7 @@ custom_rules:
 
   final_class:
     name: "Final Class"
-    regex: "(?<!final )class (?!(\\{|private|func|var))"
+    regex: "(?<!final )class Base (?!(\\{|private|func|var))"
     message: "Classes without subclasses should be marked as `final`."
     match_kinds:
     - identifier
