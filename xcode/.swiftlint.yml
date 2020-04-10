@@ -217,7 +217,7 @@ custom_rules:
 
   boolean_redundant_condition:
     name: "Redundant Boolean Condition"
-    regex: "(== true)|(== false)|(!= true)|(!= false)||(\\? true \\: false)|(\\? false \\: true)"
+    regex: "(== true)|(== false)|(!= true)|(!= false)|(\\? true \\: false)|(\\? false \\: true)"
     message: "Comparing a boolean to true is redundant (use `?? false` for optionals), and `!`-syntax is preferred over comparing to false."
     severity: error
 
