@@ -215,10 +215,16 @@ custom_rules:
     message: "Make a new line break when use getter or setter"
     severity: error
 
-  boolean_redundant_condition:
+  redundant_boolean_condition:
     name: "Redundant Boolean Condition"
-    regex: "(== true)|(== false)|(!= true)|(!= false)|(\\? true \\: false)|(\\? false \\: true)"
+    regex: "(== true)|(== false)|(!= true)|(!= false)"
     message: "Comparing a boolean to true is redundant (use `?? false` for optionals), and `!`-syntax is preferred over comparing to false."
+    severity: error
+
+  redundant_ternary_operator:
+    name: "Redundant Ternary Operator"
+    regex: "(\\? true \\: false)|(\\? false \\: true)"
+    message: "Returning a boolean as true is redundant, and `!`-syntax is preferred over returning as false."
     severity: error
 
   # Rx
