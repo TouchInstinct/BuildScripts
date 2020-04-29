@@ -370,7 +370,7 @@ def set_xcconfig_for_configuration_of_project(xcconfig_name, configuration, xcod
         Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension]
     ]
     return !t.test_target_type? && supported_product_types.include?(t.product_type)
-end
+  end
 
   application_targets = project.native_targets.select(&target_to_modify_selector)
 
