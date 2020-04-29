@@ -96,8 +96,7 @@ private_lane :buildConfiguration do |options|
   configuration_type = Touchlane::ConfigurationType.from_lane_name(lane_name)
   configuration = get_configuration_for_type(configuration_type.type)
 
-  options = configuration.to_options()
-    .merge(configuration_type.to_options())
+  options = configuration.to_options
     .merge(get_keychain_options(options))
     .merge(options)
 
@@ -213,7 +212,7 @@ end
 
 lane :SyncSymbols do |options|
   configuration = get_configuration_for_type(options[:type])
-  options = configuration.to_options().merge(options)
+  options = configuration.to_options.merge(options)
 
   appName = options[:appName] || $appName
 
