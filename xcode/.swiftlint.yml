@@ -227,6 +227,12 @@ custom_rules:
     message: "Returning a boolean as true is redundant, and `!`-syntax is preferred over returning as false."
     severity: error
 
+  single_line_closure:
+    name: "Single line closure"
+    regex: '\{[^\n]+ in[^\n]+'
+    message: "Make a new line after `in` in closure"
+    severity: error
+
   # Rx
 
   unused_map_parameter:
