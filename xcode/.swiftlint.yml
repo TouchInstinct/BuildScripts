@@ -230,7 +230,7 @@ custom_rules:
   single_line_closure:
     name: "Single line closure"
     regex: '\{[^\n]+ in[^\n]+'
-    message: "Make a new line after `in` in closure"
+    message: "Make a new line after `in` keyword in closure"
     severity: error
 
   # Rx
