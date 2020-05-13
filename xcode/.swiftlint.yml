@@ -230,7 +230,7 @@ custom_rules:
   single_line_closure:
     name: "Single line closure"
     regex: '\{([^\n]*\[[^\]]+\][^\n]*)?([^\n]*[a-zA-Z]+(, (_|[a-zA-Z]+))*)? in [^\n]+'
-    message: "Make a new line after `in` keyword in closure"
+    message: "Too complex expression for single line closure. Improve readability by making it multiline."
     severity: error
 
   # Rx
