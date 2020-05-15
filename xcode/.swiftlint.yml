@@ -229,7 +229,7 @@ custom_rules:
 
   single_line_closure:
     name: "Single line closure"
-    regex: '\{([^\n]*\[[^\]]+\][^\n]*)?([^\n]*[a-zA-Z]+(, (_|[a-zA-Z]+))*)? in [^\n]+'
+    regex: '\{([^\n]*\[[^\]]+\][^\n]*)?([^\n]*[a-zA-Z]\w*(, \w+)*)? in [^\n]+'
     message: "Too complex expression for single line closure. Improve readability by making it multiline."
     severity: error
 
