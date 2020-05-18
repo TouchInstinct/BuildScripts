@@ -11,8 +11,11 @@ private_lane :installDependencies do |options|
     sh("rm -rf #{podsReposPath}")
   end
   
-  if File.exists? "../Brewfile"
-    sh("brew bundle --file ../Brewfile")
+  brew_dependencies = "imagemagick"
+  sh "brew ls --versions #{brew_dependencies}" do |status, output, command|
+    unless status.success?
+      sh("brew install #{brew_dependencies}")
+    end
   end
 
   if File.exists? "../Gemfile"
