@@ -236,7 +236,7 @@ custom_rules:
   addSubview_in_cell:
     name: "Usage addSubview in cell"
     regex: '(extension|class)\s*\w+Cell(:| )(?s).*(self\.|\s{2,})add(Subv|V)iews?\(\w'
-    message: "Use сontentView instead of self for addSubview or addSubviews methods."
+    message: "Use сontentView instead of self for addSubview or addSubviews methods in cell."
     severity: error
 
   # Rx
