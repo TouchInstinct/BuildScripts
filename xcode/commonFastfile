@@ -89,10 +89,14 @@ private_lane :addShield do |options|
   buildNumber = options[:buildNumber]
   buildDescription = options[:xcconfig_name].scan(/\p{Upper}/)[1..2].join
   
-  add_badge(
-    shield: "#{buildDescription}-#{buildNumber}-green",
-    no_badge: true
-  )
+  begin
+    add_badge(
+      shield: "#{buildDescription}-#{buildNumber}-green",
+      no_badge: true
+    )
+  rescue => error
+    UI.error(error)
+  end
 end
 
 private_lane :buildConfiguration do |options|
