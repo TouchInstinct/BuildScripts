@@ -10,13 +10,6 @@ private_lane :installDependencies do |options|
   if File.exists? lockFilePath
     sh("rm -rf #{podsReposPath}")
   end
-  
-  brew_dependencies = "imagemagick"
-  sh "brew ls --versions #{brew_dependencies}" do |status, output, command|
-    unless status.success?
-      sh("brew install #{brew_dependencies}")
-    end
-  end
 
   if File.exists? "../Gemfile"
     bundle_install(path: "../.gem")
@@ -92,7 +85,7 @@ private_lane :uploadToAppStore do |options|
   )
 end
 
-private_lane :add_shield do |options|
+private_lane :addShield do |options|
   buildNumber = options[:buildNumber]
   buildDescription = options[:xcconfig_name].scan(/\p{Upper}/)[1..2].join
   
@@ -146,7 +139,7 @@ private_lane :buildConfiguration do |options|
 
   if options[:uploadToFabric]
     syncCodeSigning(options)
-    add_shield(options)
+    addShield(options)
     buildArchive(options)
 
     uploadToFirebase(options)
