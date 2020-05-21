@@ -85,6 +85,20 @@ private_lane :uploadToAppStore do |options|
   )
 end
 
+private_lane :addShield do |options|
+  buildNumber = options[:buildNumber]
+  buildDescription = options[:xcconfig_name].scan(/\p{Upper}/)[1..2].join
+  
+  begin
+    add_badge(
+      shield: "#{buildDescription}-#{buildNumber}-green",
+      no_badge: true
+    )
+  rescue => error
+    UI.error(error)
+  end
+end
+
 private_lane :buildConfiguration do |options|
   appName = options[:appName] || $appName
 
@@ -129,6 +143,7 @@ private_lane :buildConfiguration do |options|
 
   if options[:uploadToFabric]
     syncCodeSigning(options)
+    addShield(options)
     buildArchive(options)
 
     uploadToFirebase(options)
