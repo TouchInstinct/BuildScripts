@@ -235,7 +235,7 @@ custom_rules:
 
   addSubview_cell:
     name: "AddSubview cell"
-    regex: '\s*class\s*\w+Cell:[\s\S]*func [\s\S]+(self\.|\s)add(Subv|V)iew(s)?\('
+    regex: '\s*class\s*\w+Cell:(?s).*(self\.|\s{2,})add(Subv|V)iews?\('
     message: "Using addSubview or addSubviews incorrect"
     severity: error
 
