@@ -233,6 +233,12 @@ custom_rules:
     message: "Too complex expression for single line closure. Improve readability by making it multiline."
     severity: error
 
+  addSubview_cell:
+    name: "AddSubview cell"
+    regex: '\s*class\s*\w+Cell:.*|\s*((self\.)|\s)addSubviews?\('
+    message: "Using addSubview or addSubviews incorrect"
+    severity: error
+
   # Rx
 
   unused_map_parameter:
