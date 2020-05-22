@@ -12,7 +12,7 @@ configurations {
 }
 
 dependencies {
-    apigeneratorKotlinServer 'ru.touchin:api-generator:1.4.0-alpha1'
+    apigeneratorKotlinServer 'ru.touchin:api-generator:1.4.0-beta1'
 }
 
 task generateApiModelsKotlinServer doLast {
