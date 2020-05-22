@@ -19,18 +19,22 @@ android.applicationVariants.all { variant ->
     final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
 
     def generateJsonModelsTask = tasks.create("apiGenerator${variant.name}") doLast {
-        def jarArgs = new ArrayList<String>()
-        jarArgs.add(configurations.apigenerator.asPath)
-        jarArgs.add("generate-client-code")
-        jarArgs.add("--output-language")
-        jarArgs.add("JAVA")
-        jarArgs.add("--specification-path")
-        jarArgs.add(rootProject.extensions.findByName("pathToApiSchemes"))
-        jarArgs.add("--output-path")
-        jarArgs.add("${generatedModelsDirectory.path}")
-        jarArgs.add("--package-name")
-        jarArgs.add("${rootProject.extensions.findByName("applicationId") ?: applicationId}")
-        javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
+        javaexec {
+            main = "-jar"
+            workingDir = file("${rootDir}")
+            args = [
+                    configurations.apigenerator.asPath,
+                    "generate-client-code",
+                    "--output-language",
+                    "JAVA",
+                    "--specification-path",
+                    rootProject.extensions.findByName("pathToApiSchemes"),
+                    "--output-path",
+                    "${generatedModelsDirectory.path}",
+                    "--package-name",
+                    "${rootProject.extensions.findByName("applicationId") ?: applicationId}"
+            ]
+        }
     }
 
     generateJsonModelsTask.description = 'Generates Java classes for JSON models'
