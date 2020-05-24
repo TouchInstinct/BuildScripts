@@ -1,5 +1,10 @@
 repositories {
-    maven { url "http://dl.bintray.com/touchin/touchin-tools" }
+    maven {
+        url "https://dl.bintray.com/touchin/touchin-tools"
+        metadataSources {
+            artifact()
+        }
+    }
 }
 
 configurations {
@@ -7,23 +12,27 @@ configurations {
 }
 
 dependencies {
-    apigeneratorKotlinServer 'ru.touchin:api-generator:1.4.0-alpha1'
+    apigeneratorKotlinServer 'ru.touchin:api-generator:1.4.0-beta1'
 }
 
 task generateApiModelsKotlinServer doLast {
-    def jarArgs = new ArrayList<String>()
-    jarArgs.add(configurations.apigeneratorKotlinServer.asPath)
-    jarArgs.add("generate-client-code")
-    jarArgs.add("--output-language")
-    jarArgs.add("KOTLIN_SERVER")
-    jarArgs.add("--specification-path")
-    jarArgs.add(rootProject.extensions.findByName("pathToApiSchemes"))
-    jarArgs.add("--output-path")
-    jarArgs.add("${rootDir}/src/main/kotlin")
-    jarArgs.add("--package-name")
-    jarArgs.add(rootProject.extensions.findByName("apiPackageName"))
-    jarArgs.add("--recreate_output_dirs")
-    jarArgs.add(false)
-    javaexec { main = "-jar"; args = jarArgs; workingDir = file("${rootDir}") }
+    javaexec {
+        main = "-jar"
+        workingDir = file("${rootDir}")
+        args = [
+                configurations.apigeneratorKotlinServer.asPath,
+                "generate-client-code",
+                "--output-language",
+                "KOTLIN_SERVER",
+                "--specification-path",
+                rootProject.extensions.findByName("pathToApiSchemes"),
+                "--output-path",
+                "${rootDir}/src/main/kotlin",
+                "--package-name",
+                rootProject.extensions.findByName("apiPackageName"),
+                "--recreate_output_dirs",
+                false
+        ]
+    }
 }
 
