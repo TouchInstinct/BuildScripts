@@ -26,7 +26,7 @@ android.applicationVariants.all { variant ->
                     configurations.apigenerator.asPath,
                     "generate-client-code",
                     "--output-language",
-                    "JAVA",
+                    "KOTLIN",
                     "--specification-path",
                     rootProject.extensions.findByName("pathToApiSchemes"),
                     "--output-path",
