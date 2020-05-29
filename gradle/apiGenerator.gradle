@@ -15,28 +15,25 @@ dependencies {
     apigenerator 'ru.touchin:api-generator:1.4.0-beta1'
 }
 
-android.applicationVariants.all { variant ->
-    final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
+final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models")
 
-    def generateJsonModelsTask = tasks.create("apiGenerator${variant.name}") doLast {
-        javaexec {
-            main = "-jar"
-            workingDir = file("${rootDir}")
-            args = [
-                    configurations.apigenerator.asPath,
-                    "generate-client-code",
-                    "--output-language",
-                    "KOTLIN",
-                    "--specification-path",
-                    rootProject.extensions.findByName("pathToApiSchemes"),
-                    "--output-path",
-                    "${generatedModelsDirectory.path}",
-                    "--package-name",
-                    "${rootProject.extensions.findByName("applicationId") ?: applicationId}"
-            ]
-        }
+def generateJsonModelsTask = tasks.create("apiGenerator") doLast {
+    javaexec {
+        main = "-jar"
+        workingDir = file("${rootDir}")
+        args = [
+                configurations.apigenerator.asPath,
+                "generate-client-code",
+                "--output-language",
+                "KOTLIN",
+                "--specification-path",
+                rootProject.extensions.findByName("pathToApiSchemes"),
+                "--output-path",
+                "${generatedModelsDirectory.path}",
+                "--package-name",
+                "${rootProject.extensions.findByName("applicationId")}"
+        ]
     }
-
-    generateJsonModelsTask.description = 'Generates Java classes for JSON models'
-    variant.registerJavaGeneratingTask generateJsonModelsTask, generatedModelsDirectory
 }
+
+generateJsonModelsTask.description = 'Generates Java classes for JSON models'
