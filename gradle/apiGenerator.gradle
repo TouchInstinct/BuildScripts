@@ -1,3 +1,5 @@
+final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models")
+
 repositories {
     maven {
         url 'https://dl.bintray.com/touchin/touchin-tools'
@@ -17,11 +19,9 @@ dependencies {
 
 android {
     sourceSets {
-        main.java.srcDirs += "build/generated/source/models"
+        main.java.srcDirs += generatedModelsDirectory
     }
 }
-
-final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models")
 
 def generateJsonModelsTask = tasks.create("apiGenerator") doLast {
     javaexec {
