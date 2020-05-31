@@ -15,6 +15,12 @@ dependencies {
     apigenerator 'ru.touchin:api-generator:1.4.0-beta1'
 }
 
+android {
+    sourceSets {
+        main.java.srcDirs += "build/generated/source/models"
+    }
+}
+
 final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models")
 
 def generateJsonModelsTask = tasks.create("apiGenerator") doLast {
