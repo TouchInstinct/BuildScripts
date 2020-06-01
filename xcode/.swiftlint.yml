@@ -239,6 +239,12 @@ custom_rules:
     message: "Use сontentView instead of self for addSubview or addSubviews methods in cell."
     severity: error
 
+  redundant_type_annotation_bool:
+    name: "Redundant type annotation for Bool"
+    regex: '((: *Bool *= *)|(BehaviourRelay<Bool> *= *\S*\s*))((true)|(false))'
+    message: "Using a type annotation for Bool is redundant"
+    severity: error
+
   # Rx
 
   unused_map_parameter:
