@@ -239,6 +239,12 @@ custom_rules:
     message: "Use сontentView instead of self for addSubview or addSubviews methods in cell."
     severity: error
 
+  redundant_type_annotation_string:
+    name: "Redundant type annotation for String"
+    regex: '((var|let)) *\w+ *((: *String *=)|((\w| |<|>|:)*= *BehaviorRelay<String>\( *value *:)) *\W?\w+'
+    message: "Using a type annotation for String is redundant"
+    severity: error
+
   # Rx
 
   unused_map_parameter:
