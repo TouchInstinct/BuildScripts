@@ -241,7 +241,7 @@ custom_rules:
 
   redundant_type_annotation_bool:
     name: "Redundant type annotation for Bool"
-    regex: '((: *Bool *= *)|(BehaviourRelay<Bool> *= *\S*\s*))((true)|(false))'
+    regex: '((var|let)) *\w+ *: *((Bool *= *)|(BehaviourRelay<Bool> *= *\S*\s*))((true)|(false))'
     message: "Using a type annotation for Bool is redundant"
     severity: error
 
