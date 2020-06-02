@@ -241,7 +241,7 @@ custom_rules:
 
   redundant_type_annotation_string:
     name: "Redundant type annotation for String"
-    regex: '((var|let)) *\w+ *(((: *String *=)|((\w| |<|>|:)*= *BehaviorRelay<String>\( *value *:)) *((("[^"]+)|([\w]+(\.[\w]+)?)(\s|\n)*\?(\s|\n)*("[^"]+)|([\w]+(\.[\w]+)?)(\s|\n)*:(\s|\n)*("[^"]+)|([\w]+(\.[\w]+)?))|(("[^"]+)|([\w]+(\.[\w]+)?)\s*\?\?\s*("[^"]+)|([\w]+(\.[\w]+)?))|(("[^"]+)|([\w]+(\.[\w]+)?))))|(: *BehaviorRelay<String> *= *BehaviorRelay<String>)'
+    regex: '((var|let)) *\w+ *(((: *String *=)|([^=]*= *BehaviorRelay<String>\( *value *:)) *((("[^"]+)|([\w]+(\.[\w]+)?)(\s|\n)*\?(\s|\n)*("[^"]+)|([\w]+(\.[\w]+)?)(\s|\n)*:(\s|\n)*("[^"]+)|([\w]+(\.[\w]+)?))|(("[^"]+)|([\w]+(\.[\w]+)?)\s*\?\?\s*("[^"]+)|([\w]+(\.[\w]+)?))|(("[^"]+)|([\w]+(\.[\w]+)?))))|(: *BehaviorRelay<String> *= *BehaviorRelay<String>)'
     message: "Using a type annotation for String is redundant"
     severity: error
 
