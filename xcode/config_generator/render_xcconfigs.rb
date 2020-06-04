@@ -58,8 +58,10 @@ def generate_google_service_info_plist_path(google_service_info_plist_key, targe
         google_service_info_plist_path += "AppStore-GoogleService-Info.plist"
     elsif account_type == "Enterprise"
         google_service_info_plist_path += "Enterprise-GoogleService-Info.plist"
-    else
+    elsif account_type == "Standard"
         google_service_info_plist_path += "Standard-GoogleService-Info.plist"
+    else
+        google_service_info_plist_path = ""
     end
     
     return config_option(google_service_info_plist_key, google_service_info_plist_path)
@@ -89,7 +91,11 @@ def generate_missing_properties(target_name, properties, account_type)
     end
     
     unless properties.key?(google_service_info_plist_key)
-        result.append(generate_google_service_info_plist_path(google_service_info_plist_key, target_name, account_type))
+        google_service_info_plist = generate_google_service_info_plist_path(google_service_info_plist_key, target_name, account_type)
+        
+        if google_service_info_plist[google_service_info_plist_key]
+            result.append(google_service_info_plist)
+        end
     end
 
     return result
