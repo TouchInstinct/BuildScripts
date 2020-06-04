@@ -87,7 +87,10 @@ end
 
 private_lane :addShield do |options|
   buildNumber = options[:buildNumber]
-  buildDescription = options[:xcconfig_name].scan(/\p{Upper}/)[1..2].join
+  buildDescription = options[:xcconfig_name]
+    .split(/(?=[A-Z])/)
+    .map { |v| v.gsub(/[[:lower:]]+/, "") }[1..2]
+    .join
   
   begin
     add_badge(
