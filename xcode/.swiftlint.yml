@@ -247,7 +247,7 @@ custom_rules:
 
   parameter_repetition:
     name: "Parameter repetition"
-    regex: 'func ((\w+([A-Z]\w+))|(\w+)) *(<.+>)? *\( *(?i)(\3|\4):'
+    regex: 'func ((\w+([A-Z]\w+))|(\w+)) *(<[^>]+>)? *\( *(?i)(\3|\4):'
     message: "The parameter name is actually used in the function name. Use _ instead."
     severity: error
 
