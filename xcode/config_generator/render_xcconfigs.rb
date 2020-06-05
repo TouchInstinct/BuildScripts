@@ -1,25 +1,41 @@
 require 'json'
 require 'mustache'
+require 'yaml'
+
+# Usage:  render_xcconfigs.rb <CUSTOM SETTINGS PATH> <CONFIGURATIONS.YAML PATH>
+#
+# Result: Adds .xcconfig files to $configs_folder_name directory. 
+#         Files are only being added and changed, not removed!
+#         It is recommended to remove old .xcconfig files before running this script.
+
 
 # Constants
 $configs_folder_name = "TargetConfigurations"
-$standard_dev_team = "D4HA43V467"
-$enterprise_dev_team = "228J5MMU7S"
 $standard_bundle_prefix = "ru.touchin."
 $enterprise_bundle_prefix = "com.touchin."
 $bundle_id_key = "PRODUCT_BUNDLE_IDENTIFIER"
+
+class String
+  def in_current_dir
+    "#{__dir__}/#{self}"
+  end
+end
+
+custom_settings_path = ARGV[0]
+configurations_yaml_file = ARGV[1]
+temp_configs_data_file = "configs_data.json".in_current_dir
 
 # create config directory if needed
 Dir.mkdir($configs_folder_name) unless Dir.exist?($configs_folder_name)
 
 # call python script and generate configs to config file
-system("python gen_configurations.py > configs_data.json")
+system("python #{"gen_configurations.py".in_current_dir} > #{temp_configs_data_file}")
 
 
-# open settings + template file
-settings = JSON.load(File.open("custom_settings.json"))
-target_xcconfig_tempate = File.read("target_xcconfig.mustache")
-
+# open settings, configurations and template files
+settings = JSON.load(File.open(custom_settings_path))
+target_xcconfig_tempate = File.read("target_xcconfig.mustache".in_current_dir)
+$configurations = YAML.load(File.open(configurations_yaml_file))
 
 # set global property
 targets = settings["targets"]
@@ -31,7 +47,17 @@ end
 
 # return empty array or generated dev team hash
 def generate_development_team(development_team_key, account_type)
-    team_value = account_type == "Standard" ? $standard_dev_team : $enterprise_dev_team
+    current_config = case account_type
+                     when "Standard"
+                         $configurations["development"]
+                     when "Enterprise"
+                         $configurations["enterprise"]
+                     when "AppStore"
+                         $configurations["appstore"]
+                     else
+                         raise "Error: Unsupported distribution type #{account_type}" 
+                     end
+    team_value = current_config["team_id"]
     return config_option(development_team_key, team_value)
 end
 
@@ -99,7 +125,7 @@ end
 targets.each do |target|
 
     # need open everytime, because script make some changes only for this target
-    configs = JSON.load(File.open("configs_data.json"))["configurations"]
+    configs = JSON.load(File.open(temp_configs_data_file))["configurations"]
 
     # run through all configs
     configs.each do |config|
@@ -132,4 +158,4 @@ targets.each do |target|
 end
 
 # remove config file, it's trash
-File.delete("configs_data.json") if File.exist?("configs_data.json")
+File.delete(temp_configs_data_file) if File.exist?(temp_configs_data_file)
