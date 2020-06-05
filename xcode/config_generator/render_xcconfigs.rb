@@ -51,11 +51,26 @@ def generate_bundle_id(target_name, account_type)
     return config_option($bundle_id_key, bundle_id)
 end
 
+def generate_google_service_info_plist_path(google_service_info_plist_key, target_name, account_type)
+    google_service_info_plist_path = target_name + "/Resources/"
+    
+    if account_type == "AppStore"
+        google_service_info_plist_path += "AppStore-GoogleService-Info.plist"
+    elsif account_type == "Enterprise"
+        google_service_info_plist_path += "Enterprise-GoogleService-Info.plist"
+    else
+        google_service_info_plist_path += "Standard-GoogleService-Info.plist"
+    end
+    
+    return config_option(google_service_info_plist_key, google_service_info_plist_path)
+end
+
 # generate missing properties if needed
 def generate_missing_properties(target_name, properties, account_type)
     result = []
     development_team_key = "DEVELOPMENT_TEAM"
     provisioning_key = "PROVISIONING_PROFILE_SPECIFIER"
+    google_service_info_plist_key = "GOOGLE_SERVICE_INFO_PLIST_PATH"
 
     unless properties.key?($bundle_id_key)
         bundle_id_config = generate_bundle_id(target_name, account_type)
@@ -71,6 +86,10 @@ def generate_missing_properties(target_name, properties, account_type)
 
     unless properties.key?(provisioning_key)
         result.append(generate_provisioning_profile(provisioning_key, bundle_id, account_type))
+    end
+    
+    unless properties.key?(google_service_info_plist_key)
+        result.append(generate_google_service_info_plist_path(google_service_info_plist_key, target_name, account_type))
     end
 
     return result
