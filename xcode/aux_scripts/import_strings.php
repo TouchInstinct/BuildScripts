@@ -11,6 +11,12 @@
     $localization = './'.$PRODUCT_NAME.'/Resources/Localization/';
 
     $baseFile = file_get_contents(array_pop(glob($COMMON_STRINGS_PATH.'/default*.json')));
+    
+    if ($baseFile == null) {
+        echo "Empty localization file\n";
+        exit(0);
+    }
+    
     $baseJson = json_decode($baseFile, true);
 
     foreach (glob($COMMON_STRINGS_PATH.'/*.json') as $file) {
