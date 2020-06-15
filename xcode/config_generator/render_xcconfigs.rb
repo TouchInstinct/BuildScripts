@@ -4,7 +4,7 @@ require 'yaml'
 
 # Usage:  render_xcconfigs.rb <CONFIGURATIONS.YAML PATH>
 #
-# Result: Adds .xcconfig files to $configs_folder_name directory. 
+# Result: Adds .xcconfig files to $configs_folder_name directory.
 #         Files are only being added and changed, not removed!
 #         It is recommended to remove old .xcconfig files before running this script.
 
@@ -21,14 +21,15 @@ end
 # Input files paths
 configurations_file_path = ARGV[0]
 temp_configs_data_file_path = "configs_data.json".in_current_dir
-generator_path = "gen_configurations.py".in_current_dir
+generator_path = "build_options_helper/helper.py".in_current_dir
 template_path = "target_xcconfig.mustache".in_current_dir
+build_parameters_path = ARGV[1] || "build_parameters.yaml".in_current_dir
 
 # Create config directory if needed
 Dir.mkdir($configs_folder_name) unless Dir.exist?($configs_folder_name)
 
 # Call python script and generate configs to config file
-system("python #{generator_path} > #{temp_configs_data_file_path}")
+system("python #{generator_path} -bp #{build_parameters_path} -o . -r ios_build_settings -p ios")
 
 # Open settings, configurations and template files
 target_xcconfig_tempate = File.read(template_path)
@@ -53,7 +54,7 @@ def distribution_type_of(account_type)
   when "AppStore"
     "appstore"
   else
-    raise "Error: Unsupported distribution type #{account_type}" 
+    raise "Error: Unsupported distribution type #{account_type}"
   end
 end
 
@@ -77,16 +78,16 @@ end
 
 def generate_google_service_info_plist_path(google_service_info_plist_key, target_name, distribution_type)
     google_service_info_plist_path = target_name + "/Resources/"
-    
+
     path_suffix = case distribution_type
                   when "development"
                     "Standard-GoogleService-Info.plist"
                   when "enterprise"
                     "Enterprise-GoogleService-Info.plist"
-                  else 
+                  else
                     "AppStore-GoogleService-Info.plist"
                   end
-    
+
     return config_option(google_service_info_plist_key, google_service_info_plist_path + path_suffix)
 end
 
@@ -110,7 +111,7 @@ def generate_missing_properties(target_name, properties, distribution_type)
     unless properties.key?(provisioning_key)
         result.append(generate_provisioning_profile(provisioning_key, bundle_id, distribution_type))
     end
-    
+
     unless properties.key?(google_service_info_plist_key)
         result.append(generate_google_service_info_plist_path(google_service_info_plist_key, target_name, distribution_type))
     end
@@ -122,11 +123,11 @@ end
 targets.each do |target_name, target|
 
     # Need open everytime, because script make some changes only for this target
-    configs = JSON.load(File.open(temp_configs_data_file_path))["configurations"]
+    configs = JSON.load(File.open(temp_configs_data_file_path))
 
     # Run through all configs
     configs.each do |config|
- 
+
         # Take default values
         distribution_type = distribution_type_of(config["account_type"])
         properties = target[distribution_type]
