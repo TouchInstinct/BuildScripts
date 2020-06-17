@@ -29,7 +29,7 @@ build_parameters_path = ARGV[1] || "build_parameters.yaml".in_current_dir
 Dir.mkdir($configs_folder_name) unless Dir.exist?($configs_folder_name)
 
 # Call python script and generate configs to config file
-system("python #{generator_path} -bp #{build_parameters_path} -o . -r ios_build_settings -p ios")
+system("python #{generator_path} -bp #{build_parameters_path} -o #{__dir__} -r ios_build_settings -p ios")
 
 # Open settings, configurations and template files
 target_xcconfig_tempate = File.read(template_path)
