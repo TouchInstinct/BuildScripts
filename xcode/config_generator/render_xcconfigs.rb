@@ -109,7 +109,7 @@ def generate_missing_properties(target_name, properties, distribution_type)
     end
 
     unless properties.key?(provisioning_key)
-        result.append(generate_provisioning_profile(provisioning_key, bundle_id, distribution_type))
+        result.append(generate_provisioning_profile(provisioning_key, properties[bundle_id_key], distribution_type))
     end
 
     unless properties.key?(google_service_info_plist_key)
