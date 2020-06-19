@@ -135,13 +135,13 @@ private_lane :buildConfiguration do |options|
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
     options[:skip_package_ipa] = true
 
-    syncCodeSigning(options)
+    sync_code_signing_using_options(options)
 
     buildArchive(options) # check build failures and static analysis
   end
 
   if options[:uploadToFabric]
-    syncCodeSigning(options)
+    sync_code_signing_using_options(options)
     addShield(options)
     buildArchive(options)
 
@@ -152,7 +152,7 @@ private_lane :buildConfiguration do |options|
     options[:compileBitcode] = options[:compileBitcode].nil? ? true : options[:compileBitcode]
     options[:include_symbols] = options[:include_symbols].nil? ? true : options[:include_symbols]
 
-    syncCodeSigning(options)
+    sync_code_signing_using_options(options)
 
     buildArchive(options)
     uploadToAppStore(options)
