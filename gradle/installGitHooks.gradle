@@ -1,7 +1,0 @@
-task installGitHooks(type: Copy) {
-    from new File(buildScriptsDir, 'android_hooks')
-    into { new File(rootProject.rootDir, '.git/hooks') }
-    fileMode 0777
-}
-
-tasks.getByPath(':app:preBuild').dependsOn installGitHooks
