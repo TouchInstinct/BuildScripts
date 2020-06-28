@@ -13,18 +13,19 @@ module Touchlane
     attr_reader :type, :app_identifier, :apple_id, :team_id, :itc_team_id
 
     def self.from_file(path, type)
-      hash_of_types = load_hash_of_types_from_file(path)
-      attrs_hash = hash_of_types[type]
+      configuration_hash = load_configuration_from_file(path)
+      attrs_hash = configuration_hash["types"][type]
+      identifiers = get_app_identifiers_from_configuration_hash(configuration_hash, type)
 
       unless attrs_hash
         raise "There is no configuration with type #{type}. Available types: #{attrs_hash.keys}"
       else
         config_type = Touchlane::ConfigurationType.from_type(type)
-        new(config_type, attrs_hash["app_identifier"], attrs_hash["apple_id"], attrs_hash["team_id"], attrs_hash["itc_team_id"])
+        new(config_type, identifiers, attrs_hash["apple_id"], attrs_hash["team_id"], attrs_hash["itc_team_id"])
       end
     end
 
-    def self.load_hash_of_types_from_file(path)
+    def self.load_configuration_from_file(path)
       unless File.exists? path
         raise "Unable to load configurations from file at #{path}"
       else
@@ -32,7 +33,14 @@ module Touchlane
       end
     end
 
-    private_class_method :new, :load_hash_of_types_from_file
+    def self.get_app_identifiers_from_configuration_hash(configuration_hash, type)
+      identifier_key = "PRODUCT_BUNDLE_IDENTIFIER"
+      configuration_hash["targets"].collect do |target, types|
+        types[type][identifier_key] or raise "#{target}: There is no #{identifier_key} field in #{type}"
+      end
+    end
+
+    private_class_method :new, :load_configuration_from_file, :get_app_identifiers_from_configuration_hash
 
     def to_options
       {

@@ -87,7 +87,10 @@ end
 
 private_lane :addShield do |options|
   buildNumber = options[:buildNumber]
-  buildDescription = options[:xcconfig_name].scan(/\p{Upper}/)[1..2].join
+  buildDescription = options[:xcconfig_name] # EnterpriseCustomerDev1WithoutSSLPinningRelease
+    .split(/(?=[A-Z])/) # -> ["Enterprise", "Customer", "Dev1", "Without", "S", "S", "L", "Pinning", "Release"]
+    .map { |v| v.gsub(/[[:lower:]]+/, "") }[1..2] # -> ["E", "C", "D1", "W", "S", "S", "L", "P", "R"] -> ["C", "D1"]
+    .join # -> "CD1"
   
   begin
     add_badge(
@@ -108,11 +111,7 @@ private_lane :buildConfiguration do |options|
   options[:xcconfig_name] = lane_name
 
   configuration_type = Touchlane::ConfigurationType.from_lane_name(lane_name)
-  configuration = get_configuration_for_type(configuration_type.type)
-
-  options = configuration.to_options
-    .merge(get_keychain_options(options))
-    .merge(options)
+  options = fill_up_options_using_configuration_type(options, configuration_type)
 
   openKeychain(options)
 
@@ -136,13 +135,13 @@ private_lane :buildConfiguration do |options|
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
     options[:skip_package_ipa] = true
 
-    syncCodeSigning(options)
+    sync_code_signing_using_options(options)
 
     buildArchive(options) # check build failures and static analysis
   end
 
   if options[:uploadToFabric]
-    syncCodeSigning(options)
+    sync_code_signing_using_options(options)
     addShield(options)
     buildArchive(options)
 
@@ -153,7 +152,7 @@ private_lane :buildConfiguration do |options|
     options[:compileBitcode] = options[:compileBitcode].nil? ? true : options[:compileBitcode]
     options[:include_symbols] = options[:include_symbols].nil? ? true : options[:include_symbols]
 
-    syncCodeSigning(options)
+    sync_code_signing_using_options(options)
 
     buildArchive(options)
     uploadToAppStore(options)
@@ -206,23 +205,11 @@ lane :createPushCertificate do |options|
   )
 end
 
-lane :syncCodeSigning do |options|
-  match(
-    app_identifier: options[:app_identifier],
-    username: options[:username] || options[:apple_id],
-    team_id: options[:team_id],
-    type: options[:type],
-    readonly: options[:readonly].nil? ? true : options[:readonly],
-    storage_mode: "git",
-    git_url: options[:git_url],
-    git_branch: "fastlane_certificates",
-    shallow_clone: true,
-    clone_branch_directly: true,
-    keychain_name: options[:keychain_name],
-    keychain_password: options[:keychain_password],
-    skip_docs: true,
-    platform: "ios"
-  )
+lane :SyncCodeSigning do |options|
+  configuration_type = Touchlane::ConfigurationType.from_type(options[:type])
+  options = fill_up_options_using_configuration_type(options, configuration_type)
+
+  sync_code_signing_using_options(options)
 end
 
 lane :SyncSymbols do |options|
@@ -346,6 +333,32 @@ lane :ManuallyUpdateCodeSigning do |options|
 
 end
 
+def sync_code_signing_using_options(options)
+  match(
+    app_identifier: options[:app_identifier],
+    username: options[:username] || options[:apple_id],
+    team_id: options[:team_id],
+    type: options[:type],
+    readonly: options[:readonly].nil? ? true : options[:readonly],
+    storage_mode: "git",
+    git_url: options[:git_url],
+    git_branch: "fastlane_certificates",
+    shallow_clone: true,
+    clone_branch_directly: true,
+    keychain_name: options[:keychain_name],
+    keychain_password: options[:keychain_password],
+    skip_docs: true,
+    platform: "ios"
+  )
+end
+
+def fill_up_options_using_configuration_type(options, configuration_type)
+  configuration = get_configuration_for_type(configuration_type.type)
+
+  configuration.to_options
+    .merge(get_keychain_options(options))
+    .merge(options)
+end
 
 def get_keychain_options(options)
   keychain_name = options[:keychain_name]

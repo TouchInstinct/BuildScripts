@@ -239,6 +239,18 @@ custom_rules:
     message: "Use сontentView instead of self for addSubview or addSubviews methods in cell."
     severity: error
 
+  redundant_type_annotation_bool:
+    name: "Redundant type annotation for Bool"
+    regex: '((var|let)) *\w+ *((: *Bool *=)|((\w| |<|>|:)*= *BehaviorRelay<Bool>\( *value *:)) *((true)|(false))'
+    message: "Using a type annotation for Bool is redundant."
+    severity: error
+
+  parameter_repetition:
+    name: "Parameter repetition"
+    regex: 'func ((\w+([A-Z]\w+))|(\w+)) *(<[^>]+>)? *\( *(?i)(\3|\4):'
+    message: "The parameter name is actually used in the function name. Use _ instead."
+    severity: error
+
   # Rx
 
   unused_map_parameter:
