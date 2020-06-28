@@ -30,7 +30,7 @@ android.libraryVariants.all { variant ->
                     "--specification-path",
                     rootProject.extensions.findByName("pathToApiSchemes"),
                     "--kotlin-methods-generation-mode",
-                    "coroutines",
+                    "COROUTINE",
                     "--output-path",
                     "${generatedModelsDirectory.path}",
                     "--package-name",
