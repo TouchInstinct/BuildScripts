@@ -12,10 +12,10 @@ configurations {
 }
 
 dependencies {
-    apigenerator 'ru.touchin:api-generator:1.4.0-beta1'
+    apigenerator 'ru.touchin:api-generator:1.4.0-beta2'
 }
 
-android.applicationVariants.all { variant ->
+android.libraryVariants.all { variant ->
     final File generatedModelsDirectory = new File("${project.buildDir}/generated/source/models/${variant.dirName}")
 
     def generateJsonModelsTask = tasks.create("apiGenerator${variant.name}") doLast {
@@ -26,9 +26,11 @@ android.applicationVariants.all { variant ->
                     configurations.apigenerator.asPath,
                     "generate-client-code",
                     "--output-language",
-                    "JAVA",
+                    "KOTLIN",
                     "--specification-path",
                     rootProject.extensions.findByName("pathToApiSchemes"),
+                    "--kotlin-methods-generation-mode",
+                    "coroutines",
                     "--output-path",
                     "${generatedModelsDirectory.path}",
                     "--package-name",
