@@ -1,3 +1,4 @@
+#https://github.com/TouchInstinct/Styleguide/blob/multiple_swiftlint/IOS/Guides/BuildScripts/Multiple_Swiftlint_Guide.md
 require 'yaml'
 require 'optparse'
 require 'ostruct'
@@ -65,11 +66,11 @@ class SettingOption
     def initialize
         @options = OpenStruct.new
         OptionParser.new do |opt|
-            opt.on('-s', '--source_directory STRING', 'The directory of start') { |option| @options.source_directory = option }
+            opt.on('-s', '--source_directory STRING', 'The directory of source') { |option| @options.source_directory = option }
             opt.on('-p', '--pods_directory STRING', 'The directory of pods') { |option| @options.pods_directory = option }
             opt.on('-c', '--check_mode MODE', 'The mode of check is "fully" or "simplified"') { |option| @options.check_mode = option }
-            opt.on('-u', '--use_multiple BOOL', 'the flag indicates the use of multiple yaml swiftlint configurations') { |option| @options.use_multiple = option }
-            opt.on('-d', '--source_date DATE', 'The date of grouping files according new and old swiftlint rules') { |option| @options.source_date = option }
+            opt.on('-u', '--use_multiple BOOL', 'The flag indicates the use of multiple yaml swiftlint configurations') { |option| @options.use_multiple = option }
+            opt.on('-d', '--source_date DATE', 'The date of grouping files according touchin and old swiftlint rules') { |option| @options.source_date = option }
             opt.on('-y', '--touchin_swiftlint_yaml_path STRING', 'The path to the touchin swiftlint yaml relative to the source directory') { |option| @options.touchin_swiftlint_yaml_path = option }
             opt.on('-g', '--depth_git_count Int', 'The depth between the git directory and sources directory') { |option| @options.depth_git_count = option }
         end.parse!
