@@ -46,18 +46,18 @@ class YamlManager
     end
     
     def get_configuration(key)
-      @configuration[key]
+        @configuration[key]
     end
 
     def update(key, new_configuration_values)
-      @configuration[key] = new_configuration_values
-      save_settings(@configuration)
+        @configuration[key] = new_configuration_values
+        save_settings(@configuration)
     end
 
     private
 
     def save_settings(settings)
-      File.write(@swiftlint_yaml_path, settings.to_yaml)
+        File.write(@swiftlint_yaml_path, settings.to_yaml)
     end
 end
 
