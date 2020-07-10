@@ -7,3 +7,5 @@
 -include rules/glide.pro
 -include rules/kaspersky.pro
 -include rules/appsflyer.pro
+-include rules/moshi.pro
+-include rules/androidx_security.pro
