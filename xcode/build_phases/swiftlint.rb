@@ -243,24 +243,18 @@ class StrategyMaker
     end
     
     def make_fully_multiple_strategy(source_date)
-        create_copy_temporary_files
+        create_yaml_managers_and_copy_temporary_files
 
-        touchin_swiftlint_yaml_manager = YamlManager.new(@touchin_swiftlint_yaml_temporary_path)
-        old_swiftlint_yaml_manager = YamlManager.new(@old_swiftlint_yaml_temporary_path)
+        exclude_files = unique_exclude_files(@touchin_swiftlint_yaml_manager, @old_swiftlint_yaml_manager)
 
-        touchin_excluded_files = touchin_swiftlint_yaml_manager.get_configuration('excluded')
-        old_excluded_files = old_swiftlint_yaml_manager.get_configuration('excluded')
-        common_exclude_files = touchin_excluded_files + old_excluded_files
-        unique_exclude_files = common_exclude_files.uniq
-
-        swift_files = SwiftFileManager.new(unique_exclude_files, source_date)
+        swift_files = SwiftFileManager.new(exclude_files, source_date)
         swift_files.find_list_file_paths(@source_directory)
 
-        total_touchin_excluded_files = unique_exclude_files + swift_files.old_files
-        total_old_excluded_files = unique_exclude_files + swift_files.new_files
+        total_touchin_excluded_files = exclude_files + swift_files.old_files
+        total_old_excluded_files = exclude_files + swift_files.new_files
 
-        touchin_swiftlint_yaml_manager.update('excluded', total_touchin_excluded_files)
-        old_swiftlint_yaml_manager.update('excluded', total_old_excluded_files)
+        @touchin_swiftlint_yaml_manager.update('excluded', total_touchin_excluded_files)
+        @old_swiftlint_yaml_manager.update('excluded', total_old_excluded_files)
         
         make_multiple_strategy(@touchin_swiftlint_yaml_temporary_path, @old_swiftlint_yaml_temporary_path)
     end
@@ -273,29 +267,22 @@ class StrategyMaker
             return
         end
         
-        create_copy_temporary_files
-        
-        touchin_swiftlint_yaml_manager = YamlManager.new(@touchin_swiftlint_yaml_temporary_path)
-        old_swiftlint_yaml_manager = YamlManager.new(@old_swiftlint_yaml_temporary_path)
+        create_yaml_managers_and_copy_temporary_files
 
-        touchin_excluded_files = touchin_swiftlint_yaml_manager.get_configuration('excluded')
-        old_excluded_files = old_swiftlint_yaml_manager.get_configuration('excluded')
-        common_exclude_files = touchin_excluded_files + old_excluded_files
-        unique_exclude_files = common_exclude_files.uniq
-        
+        exclude_files = unique_exclude_files(@touchin_swiftlint_yaml_manager, @old_swiftlint_yaml_manager)
         included_files = included_files.map { |file_path| file_path.add_back_to_path(depth_git_count) }
         
-        swift_file_manager = SwiftFileManager.new(unique_exclude_files, source_date)
+        swift_file_manager = SwiftFileManager.new(exclude_files, source_date)
         swift_file_manager.find_list_file_paths_from(included_files)
         
         total_touchin_included_files = swift_file_manager.new_files
         total_old_included_files = swift_file_manager.old_files
         
-        touchin_swiftlint_yaml_manager.update('excluded', [])
-        old_swiftlint_yaml_manager.update('excluded', [])
+        @touchin_swiftlint_yaml_manager.update('excluded', [])
+        @old_swiftlint_yaml_manager.update('excluded', [])
         
-        touchin_swiftlint_yaml_manager.update('included', total_touchin_included_files)
-        old_swiftlint_yaml_manager.update('included', total_old_included_files)
+        @touchin_swiftlint_yaml_manager.update('included', total_touchin_included_files)
+        @old_swiftlint_yaml_manager.update('included', total_old_included_files)
         
         is_exist_total_touchin_included_files = (not total_touchin_included_files.nilOrEmpty?)
         is_exist_total_old_included_files = (not total_old_included_files.nilOrEmpty?)
@@ -347,7 +334,7 @@ class StrategyMaker
     def make_single_strategy(swiftlint_yaml_path)
         result_swiftlint_command = get_swiftlint_command(swiftlint_yaml_path)
         puts result_swiftlint_command
-        make_bash_command(result_swiftlint_command)
+        run_bash_command(result_swiftlint_command)
     end
     
     def make_multiple_strategy(touchin_swiftlint_yaml_temporary_path, old_swiftlint_yaml_temporary_path)
@@ -355,7 +342,7 @@ class StrategyMaker
         old_swiftlint_command = get_swiftlint_command(old_swiftlint_yaml_temporary_path)
         result_swiftlint_command = touchin_swiftlint_command + ' && ' + old_swiftlint_command
         puts result_swiftlint_command
-        make_bash_command(result_swiftlint_command)
+        run_bash_command(result_swiftlint_command)
     end
     
     def get_swiftlint_command(swiftlint_yaml_path)
@@ -364,7 +351,7 @@ class StrategyMaker
         return autocorrect_command + ' && ' + lint_command
     end
     
-    def make_bash_command(bash_command)
+    def run_bash_command(bash_command)
         exit (exec bash_command)
     end
     
@@ -376,6 +363,21 @@ class StrategyMaker
     def create_copy_temporary_touchin_files
         Dir.mkdir(@temporary_swiftlint_folder_name) unless Dir.exist?(@temporary_swiftlint_folder_name)
         FileUtils.cp @touchin_swiftlint_yaml_path, @touchin_swiftlint_yaml_temporary_path
+    end
+    
+    def create_yaml_managers_and_copy_temporary_files
+        create_copy_temporary_files
+        
+        @touchin_swiftlint_yaml_manager = YamlManager.new(@touchin_swiftlint_yaml_temporary_path)
+        @old_swiftlint_yaml_manager = YamlManager.new(@old_swiftlint_yaml_temporary_path)
+    end
+    
+    def unique_exclude_files(touchin_swiftlint_yaml_manager, old_swiftlint_yaml_manager)
+        touchin_excluded_files = touchin_swiftlint_yaml_manager.get_configuration('excluded')
+        old_excluded_files = old_swiftlint_yaml_manager.get_configuration('excluded')
+        common_exclude_files = touchin_excluded_files + old_excluded_files
+        unique_exclude_files = common_exclude_files.uniq
+        return unique_exclude_files
     end
 end
 
