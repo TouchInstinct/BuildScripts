@@ -23,7 +23,7 @@ class StrategyMaker
         @swiftlint_lint_command = @swiftlint + ' --path ' + @source_directory + ' --config '
     end
     
-    def make_fully_multiple_strategy(source_date)
+    def run_fully_multiple_strategy(source_date)
         create_yaml_managers_and_copy_temporary_files
 
         exclude_files = unique_exclude_files(@touchin_swiftlint_yaml_manager, @old_swiftlint_yaml_manager)
@@ -37,10 +37,10 @@ class StrategyMaker
         @touchin_swiftlint_yaml_manager.update('excluded', total_touchin_excluded_files)
         @old_swiftlint_yaml_manager.update('excluded', total_old_excluded_files)
         
-        make_multiple_strategy(@touchin_swiftlint_yaml_temporary_path, @old_swiftlint_yaml_temporary_path)
+        run_multiple_strategy(@touchin_swiftlint_yaml_temporary_path, @old_swiftlint_yaml_temporary_path)
     end
     
-    def make_simplified_multiple_strategy(source_date, depth_git_count)
+    def run_simplified_multiple_strategy(source_date, depth_git_count)
         included_files = GitСaretaker.get_modified_files
         
         if included_files.nilOrEmpty?
@@ -69,21 +69,21 @@ class StrategyMaker
         is_exist_total_old_included_files = (not total_old_included_files.nilOrEmpty?)
         
         if is_exist_total_touchin_included_files and is_exist_total_old_included_files
-            make_multiple_strategy(@touchin_swiftlint_yaml_temporary_path, @old_swiftlint_yaml_temporary_path)
+            run_multiple_strategy(@touchin_swiftlint_yaml_temporary_path, @old_swiftlint_yaml_temporary_path)
         elsif is_exist_total_touchin_included_files and not is_exist_total_old_included_files
-            make_single_strategy(@touchin_swiftlint_yaml_temporary_path)
+            run_single_strategy(@touchin_swiftlint_yaml_temporary_path)
         elsif not is_exist_total_touchin_included_files and is_exist_total_old_included_files
-            make_single_strategy(@old_swiftlint_yaml_temporary_path)
+            run_single_strategy(@old_swiftlint_yaml_temporary_path)
         else
             puts 'Git did not found swift files to check'
         end
     end
     
-    def make_fully_single_strategy
-        make_single_strategy(@touchin_swiftlint_yaml_path)
+    def run_fully_single_strategy
+        run_single_strategy(@touchin_swiftlint_yaml_path)
     end
     
-    def make_simplified_single_strategy(depth_git_count)
+    def run_simplified_single_strategy(depth_git_count)
         included_files = GitСaretaker.get_modified_files
 
         if included_files.nilOrEmpty?
@@ -104,7 +104,7 @@ class StrategyMaker
         touchin_swiftlint_yaml_manager.update('included', included_files)
         
         if not included_files.nilOrEmpty?
-            make_single_strategy(@touchin_swiftlint_yaml_temporary_path)
+            run_single_strategy(@touchin_swiftlint_yaml_temporary_path)
         else
             puts 'Git found the swift files to check, but they are excluded in yaml'
         end
@@ -112,13 +112,13 @@ class StrategyMaker
     
     private
     
-    def make_single_strategy(swiftlint_yaml_path)
+    def run_single_strategy(swiftlint_yaml_path)
         result_swiftlint_command = get_swiftlint_command(swiftlint_yaml_path)
         puts result_swiftlint_command
         run_bash_command(result_swiftlint_command)
     end
     
-    def make_multiple_strategy(touchin_swiftlint_yaml_temporary_path, old_swiftlint_yaml_temporary_path)
+    def run_multiple_strategy(touchin_swiftlint_yaml_temporary_path, old_swiftlint_yaml_temporary_path)
         touchin_swiftlint_command = get_swiftlint_command(touchin_swiftlint_yaml_temporary_path)
         old_swiftlint_command = get_swiftlint_command(old_swiftlint_yaml_temporary_path)
         result_swiftlint_command = touchin_swiftlint_command + ' && ' + old_swiftlint_command
