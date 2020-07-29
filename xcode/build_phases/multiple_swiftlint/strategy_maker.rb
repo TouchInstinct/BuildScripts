@@ -37,7 +37,7 @@ class StrategyMaker
         run_multiple_strategy(@touchin_swiftlint_yaml_temporary_path, @old_swiftlint_yaml_temporary_path)
     end
     
-    def run_simplified_multiple_strategy(source_date, depth_git_count)
+    def run_simplified_multiple_strategy(source_date, git_directory)
         included_files = GitСaretaker.get_modified_files
         
         if included_files.nilOrEmpty?
@@ -48,7 +48,7 @@ class StrategyMaker
         create_yaml_managers_and_copy_temporary_files
 
         exclude_files = unique_exclude_files(@touchin_swiftlint_yaml_manager, @old_swiftlint_yaml_manager)
-        included_files = included_files.map { |file_path| file_path.add_back_to_path(depth_git_count) }
+        included_files = included_files.map { |file_path| git_directory + file_path }
         
         swift_file_manager = SwiftFileManager.new(exclude_files, source_date)
         swift_file_manager.find_list_file_paths_from(included_files)
@@ -80,7 +80,7 @@ class StrategyMaker
         run_single_strategy(@touchin_swiftlint_yaml_path)
     end
     
-    def run_simplified_single_strategy(depth_git_count)
+    def run_simplified_single_strategy(git_directory)
         included_files = GitСaretaker.get_modified_files
 
         if included_files.nilOrEmpty?
@@ -95,7 +95,7 @@ class StrategyMaker
         swift_files = SwiftFileManager.new(touchin_excluded_files, '')
 
         included_files = included_files.select { |file_name| not swift_files.is_excluded_file(file_name) }
-        included_files = included_files.map { |file_path| file_path.add_back_to_path(depth_git_count) }
+        included_files = included_files.map { |file_path| git_directory + file_path }
         
         touchin_swiftlint_yaml_manager.update('excluded', [])
         touchin_swiftlint_yaml_manager.update('included', included_files)

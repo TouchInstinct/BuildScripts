@@ -13,7 +13,7 @@ if setting.check_mode.eql? 'fully' and setting.use_multiple.true?
 elsif setting.check_mode.eql? 'fully' and not setting.use_multiple.true?
     strategy_maker.run_fully_single_strategy
 elsif setting.check_mode.eql? 'simplified' and setting.use_multiple.true?
-    strategy_maker.run_simplified_multiple_strategy(setting.source_date, setting.depth_git_count)
+    strategy_maker.run_simplified_multiple_strategy(setting.source_date, setting.git_directory)
 elsif setting.check_mode.eql? 'simplified' and not setting.use_multiple.true?
-    strategy_maker.run_simplified_single_strategy(setting.depth_git_count)
+    strategy_maker.run_simplified_single_strategy(setting.git_directory)
 end

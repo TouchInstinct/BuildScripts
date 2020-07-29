@@ -11,14 +11,6 @@ class String
         self.to_s.downcase == "true"
     end
     
-    def add_back_to_path(count)
-        string = self
-        count.to_i.times { |i|
-            string = '../' + string
-        }
-        return string
-    end
-    
     def nilOrEmpty?
         self.nil? or self.empty?
     end
