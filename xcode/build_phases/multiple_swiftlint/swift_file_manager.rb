@@ -52,13 +52,12 @@ class SwiftFileManager
     def compare_timestamp(file_path)
         wrapped_whitespace_file_path = file_path.with_wrapped_whitespace
         creation_date_string = GitСaretaker.get_creation_date(wrapped_whitespace_file_path)
-        puts file_path
         if creation_date_string.nilOrEmpty?
             @old_files.push(file_path)
-            puts 'Not found the creation date'
+            puts ('Creation date of ' + file_path + ' was not found')
         else
             creation_date = Date.parse(creation_date_string)
-            puts creation_date
+            puts ('Creation date of ' + file_path + ' is ' + creation_date.to_s)
             if @source_date < creation_date
                 @new_files.push(file_path)
             else

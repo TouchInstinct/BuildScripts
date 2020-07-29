@@ -7,17 +7,17 @@ require_relative 'swift_file_manager.rb'
 require_relative 'yaml_manager.rb'
 
 class StrategyMaker
-    def initialize(source_directory, swiftlint_executable_path, touchin_swiftlint_yaml_path)
-        @source_directory = source_directory        
-        @touchin_swiftlint_yaml_path = source_directory + touchin_swiftlint_yaml_path
-        @old_swiftlint_yaml_path = source_directory + '/.swiftlint.yml'
+    def initialize(project_directory, swiftlint_executable_path, touchin_swiftlint_yaml_path)
+        @project_directory = project_directory        
+        @touchin_swiftlint_yaml_path = project_directory + touchin_swiftlint_yaml_path
+        @old_swiftlint_yaml_path = project_directory + '/.swiftlint.yml'
         
-        @temporary_swiftlint_folder_name = source_directory + '/temporary_swiftlint'
+        @temporary_swiftlint_folder_name = project_directory + '/temporary_swiftlint'
         @touchin_swiftlint_yaml_temporary_path = @temporary_swiftlint_folder_name + '/.touchin_swiftlint.yml'
         @old_swiftlint_yaml_temporary_path = @temporary_swiftlint_folder_name + '/.old_swiftlint.yml'
         
-        @swiftlint_autocorrect_command = swiftlint_executable_path + ' autocorrect --path ' + @source_directory + ' --config '
-        @swiftlint_lint_command = swiftlint_executable_path + ' --path ' + @source_directory + ' --config '
+        @swiftlint_autocorrect_command = swiftlint_executable_path + ' autocorrect --path ' + @project_directory + ' --config '
+        @swiftlint_lint_command = swiftlint_executable_path + ' --path ' + @project_directory + ' --config '
     end
     
     def run_fully_multiple_strategy(source_date)
@@ -26,7 +26,7 @@ class StrategyMaker
         exclude_files = unique_exclude_files(@touchin_swiftlint_yaml_manager, @old_swiftlint_yaml_manager)
 
         swift_files = SwiftFileManager.new(exclude_files, source_date)
-        swift_files.find_list_file_paths(@source_directory)
+        swift_files.find_list_file_paths(@project_directory)
 
         total_touchin_excluded_files = exclude_files + swift_files.old_files
         total_old_excluded_files = exclude_files + swift_files.new_files

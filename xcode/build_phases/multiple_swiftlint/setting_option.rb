@@ -7,8 +7,8 @@ class SettingOption
     def initialize
         @options = OpenStruct.new
         OptionParser.new do |opt|
-            opt.on('-s', '--source_directory STRING', 'The directory of source') { |option| @options.source_directory = option }
-            opt.on('-l', '--swiftlint_executable_path STRING', 'The executable path of swiftlint') { |option| @options.swiftlint_executable_path = option }
+            opt.on('-p', '--project_directory STRING', 'The directory of project') { |option| @options.project_directory = option }
+            opt.on('-s', '--swiftlint_executable_path STRING', 'The executable path of swiftlint') { |option| @options.swiftlint_executable_path = option }
             opt.on('-g', '--git_directory STRING', 'The directory of git') { |option| @options.git_directory = option }
             opt.on('-c', '--check_mode MODE', 'The mode of check is "fully" or "simplified"') { |option| @options.check_mode = option }
             opt.on('-u', '--use_multiple BOOL', 'The flag indicates the use of multiple yaml swiftlint configurations') { |option| @options.use_multiple = option }
@@ -25,7 +25,7 @@ class SettingOption
         end
 
         if @options.git_directory.to_s.nilOrEmpty?
-            @options.git_directory = @options.source_directory
+            @options.git_directory = @options.project_directory
         end
         
         if @options.touchin_swiftlint_yaml_path.to_s.nilOrEmpty?
@@ -33,8 +33,8 @@ class SettingOption
         end
     end
     
-    def source_directory
-        @options.source_directory
+    def project_directory
+        @options.project_directory
     end
     
     def source_date
