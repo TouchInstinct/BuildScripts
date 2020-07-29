@@ -6,7 +6,7 @@ Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
 
 setting = SettingOption.new
-strategy_maker = StrategyMaker.new(setting.source_directory, setting.pods_directory, setting.touchin_swiftlint_yaml_path)
+strategy_maker = StrategyMaker.new(setting.source_directory, setting.swiftlint_executable_path, setting.touchin_swiftlint_yaml_path)
 
 if setting.check_mode.eql? 'fully' and setting.use_multiple.true?
     strategy_maker.run_fully_multiple_strategy(setting.source_date)

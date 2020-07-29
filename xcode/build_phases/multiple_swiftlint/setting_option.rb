@@ -8,7 +8,7 @@ class SettingOption
         @options = OpenStruct.new
         OptionParser.new do |opt|
             opt.on('-s', '--source_directory STRING', 'The directory of source') { |option| @options.source_directory = option }
-            opt.on('-p', '--pods_directory STRING', 'The directory of pods') { |option| @options.pods_directory = option }
+            opt.on('-l', '--swiftlint_executable_path STRING', 'The executable path of swiftlint') { |option| @options.swiftlint_executable_path = option }
             opt.on('-c', '--check_mode MODE', 'The mode of check is "fully" or "simplified"') { |option| @options.check_mode = option }
             opt.on('-u', '--use_multiple BOOL', 'The flag indicates the use of multiple yaml swiftlint configurations') { |option| @options.use_multiple = option }
             opt.on('-d', '--source_date DATE', 'The date of grouping files according touchin and old swiftlint rules') { |option| @options.source_date = option }
@@ -41,8 +41,8 @@ class SettingOption
         @options.source_date
     end
     
-    def pods_directory
-        @options.pods_directory
+    def swiftlint_executable_path
+        @options.swiftlint_executable_path
     end
     
     def check_mode

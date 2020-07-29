@@ -7,11 +7,8 @@ require_relative 'swift_file_manager.rb'
 require_relative 'yaml_manager.rb'
 
 class StrategyMaker
-    def initialize(source_directory, pods_directory, touchin_swiftlint_yaml_path)
-        @source_directory = source_directory
-        @pods_directory = pods_directory
-        @swiftlint = pods_directory + '/SwiftLint/swiftlint'
-        
+    def initialize(source_directory, swiftlint_executable_path, touchin_swiftlint_yaml_path)
+        @source_directory = source_directory        
         @touchin_swiftlint_yaml_path = source_directory + touchin_swiftlint_yaml_path
         @old_swiftlint_yaml_path = source_directory + '/.swiftlint.yml'
         
@@ -19,8 +16,8 @@ class StrategyMaker
         @touchin_swiftlint_yaml_temporary_path = @temporary_swiftlint_folder_name + '/.touchin_swiftlint.yml'
         @old_swiftlint_yaml_temporary_path = @temporary_swiftlint_folder_name + '/.old_swiftlint.yml'
         
-        @swiftlint_autocorrect_command = @swiftlint + ' autocorrect --path ' + @source_directory + ' --config '
-        @swiftlint_lint_command = @swiftlint + ' --path ' + @source_directory + ' --config '
+        @swiftlint_autocorrect_command = swiftlint_executable_path + ' autocorrect --path ' + @source_directory + ' --config '
+        @swiftlint_lint_command = swiftlint_executable_path + ' --path ' + @source_directory + ' --config '
     end
     
     def run_fully_multiple_strategy(source_date)
