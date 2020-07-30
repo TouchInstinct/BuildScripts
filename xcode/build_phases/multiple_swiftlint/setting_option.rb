@@ -7,9 +7,9 @@ class SettingOption
     def initialize
         @options = OpenStruct.new
         OptionParser.new do |opt|
-            opt.on('-p', '--project_directory STRING', 'The directory of project') { |option| @options.project_directory = option }
+            opt.on('-p', '--project_root_path STRING', 'The path of project directory') { |option| @options.project_root_path = option }
+            opt.on('-r', '--source_root_path STRING', 'The path of source directory ') { |option| @options.source_root_path = option }
             opt.on('-s', '--swiftlint_executable_path STRING', 'The executable path of swiftlint') { |option| @options.swiftlint_executable_path = option }
-            opt.on('-g', '--git_directory STRING', 'The directory of git') { |option| @options.git_directory = option }
             opt.on('-c', '--check_mode MODE', 'The mode of check is "fully" or "simplified"') { |option| @options.check_mode = option }
             opt.on('-u', '--use_multiple BOOL', 'The flag indicates the use of multiple yaml swiftlint configurations') { |option| @options.use_multiple = option }
             opt.on('-d', '--source_date DATE', 'The date of grouping files according touchin and old swiftlint rules') { |option| @options.source_date = option }
@@ -24,8 +24,8 @@ class SettingOption
             @options.use_multiple = 'false'
         end
 
-        if @options.git_directory.to_s.nilOrEmpty?
-            @options.git_directory = @options.project_directory
+        if @options.source_root_path.to_s.nilOrEmpty?
+            @options.source_root_path = @options.project_root_path
         end
         
         if @options.touchin_swiftlint_yaml_path.to_s.nilOrEmpty?
@@ -33,8 +33,8 @@ class SettingOption
         end
     end
     
-    def project_directory
-        @options.project_directory
+    def project_root_path
+        @options.project_root_path
     end
     
     def source_date
@@ -53,8 +53,8 @@ class SettingOption
         @options.use_multiple
     end
     
-    def git_directory
-        @options.git_directory
+    def source_root_path
+        @options.source_root_path
     end
     
     def touchin_swiftlint_yaml_path

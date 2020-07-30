@@ -7,17 +7,17 @@ require_relative 'swift_file_manager.rb'
 require_relative 'yaml_manager.rb'
 
 class StrategyMaker
-    def initialize(project_directory, swiftlint_executable_path, touchin_swiftlint_yaml_path)
-        @project_directory = project_directory        
-        @touchin_swiftlint_yaml_path = project_directory + touchin_swiftlint_yaml_path
-        @old_swiftlint_yaml_path = project_directory + '/.swiftlint.yml'
+    def initialize(project_root_path, swiftlint_executable_path, touchin_swiftlint_yaml_path)
+        @project_root_path = project_root_path        
+        @touchin_swiftlint_yaml_path = project_root_path + touchin_swiftlint_yaml_path
+        @old_swiftlint_yaml_path = project_root_path + '/.swiftlint.yml'
         
-        @temporary_swiftlint_folder_name = project_directory + '/temporary_swiftlint'
+        @temporary_swiftlint_folder_name = project_root_path + '/temporary_swiftlint'
         @touchin_swiftlint_yaml_temporary_path = @temporary_swiftlint_folder_name + '/.touchin_swiftlint.yml'
         @old_swiftlint_yaml_temporary_path = @temporary_swiftlint_folder_name + '/.old_swiftlint.yml'
         
-        @swiftlint_autocorrect_command = swiftlint_executable_path + ' autocorrect --path ' + @project_directory + ' --config '
-        @swiftlint_lint_command = swiftlint_executable_path + ' --path ' + @project_directory + ' --config '
+        @swiftlint_autocorrect_command = swiftlint_executable_path + ' autocorrect --path ' + @project_root_path + ' --config '
+        @swiftlint_lint_command = swiftlint_executable_path + ' --path ' + @project_root_path + ' --config '
     end
     
     def run_fully_multiple_strategy(source_date)
@@ -26,7 +26,7 @@ class StrategyMaker
         exclude_files = unique_exclude_files(@touchin_swiftlint_yaml_manager, @old_swiftlint_yaml_manager)
 
         swift_files = SwiftFileManager.new(exclude_files, source_date)
-        swift_files.find_list_file_paths(@project_directory)
+        swift_files.find_list_file_paths(@project_root_path)
 
         total_touchin_excluded_files = exclude_files + swift_files.old_files
         total_old_excluded_files = exclude_files + swift_files.new_files
@@ -37,7 +37,7 @@ class StrategyMaker
         run_multiple_strategy(@touchin_swiftlint_yaml_temporary_path, @old_swiftlint_yaml_temporary_path)
     end
     
-    def run_simplified_multiple_strategy(source_date, git_directory)
+    def run_simplified_multiple_strategy(source_date, source_root_path)
         included_files = GitСaretaker.get_modified_files
         
         if included_files.nilOrEmpty?
@@ -48,7 +48,7 @@ class StrategyMaker
         create_yaml_managers_and_copy_temporary_files
 
         exclude_files = unique_exclude_files(@touchin_swiftlint_yaml_manager, @old_swiftlint_yaml_manager)
-        included_files = included_files.map { |file_path| git_directory + file_path }
+        included_files = included_files.map { |file_path| source_root_path + file_path }
         
         swift_file_manager = SwiftFileManager.new(exclude_files, source_date)
         swift_file_manager.find_list_file_paths_from(included_files)
@@ -80,7 +80,7 @@ class StrategyMaker
         run_single_strategy(@touchin_swiftlint_yaml_path)
     end
     
-    def run_simplified_single_strategy(git_directory)
+    def run_simplified_single_strategy(source_root_path)
         included_files = GitСaretaker.get_modified_files
 
         if included_files.nilOrEmpty?
@@ -95,7 +95,7 @@ class StrategyMaker
         swift_files = SwiftFileManager.new(touchin_excluded_files, '')
 
         included_files = included_files.select { |file_name| not swift_files.is_excluded_file(file_name) }
-        included_files = included_files.map { |file_path| git_directory + file_path }
+        included_files = included_files.map { |file_path| source_root_path + file_path }
         
         touchin_swiftlint_yaml_manager.update('excluded', [])
         touchin_swiftlint_yaml_manager.update('included', included_files)
