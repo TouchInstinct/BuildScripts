@@ -7,8 +7,10 @@ class SettingOption
     def initialize
         @options = OpenStruct.new
         OptionParser.new do |opt|
-            opt.on('-p', '--project_root_path STRING', 'The path of project directory') { |option| @options.project_root_path = option }
-            opt.on('-r', '--source_root_path STRING', 'The path of source directory ') { |option| @options.source_root_path = option }
+            opt.on('-p', '--project_root_path STRING', 'The path of project directory and contains *.xcodeproj file always. ' +
+                'Example: project_root_path=~/Projects/MyProject/Source/..') { |option| @options.project_root_path = option }
+            opt.on('-r', '--source_root_path STRING', 'The path of source directory and may not contains *.xcodeproj file in some cases. ' +
+                'Example: source_root_path=~/Projects/MyProject/') { |option| @options.source_root_path = option }
             opt.on('-s', '--swiftlint_executable_path STRING', 'The executable path of swiftlint') { |option| @options.swiftlint_executable_path = option }
             opt.on('-c', '--check_mode MODE', 'The mode of check is "fully" or "simplified"') { |option| @options.check_mode = option }
             opt.on('-u', '--use_multiple BOOL', 'The flag indicates the use of multiple yaml swiftlint configurations') { |option| @options.use_multiple = option }
