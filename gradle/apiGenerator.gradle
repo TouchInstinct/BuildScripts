@@ -12,7 +12,7 @@ configurations {
 }
 
 dependencies {
-    apigenerator 'ru.touchin:api-generator:1.4.0-beta4'
+    apigenerator 'ru.touchin:api-generator:1.4.0-beta5'
 }
 
 android.libraryVariants.all { variant ->
