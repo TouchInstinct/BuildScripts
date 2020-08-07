@@ -2,15 +2,13 @@ require 'json'
 require 'mustache'
 require 'yaml'
 
-# Usage:  render_xcconfigs.rb <CONFIGURATIONS.YAML PATH>
 #
-# Result: Adds .xcconfig files to $configs_folder_name directory.
+# Usage:  render_xcconfigs.rb <configurations.yaml> <build_parameters.yaml> [<ouptut folder>]
+#
+# Result: Adds .xcconfig files to ouptut folder.
 #         Files are only being added and changed, not removed!
 #         It is recommended to remove old .xcconfig files before running this script.
-
-
-# Constants
-$configs_folder_name = "TargetConfigurations"
+#
 
 class String
   def in_current_dir
@@ -23,10 +21,11 @@ configurations_file_path = ARGV[0]
 temp_configs_data_file_path = "configs_data.json".in_current_dir
 generator_path = "build_options_helper/helper.py".in_current_dir
 template_path = "target_xcconfig.mustache".in_current_dir
-build_parameters_path = ARGV[1] || "build_parameters.yaml".in_current_dir
+build_parameters_path = ARGV[1]
+configs_folder_name = ARGV[2] || "TargetConfigurations"
 
 # Create config directory if needed
-Dir.mkdir($configs_folder_name) unless Dir.exist?($configs_folder_name)
+Dir.mkdir(configs_folder_name) unless Dir.exist?(configs_folder_name)
 
 # Call python script and generate configs to config file
 system("python #{generator_path} -bp #{build_parameters_path} -o #{__dir__} -r ios_build_settings -p ios")
@@ -147,7 +146,7 @@ targets.each do |target_name, target|
         }
 
         # Create file for every setting in loop
-        File.open($configs_folder_name + "/" + target_name + config["name"] + ".xcconfig", 'w') { |file|
+        File.open(configs_folder_name + "/" + target_name + config["name"] + ".xcconfig", 'w') { |file|
             file.puts(Mustache.render(target_xcconfig_tempate, config_data))
         }
     end
