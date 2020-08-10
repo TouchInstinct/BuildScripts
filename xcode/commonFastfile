@@ -191,7 +191,7 @@ private_lane :buildArchive do |options|
 end
 
 lane :CreatePushCertificate do |options|
-  configuration = get_configuration_for_type(options[:type] || "development")
+  configuration = get_configuration_for_type(options[:type] || "development", options)
   options = configuration.to_options.merge(options)
 
   certificates_path = File.expand_path "../Certificates"
@@ -220,7 +220,7 @@ lane :SyncCodeSigning do |options|
 end
 
 lane :SyncSymbols do |options|
-  configuration = get_configuration_for_type(options[:type])
+  configuration = get_configuration_for_type(options[:type], options)
   options = configuration.to_options.merge(options)
 
   appName = options[:appName] || $appName
@@ -360,7 +360,7 @@ def sync_code_signing_using_options(options)
 end
 
 def fill_up_options_using_configuration_type(options, configuration_type)
-  configuration = get_configuration_for_type(configuration_type.type)
+  configuration = get_configuration_for_type(configuration_type.type, options)
 
   configuration.to_options
     .merge(get_keychain_options(options))
@@ -384,8 +384,12 @@ def get_keychain_options(options)
   return {:keychain_name => keychain_name, :keychain_password => keychain_password}
 end
 
-def get_configuration_for_type(type)
-  config_path = File.expand_path "configurations.yaml"
+def get_configuration_for_type(type, options)
+  appName = options[:appName] || $appName
+  
+  project_config_path = "configurations_#{appName}.yaml"
+  relative_config_path = File.exists? project_config_path ? project_config_path : "configurations.yaml"
+  config_path = File.expand_path relative_config_path
 
   configuration = Touchlane::Configuration.from_file(config_path, type)
 end
