@@ -388,7 +388,7 @@ def get_configuration_for_type(type, options)
   appName = options[:appName] || $appName
   
   project_config_path = "configurations_#{appName}.yaml"
-  relative_config_path = File.exists? project_config_path ? project_config_path : "configurations.yaml"
+  relative_config_path = File.exists?(project_config_path) ? project_config_path : "configurations.yaml"
   config_path = File.expand_path relative_config_path
 
   configuration = Touchlane::Configuration.from_file(config_path, type)
