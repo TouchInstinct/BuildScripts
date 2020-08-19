@@ -12,7 +12,7 @@ abstract class ApiGeneratorPlugin : Plugin<Project> {
     companion object {
         const val API_GENERATOR_CONFIG = "apiGenerator"
         const val API_GENERATOR_EXT_NAME = "apiGenerator"
-        const val API_GENERATOR_VERSION = "1.4.0-beta4"
+        const val API_GENERATOR_VERSION = "1.4.0-beta5"
     }
 
     override fun apply(target: Project) {
