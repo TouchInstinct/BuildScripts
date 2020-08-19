@@ -23,7 +23,7 @@ formatting:
     active: true
 
 console-reports:
-  active: true
+  active: false
   exclude:
   #  - 'ProjectStatisticsReport'
   #  - 'ComplexityReport'
