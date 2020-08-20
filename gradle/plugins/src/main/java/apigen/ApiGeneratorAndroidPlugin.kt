@@ -31,7 +31,7 @@ class ApiGeneratorAndroidPlugin : ApiGeneratorPlugin() {
                             .srcDir(outputDir)
                 }
                 tasks
-                        .filterIsInstance(KotlinCompile::class.java)
+                        .filterIsInstance<KotlinCompile>()
                         .forEach {
                             it.source(outputDir)
                         }
