@@ -1,8 +1,9 @@
 package apigen
 
+import com.android.build.gradle.AppExtension
 import com.android.build.gradle.LibraryExtension
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.findByType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 class ApiGeneratorAndroidPlugin : ApiGeneratorPlugin() {
@@ -18,7 +19,12 @@ class ApiGeneratorAndroidPlugin : ApiGeneratorPlugin() {
             extension.recreateOutputDir = true
 
             afterEvaluate {
-                extensions.getByType<LibraryExtension>().apply {
+                extensions.findByType<LibraryExtension>()?.apply {
+                    sourceSets.getByName("main")
+                            .java
+                            .srcDir(outputDir)
+                }
+                extensions.findByType<AppExtension>()?.apply {
                     sourceSets.getByName("main")
                             .java
                             .srcDir(outputDir)
