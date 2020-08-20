@@ -24,7 +24,7 @@ class AndroidLinter : Linter {
                         .map { locationNode ->
                             AndroidLintError(
                                     filePath = locationNode.attribute("file") as String,
-                                    fileLine = locationNode.attribute("line") as String,
+                                    fileLine = locationNode.attribute("line") as String?,
                                     errorId = errorNode.attribute("id") as String,
                                     description = errorNode.attribute("message") as String
                             )
