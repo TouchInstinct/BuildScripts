@@ -7,6 +7,9 @@ class AndroidLintError(
         private val description: String
 ) : StaticAnalysisError {
 
-    override fun print(count: Int): String = "\n$count. Android Lint. $description ($errorId)\n\tat [$filePath${fileLine?.let { ":$it" }.orEmpty()}]"
+    override fun print(count: Int): String = "\n$count. Android Lint. $description ($errorId)\n\tat [$filePath$fileLinePrefix]"
+
+    private val fileLinePrefix: String
+        get() = fileLine?.let { ":$it" }.orEmpty()
 
 }

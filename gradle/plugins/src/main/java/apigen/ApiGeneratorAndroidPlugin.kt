@@ -32,15 +32,11 @@ class ApiGeneratorAndroidPlugin : ApiGeneratorPlugin() {
                 }
                 tasks
                         .filterIsInstance<KotlinCompile>()
-                        .forEach {
-                            it.source(outputDir)
-                        }
+                        .forEach { it.source(outputDir) }
 
                 tasks
                         .filterIsInstance<JavaCompile>()
-                        .forEach {
-                            it.source(outputDir)
-                        }
+                        .forEach { it.source(outputDir) }
             }
         }
     }

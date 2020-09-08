@@ -7,7 +7,7 @@ import static_analysis.errors.StaticAnalysisError
 import static_analysis.plugins.StaticAnalysisExtension
 import static_analysis.utils.getSources
 import static_analysis.utils.typedChildren
-import static_analysis.utils.xmlParser
+import xmlParser
 
 class DetektLinter : Linter {
 

@@ -7,13 +7,11 @@ class ApiGeneratorBackendPlugin : ApiGeneratorPlugin() {
     override fun apply(target: Project) {
         super.apply(target)
 
-        with(target) {
-            val extension = getExtension()
+        val extension = target.getExtension()
 
-            extension.outputDirPath = file("src/main/kotlin").path
-            extension.recreateOutputDir = false
-            extension.outputLanguage = OutputLanguage.KotlinServer
+        extension.outputDirPath = target.file("src/main/kotlin").path
+        extension.recreateOutputDir = false
+        extension.outputLanguage = OutputLanguage.KotlinServer
 
-        }
     }
 }

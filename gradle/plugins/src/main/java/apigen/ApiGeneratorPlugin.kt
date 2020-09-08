@@ -12,7 +12,7 @@ abstract class ApiGeneratorPlugin : Plugin<Project> {
     companion object {
         const val API_GENERATOR_CONFIG = "apiGenerator"
         const val API_GENERATOR_EXT_NAME = "apiGenerator"
-        const val API_GENERATOR_VERSION = "1.4.0-beta5"
+        const val API_GENERATOR_DEFAULT_VERSION = "1.4.0-beta5"
     }
 
     override fun apply(target: Project) {
@@ -29,7 +29,7 @@ abstract class ApiGeneratorPlugin : Plugin<Project> {
             configurations.create(API_GENERATOR_CONFIG)
 
             dependencies {
-                add(API_GENERATOR_CONFIG, "ru.touchin:api-generator:$API_GENERATOR_VERSION")
+                add(API_GENERATOR_CONFIG, "ru.touchin:api-generator:$API_GENERATOR_DEFAULT_VERSION")
             }
 
             extensions.create<ApiGeneratorExtension>(API_GENERATOR_EXT_NAME)

@@ -12,6 +12,7 @@ local.properties
 
 # Log Files
 *.log
+
 .gradle
 .idea
 .DS_Store

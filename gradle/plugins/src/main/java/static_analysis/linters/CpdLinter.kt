@@ -10,7 +10,7 @@ import static_analysis.errors.StaticAnalysisError
 import static_analysis.plugins.StaticAnalysisExtension
 import static_analysis.utils.getSources
 import static_analysis.utils.typedChildren
-import static_analysis.utils.xmlParser
+import xmlParser
 
 class CpdLinter : Linter {
 
@@ -50,7 +50,7 @@ class CpdLinter : Linter {
             .rootProject
             .tasks
             .withType<Cpd>()
-            .map { it.path }
+            .map(Cpd::getPath)
 
     private fun Project.getCpdReportFile() = file("${rootProject.buildDir}/reports/cpd.xml")
 

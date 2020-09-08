@@ -12,10 +12,10 @@ object ReportGenerator {
                 .map { linter -> linter to linter.getErrors(project) }
 
         val lintersResults = groupedErrors
-                .map { it.first.name to it.second.size }
+                .map { (linter, linterErrors) -> linter.name to linterErrors.size }
 
         val allErrors = groupedErrors
-                .map { it.second }
+                .map(Pair<Linter, List<StaticAnalysisError>>::second)
                 .flatten()
 
         val consoleReport = StringBuilder("\nSTATIC ANALYSIS ERRORS:").apply {

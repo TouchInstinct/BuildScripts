@@ -1,14 +1,8 @@
 package static_analysis.utils
 
-import groovy.util.Node
-import groovy.util.XmlParser
 import org.gradle.api.Project
 import org.gradle.api.file.FileTree
 import java.io.File
-
-fun Node.typedChildren() = children() as List<Node>
-
-fun xmlParser(file: File) = XmlParser().parse(file)
 
 fun Project.getSources(excludes: String): FileTree = files(
         project
