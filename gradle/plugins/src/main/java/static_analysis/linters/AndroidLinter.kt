@@ -8,7 +8,7 @@ import static_analysis.errors.AndroidLintError
 import static_analysis.errors.StaticAnalysisError
 import static_analysis.plugins.StaticAnalysisExtension
 import static_analysis.utils.typedChildren
-import xmlParser
+import static_analysis.utils.xmlParser
 
 class AndroidLinter : Linter {
 
@@ -52,15 +52,18 @@ class AndroidLinter : Linter {
     }
 
     override fun getTaskNames(project: Project, buildType: String?): List<String> {
-        if (buildType == null) throw IllegalStateException("build type must not be null in android linter")
+        if (buildType == null) {
+            throw IllegalStateException("Build type must not be null in android linter")
+        }
 
         return project
                 .subprojects
                 .filter { it.plugins.hasPlugin(AppPlugin::class.java) }
                 .mapNotNull { subproject: Project ->
-                    subproject.tasks.find { task ->
-                        task.name.contains(buildType, ignoreCase = true) && task.name.contains("lint")
-                    }?.path
+                    subproject
+                            .tasks
+                            .find { task -> task.name.contains(buildType, ignoreCase = true) && task.name.contains("lint") }
+                            ?.path
                 }
     }
 

@@ -10,7 +10,7 @@ import static_analysis.errors.StaticAnalysisError
 import static_analysis.plugins.StaticAnalysisExtension
 import static_analysis.utils.getSources
 import static_analysis.utils.typedChildren
-import xmlParser
+import static_analysis.utils.xmlParser
 
 class CpdLinter : Linter {
 
