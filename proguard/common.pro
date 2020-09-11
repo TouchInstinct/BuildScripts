@@ -1,5 +1,4 @@
 -include rules/components.pro
-
 -include rules/okhttp.pro
 -include rules/retrofit.pro
 -include rules/logansquare.pro
@@ -8,4 +7,3 @@
 -include rules/kaspersky.pro
 -include rules/appsflyer.pro
 -include rules/moshi.pro
--include rules/androidx_security.pro

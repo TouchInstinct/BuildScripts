@@ -2,11 +2,11 @@ import groovy.json.JsonSlurper
 import groovy.xml.MarkupBuilder
 
 task stringGenerator {
-    generate(android.languageMap)
+    generate(android.languageMap, project)
     println("Strings generated!")
 }
 
-private def generate(Map<String, String> sources) {
+private def generate(Map<String, String> sources, Project project) {
     if (sources == null || sources.isEmpty()) {
         throw new IOException("languageMap can't be null or empty")
     }
@@ -31,7 +31,7 @@ private def generate(Map<String, String> sources) {
             }
         }
 
-        def stringsFile = getFile(key, key == defaultLang)
+        def stringsFile = getFile(key, key == defaultLang, project)
         stringsFile.write(sw.toString(), "UTF-8")
     }
 }
@@ -69,15 +69,15 @@ private static Map<String, Object> getJsonsMap(Map sources) {
     }
 }
 
-private static File getFile(String key, boolean defaultLang) {
+private static File getFile(String key, boolean defaultLang, Project project) {
     if (defaultLang) {
-        return new File("app/src/main/res/values/strings.xml")
+        return project.file("src/main/res/values/strings.xml")
     } else {
-        def directory = new File("app/src/main/res/values-$key")
+        def directory = project.file("src/main/res/values-$key")
         if (!directory.exists()) {
             directory.mkdir()
         }
-        return new File("app/src/main/res/values-$key/strings.xml")
+        return project.file("src/main/res/values-$key/strings.xml")
     }
 }
 
