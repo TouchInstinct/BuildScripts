@@ -262,7 +262,7 @@ custom_rules:
   disposable_nil:
     name: "Disposable nil"
     regex: ' *\S*(d|D)isposable\?? *= *nil'
-    message: "Use `dispose()` instead of nil."
+    message: "nil assigning doesn't dispose subscription. Call `dispose()` instead."
     severity: error
 
   # LeadKit
