@@ -109,6 +109,10 @@ identifier_name:
     - y
     - z
 
+indentation_width: 
+  indentation_width: 4
+  severity: error
+
 warning_threshold: 1
 
 custom_rules:
