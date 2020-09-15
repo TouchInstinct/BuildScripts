@@ -259,6 +259,12 @@ custom_rules:
     message: "Replace Rx.map operator with replace(with:) or asVoid(). For Sequence.map consider using forEach."
     severity: warning
 
+  disposable_nil:
+    name: "Disposable nil"
+    regex: ' *\S*(d|D)isposable\?? *= *nil'
+    message: "nil assigning doesn't dispose subscription. Call `dispose()` instead."
+    severity: error
+
   # LeadKit
 
   multiple_add_subview:
