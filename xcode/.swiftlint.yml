@@ -251,12 +251,6 @@ custom_rules:
     message: "The parameter name is actually used in the function name. Use _ instead."
     severity: error
 
-  disposable_nil:
-    name: "Disposable nil"
-    regex: ' *\S*(d|D)isposable\?? *= *nil'
-    message: "Use `dispose()` instead of nil."
-    severity: error
-
   # Rx
 
   unused_map_parameter:
@@ -264,6 +258,12 @@ custom_rules:
     regex: '.map\s*\{\s*_\s*in'
     message: "Replace Rx.map operator with replace(with:) or asVoid(). For Sequence.map consider using forEach."
     severity: warning
+
+  disposable_nil:
+    name: "Disposable nil"
+    regex: ' *\S*(d|D)isposable\?? *= *nil'
+    message: "Use `dispose()` instead of nil."
+    severity: error
 
   # LeadKit
 
