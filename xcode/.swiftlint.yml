@@ -253,7 +253,7 @@ custom_rules:
 
   disposable_nil:
     name: "Disposable nil"
-    regex: ' *\S*(d|D)isposable *= *nil'
+    regex: ' *\S*(d|D)isposable\?? *= *nil'
     message: "Use `dispose()` instead of nil."
     severity: error
 
