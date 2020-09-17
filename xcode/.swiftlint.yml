@@ -113,6 +113,26 @@ identifier_name:
 indentation_width: 
   indentation_width: 4
   severity: error
+  match_kinds:
+      - argument
+      - attribute.builtin
+      - attribute.id
+      - buildconfig.id
+      - buildconfig.keyword
+      - identifier
+      - keyword
+      - number
+      - objectliteral
+      # - parameter
+      - placeholder
+      # - string # all except string literals
+      # - comment # and comments
+      # - comment.mark
+      # - comment.url
+      # - doccomment
+      # - doccomment.field
+      - string_interpolation_anchor
+      - typeidentifier
 
 warning_threshold: 1
 
