@@ -64,6 +64,7 @@ opt_in_rules:
   - identical_operands
   - overridden_super_call
   - unowned_variable_capture
+  - indentation_width
 
   # metrics
 
@@ -74,10 +75,6 @@ excluded:
   - Pods
   - Generated
   - Localization
-  
-analyzer_rules:
-  - unused_import
-  - unused_declaration
 
 line_length:
   warning: 128
