@@ -251,6 +251,12 @@ custom_rules:
     message: "The parameter name is actually used in the function name. Use _ instead."
     severity: error
 
+  parameter_closure:
+    name: "Parameter closure"
+    regex: '\w*<\S*, Void\S*>'
+    message: "Use `ParameterClosure` instead of declaring an explicit return value of `Void`."
+    severity: error
+
   # Rx
 
   unused_map_parameter:
