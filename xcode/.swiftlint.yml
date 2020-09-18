@@ -251,6 +251,12 @@ custom_rules:
     message: "The parameter name is actually used in the function name. Use _ instead."
     severity: error
 
+  strong_self:
+    name: "Strong self"
+    regex: 'guard[\s\S]*= *self[\s\S]*else'
+    message: "Use a local function with `weak self` instead of `strong self`."
+    severity: error
+
   # Rx
 
   unused_map_parameter:
