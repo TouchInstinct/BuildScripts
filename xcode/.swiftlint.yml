@@ -253,7 +253,7 @@ custom_rules:
 
   parameter_closure:
     name: "Parameter closure"
-    regex: '\w*<\S*, Void\S*>'
+    regex: '\w*Closure<[^\r\n\t\f\v]*, Void[^\r\n\t\f\v]*>'
     message: "Use `ParameterClosure` instead of declaring an explicit return value of `Void`."
     severity: error
 
