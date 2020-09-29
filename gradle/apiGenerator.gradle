@@ -12,7 +12,7 @@ configurations {
 }
 
 dependencies {
-    apigenerator 'ru.touchin:api-generator:1.4.0-beta5'
+    apigenerator 'ru.touchin:api-generator:1.4.0-beta9'
 }
 
 android.libraryVariants.all { variant ->
@@ -27,6 +27,8 @@ android.libraryVariants.all { variant ->
                     "generate-client-code",
                     "--output-language",
                     "KOTLIN",
+                    "--android-calendar-library",
+                    "JAVA_TIME",
                     "--specification-path",
                     rootProject.extensions.findByName("pathToApiSchemes"),
                     "--kotlin-methods-generation-mode",
