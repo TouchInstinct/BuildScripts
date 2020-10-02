@@ -5,4 +5,4 @@ readonly FILES_TO_EXCLUDE=`find ${SOURCES_DIR} -type d -name Localization -or -n
 
 mkdir ${REPORTS_DIR}
 
-${UNUSED_RESOURCES_SCRIPT} --exclude ${FILES_TO_EXCLUDE} > ${REPORTS_DIR}/Unused_resources_log.txt
+${UNUSED_RESOURCES_SCRIPT} --project ${SOURCES_DIR} --exclude ${FILES_TO_EXCLUDE} > ${REPORTS_DIR}/Unused_resources_log.txt
