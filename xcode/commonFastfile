@@ -91,7 +91,7 @@ private_lane :addShield do |options|
     .split(/(?=[A-Z])/) # -> ["Enterprise", "Customer", "Dev1", "Without", "S", "S", "L", "Pinning", "Release"]
     .map { |v| v.gsub(/[[:lower:]]+/, "") }[1..2] # -> ["E", "C", "D1", "W", "S", "S", "L", "P", "R"] -> ["C", "D1"]
     .join # -> "CD1"
-  
+
   begin
     add_badge(
       shield: "#{buildDescription}-#{buildNumber}-green",
@@ -168,7 +168,9 @@ private_lane :buildArchive do |options|
   configuration = options[:configuration]
   xcodeproj_path = options[:xcodeproj_path]
 
-  set_xcconfig_for_configuration_of_project(xcconfig_name, configuration, xcodeproj_path)
+  if configuration != "AppStore" # AppStore uses xcconfig choosen in Xcode
+    set_xcconfig_for_configuration_of_project(xcconfig_name, configuration, xcodeproj_path)
+  end
 
   gym(
     clean: true,
@@ -186,7 +188,10 @@ private_lane :buildArchive do |options|
   )
 end
 
-lane :createPushCertificate do |options|
+lane :CreatePushCertificate do |options|
+  configuration = get_configuration_for_type(options[:type] || "development")
+  options = configuration.to_options.merge(options)
+
   certificates_path = File.expand_path "../Certificates"
   Dir.mkdir(certificates_path) unless File.directory?(certificates_path)
 

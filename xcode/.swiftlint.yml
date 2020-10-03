@@ -241,7 +241,7 @@ custom_rules:
 
   redundant_type_annotation_bool:
     name: "Redundant type annotation for Bool"
-    regex: '((var|let)) *\w+ *((: *Bool *=)|((\w| |<|>|:)*= *BehaviorRelay<Bool>\( *value *:)) *((true)|(false))'
+    regex: '\s((var|let))\s{1,}\w+ *((: *Bool *=)|((\w| |<|>|:)*= *BehaviorRelay<Bool>\( *value *:)) *((true)|(false))'
     message: "Using a type annotation for Bool is redundant."
     severity: error
 
@@ -251,6 +251,12 @@ custom_rules:
     message: "The parameter name is actually used in the function name. Use _ instead."
     severity: error
 
+  parameter_closure:
+    name: "Parameter closure"
+    regex: '\w*Closure<[^\r\n\t\f\v]*, Void[^\r\n\t\f\v]*>'
+    message: "Use `ParameterClosure` instead of declaring an explicit return value of `Void`."
+    severity: error
+
   # Rx
 
   unused_map_parameter:
@@ -258,6 +264,12 @@ custom_rules:
     regex: '.map\s*\{\s*_\s*in'
     message: "Replace Rx.map operator with replace(with:) or asVoid(). For Sequence.map consider using forEach."
     severity: warning
+
+  disposable_nil:
+    name: "Disposable nil"
+    regex: ' *\S*(d|D)isposable\?? *= *nil'
+    message: "nil assigning doesn't dispose subscription. Call `dispose()` instead."
+    severity: error
 
   # LeadKit
 
