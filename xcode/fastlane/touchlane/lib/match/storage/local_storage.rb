@@ -59,7 +59,7 @@ module Touchlane
 
     def delete_files(files_to_delete: [], custom_message: nil)
       files_to_delete.each do |file_name|
-        target_path = current_file.gsub(self.working_directory + "/", "")
+        target_path = file_name.gsub(self.working_directory + "/", "")
         File.delete(File.join(self.signing_identities_path, target_path))
       end
     end
