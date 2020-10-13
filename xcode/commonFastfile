@@ -2,6 +2,14 @@ $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
 require_relative 'fastlane/touchlane/lib/touchlane'
 
+# ugly hack to add support for custom storage
+
+Match.module_eval do
+  def self.storage_modes
+    return %w(git google_cloud s3 local)
+  end
+end
+
 private_lane :installDependencies do |options|
   podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
   lockFilePath = "#{podsReposPath}/.git/index.lock"
@@ -339,21 +347,23 @@ lane :ManuallyUpdateCodeSigning do |options|
 end
 
 def sync_code_signing_using_options(options)
+  Match::Storage.register_backend(type: 'local', storage_class: Touchlane::LocalStorage)
+  Match::Encryption.register_backend(type: 'local', encryption_class: Match::Encryption::OpenSSL)
+
+  signing_identities_path = File.expand_path "../EncryptedSigningIdentities"
+
   match(
     app_identifier: options[:app_identifier],
     username: options[:username] || options[:apple_id],
     team_id: options[:team_id],
     type: options[:type],
     readonly: options[:readonly].nil? ? true : options[:readonly],
-    storage_mode: "git",
-    git_url: options[:git_url],
-    git_branch: "fastlane_certificates",
-    shallow_clone: true,
-    clone_branch_directly: true,
-    keychain_name: options[:keychain_name],
-    keychain_password: options[:keychain_password],
+    storage_mode: "local",
+    # we can't pass signing_identities_path as parameter name since params is hardcoded in match/runner.rb
+    git_url: signing_identities_path,
     skip_docs: true,
-    platform: "ios"
+    keychain_name: options[:keychain_name],
+    keychain_password: options[:keychain_password]
   )
 end
 
