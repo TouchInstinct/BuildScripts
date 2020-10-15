@@ -2,6 +2,14 @@ $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
 require_relative 'fastlane/touchlane/lib/touchlane'
 
+# ugly hack to add support for custom storage
+
+Match.module_eval do
+  def self.storage_modes
+    return %w(git google_cloud s3 local)
+  end
+end
+
 private_lane :installDependencies do |options|
   podsReposPath = File.expand_path "~/.cocoapods/repos/master/"
   lockFilePath = "#{podsReposPath}/.git/index.lock"
@@ -271,25 +279,18 @@ private_lane :openKeychain do |options|
 end
 
 lane :ManuallyUpdateCodeSigning do |options|
-  # based on this article https://medium.com/@jonathancardoso/using-fastlane-match-with-existing-certificates-without-revoking-them-a325be69dac6
-  require 'fastlane_core'
+  register_local_storage_for_match()
+
   require 'match'
 
-  conf = FastlaneCore::Configuration.create(Match::Options.available_options, {})
-  conf.load_configuration_file("Matchfile")
-
-  git_url = conf.config_file_options[:git_url]
-  shallow_clone = false
-  branch = 'fastlane_certificates'
-
-  storage_conf = lambda do
-    new_storage = Match::Storage.for_mode('git', { git_url: git_url, shallow_clone: shallow_clone, git_branch: branch, clone_branch_directly: false})
+  storage_factory = lambda do
+    new_storage = Match::Storage.for_mode('local', { git_url: get_signing_identities_path() })
     new_storage.download
     return new_storage
   end
 
-  encryption_conf_for_storage = lambda do |stor|
-    new_encryption = Match::Encryption.for_storage_mode('git', { git_url: git_url, working_directory: stor.working_directory})
+  encryption_factory = lambda do |stor|
+    new_encryption = Match::Encryption.for_storage_mode('local', { working_directory: stor.working_directory })
     new_encryption.decrypt_files
     return new_encryption
   end
@@ -298,8 +299,8 @@ lane :ManuallyUpdateCodeSigning do |options|
     Dir[File.join(stor.working_directory, "**", "*.{cer,p12,mobileprovision}")]
   end
 
-  storage = storage_conf.call
-  encryption = encryption_conf_for_storage.call(storage)
+  storage = storage_factory.call
+  encryption = encryption_factory.call(storage)
   old_files = get_all_files.call(storage)
 
   sh("open #{storage.working_directory}")
@@ -322,8 +323,8 @@ lane :ManuallyUpdateCodeSigning do |options|
   # to avoid this we use storage twice if needed
 
   if files_diff.length > 0
-    storage = storage_conf.call
-    encryption = encryption_conf_for_storage.call(storage)
+    storage = storage_factory.call
+    encryption = encryption_factory.call(storage)
 
     files_to_delete = files_diff.map do |file|
       old_file = file
@@ -340,22 +341,30 @@ lane :ManuallyUpdateCodeSigning do |options|
 end
 
 def sync_code_signing_using_options(options)
+  register_local_storage_for_match()
+
   match(
     app_identifier: options[:app_identifier],
     username: options[:username] || options[:apple_id],
     team_id: options[:team_id],
     type: options[:type],
     readonly: options[:readonly].nil? ? true : options[:readonly],
-    storage_mode: "git",
-    git_url: options[:git_url],
-    git_branch: "fastlane_certificates",
-    shallow_clone: true,
-    clone_branch_directly: true,
-    keychain_name: options[:keychain_name],
-    keychain_password: options[:keychain_password],
+    storage_mode: "local",
+    # we can't pass signing_identities_path as parameter name since params is hardcoded in match/runner.rb
+    git_url: get_signing_identities_path(),
     skip_docs: true,
-    platform: "ios"
+    keychain_name: options[:keychain_name],
+    keychain_password: options[:keychain_password]
   )
+end
+
+def register_local_storage_for_match
+  Match::Storage.register_backend(type: 'local', storage_class: Touchlane::LocalStorage)
+  Match::Encryption.register_backend(type: 'local', encryption_class: Match::Encryption::OpenSSL)
+end
+
+def get_signing_identities_path
+  File.expand_path "../EncryptedSigningIdentities"
 end
 
 def fill_up_options_using_configuration_type(options, configuration_type)
