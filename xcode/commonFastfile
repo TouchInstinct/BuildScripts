@@ -58,10 +58,9 @@ private_lane :uploadToFirebase do |options|
 
   sh("yarn install")
 
-  app_target_folder_name = options[:appName] || $appName
   configuration_type = Touchlane::ConfigurationType.from_type(options[:type])
 
-  gsp_plist_path = get_google_services_plist_path(app_target_folder_name, configuration_type)
+  gsp_plist_path = "/Users/vladsuhomlinov/Ubrd-ios/Ubrd/Resources/Enterprise-GoogleService-Info.plist"
 
   google_app_id = get_info_plist_value(path: gsp_plist_path, key: "GOOGLE_APP_ID")
 
@@ -74,7 +73,7 @@ private_lane :uploadToFirebase do |options|
   )
 
   upload_symbols_to_crashlytics(
-    gsp_path: get_google_services_plist_path(app_target_folder_name, configuration_type)
+    gsp_path: "/Users/vladsuhomlinov/Ubrd-ios/Ubrd/Resources/Enterprise-GoogleService-Info.plist"
   )
 end
 
