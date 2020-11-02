@@ -245,7 +245,7 @@ lane :SyncSymbols do |options|
   app_target_folder_name = appName
 
   upload_symbols_to_crashlytics(
-    gsp_path: get_google_services_plist_path(app_target_folder_name, configuration.type)
+    gsp_path: (options[:symbolsPath] || get_google_services_plist_path(app_target_folder_name, configuration.type))
   )
 
   clean_build_artifacts
