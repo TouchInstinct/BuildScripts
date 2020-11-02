@@ -227,7 +227,7 @@ lane :SyncSymbols do |options|
 
   appName = options[:appName] || $appName
 
-  xcodeproj_path = File.expand_path "../#{appName}.xcodeproj"
+  xcodeproj_path = options[:projPath] || File.expand_path "../#{appName}.xcodeproj"
 
   version_number = options[:version] || get_version_number(xcodeproj: xcodeproj_path, target: appName)
   build_number = options[:build_number] || get_build_number(xcodeproj: xcodeproj_path)
@@ -243,9 +243,10 @@ lane :SyncSymbols do |options|
   end
 
   app_target_folder_name = appName
+  gsp_path_string = options[:symbolsPath]
 
   upload_symbols_to_crashlytics(
-    gsp_path: (options[:symbolsPath] || get_google_services_plist_path(app_target_folder_name, configuration.type))
+    gsp_path: gsp_path_string
   )
 
   clean_build_artifacts
