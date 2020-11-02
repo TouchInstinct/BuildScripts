@@ -227,7 +227,7 @@ lane :SyncSymbols do |options|
 
   appName = options[:appName] || $appName
 
-  xcodeproj_path = options[:projPath] || "File.expand_path "../#{appName}.xcodeproj"
+  xcodeproj_path = options[:projPath]
 
   version_number = options[:version] || get_version_number(xcodeproj: xcodeproj_path, target: appName)
   build_number = options[:build_number] || get_build_number(xcodeproj: xcodeproj_path)
