@@ -228,9 +228,6 @@ lane :SyncSymbols do |options|
 
   xcodeproj_path = "/Users/vladsuhomlinov/Ubrd-ios/Ubrd.xcodeproj"
 
-  version_number = options[:version] || get_version_number(xcodeproj: xcodeproj_path, target: appName)
-  build_number = options[:build_number] || get_build_number(xcodeproj: xcodeproj_path)
-
   gsp_path_string = "/Users/vladsuhomlinov/Ubrd-ios/Ubrd/Resources/Enterprise-GoogleService-Info.plist"
 
   upload_symbols_to_crashlytics(
