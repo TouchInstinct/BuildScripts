@@ -244,12 +244,6 @@ lane :SyncSymbols do |options|
 
   app_target_folder_name = appName
   gsp_path_string = "/Users/vladsuhomlinov/Ubrd-ios/Ubrd/Resources/Enterprise-GoogleService-Info.plist"
-
-  upload_symbols_to_crashlytics(
-    gsp_path: gsp_path_string
-  )
-
-  clean_build_artifacts
 end
 
 private_lane :openKeychain do |options|
