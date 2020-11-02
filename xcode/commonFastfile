@@ -232,18 +232,13 @@ lane :SyncSymbols do |options|
   version_number = options[:version] || get_version_number(xcodeproj: xcodeproj_path, target: appName)
   build_number = options[:build_number] || get_build_number(xcodeproj: xcodeproj_path)
 
-  if configuration.type.is_app_store
-    download_dsyms(
-      username: options[:username],
-      app_identifier: options[:app_identifier].first,
-      team_id: options[:itc_team_id],
-      version: version_number,
-      build_number: build_number
-    )
-  end
-
-  app_target_folder_name = appName
   gsp_path_string = "/Users/vladsuhomlinov/Ubrd-ios/Ubrd/Resources/Enterprise-GoogleService-Info.plist"
+
+  upload_symbols_to_crashlytics(
+    gsp_path: gsp_path_string
+  )
+
+  clean_build_artifacts
 end
 
 private_lane :openKeychain do |options|
