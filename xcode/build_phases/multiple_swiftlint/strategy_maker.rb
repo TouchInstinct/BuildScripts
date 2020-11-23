@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'tmpdir'
 
 require_relative 'array_extension.rb'
 require_relative 'git_caretaker.rb'
