@@ -32,6 +32,7 @@ opt_in_rules:
   - fatal_error_message
   - extension_access_modifier
   - explicit_init
+  - prefer_zero_over_explicit_init
 
   # style
 
