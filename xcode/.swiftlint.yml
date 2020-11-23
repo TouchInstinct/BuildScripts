@@ -72,8 +72,7 @@ opt_in_rules:
 excluded:
   - Carthage
   - Pods
-  - Generated
-  - Localization
+  - "**/Generated"
 
 line_length:
   warning: 128
