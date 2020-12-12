@@ -16,7 +16,7 @@ module Touchlane
 
       # Generate JSON from feature names
       feature_bodies = builder_features_list.map { |feature_name| { :name => feature_name, :enabled => true} }
-      features = { :features => features_body }
+      features = { :features => feature_bodies }
       features_json = JSON.pretty_generate(features)
 
       unless File.exists? project_features_file_path
@@ -32,7 +32,7 @@ module Touchlane
       unless File.exists? path
         raise "Unable to load features from file at #{path}"
       else
-        YAML.load_file(path)["features"]
+        YAML.load_file(path)
       end
     end
 
