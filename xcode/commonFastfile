@@ -106,24 +106,15 @@ private_lane :addShield do |options|
   end
 end
 
-private_lane :uploadFeaturesToProject do |options|
-  require 'json'
-
-  features_string = options[:features] # "DebitCardFeature,Sprint5Feature,CreditCardFeature"
-  feature_names = features_string.split(",").map { |value| value.strip } # [ "DebitCardFeature", "Sprint5Feature", "CreditCardFeature" ]
-
-  # Generate JSON from feature names
-  feature_bodies = feature_names.map { |feature_name| { :name => feature_name, :enabled => true} }
-  features = { :features => features_body }
-  features_json = JSON.pretty_generate(features)
-
-  # Put features JSON to project file
+private_lane lane :uploadFeaturesToProject do |options|
   app_target_folder_name = options[:appName] || $appName
-  features_file_path = get_features_file_path(app_target_folder_name)
 
-  File.open(features_file_path, "w") do |f|
-    f.write(features_json)
-  end
+  project_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features.json"
+  common_features_file_path = File.expand_path "../common/build_options/Features.json"
+
+  builder_features_list = options[:features] # [ "Feature1", "Feature2", "Feature3" ]
+  
+  Touchlane::Features.generate_features_file_in_project(builder_features_list, common_features_file_path, project_features_file_path)
 end
 
 private_lane :buildConfiguration do |options|
@@ -419,10 +410,6 @@ end
 
 def get_google_services_plist_path(app_target_folder_name, configuration_type)
   File.expand_path "../#{app_target_folder_name}/Resources/#{configuration_type.prefix}-GoogleService-Info.plist"
-end
-
-def get_features_file_path(app_target_folder_name)
-  File.expand_path "../#{app_target_folder_name}/Resources/Features.json"
 end
 
 def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
