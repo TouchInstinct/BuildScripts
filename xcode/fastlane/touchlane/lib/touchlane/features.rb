@@ -20,7 +20,7 @@ module Touchlane
       features_json = JSON.pretty_generate(features)
 
       unless File.exists? project_features_file_path
-        raise "Unable to load features from file at #{path}"
+        raise "Unable to load features to file at #{path}"
       else
         File.open(project_features_file_path, "w") do |f| 
           f.write(features_json)
