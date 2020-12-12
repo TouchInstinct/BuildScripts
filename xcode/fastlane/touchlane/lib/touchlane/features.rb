@@ -28,7 +28,7 @@ module Touchlane
       end
     end
 
-     def self.get_features_from_file(path)
+    def self.get_features_from_file(path)
       unless File.exists? path
         raise "Unable to load features from file at #{path}"
       else
