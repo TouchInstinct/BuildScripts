@@ -24,6 +24,7 @@ module Touchlane
       else
         File.open(project_features_file_path, "w") do |f| 
           f.write(features_json)
+        end
       end
     end
 
