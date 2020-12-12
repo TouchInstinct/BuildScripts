@@ -110,7 +110,7 @@ private_lane lane :uploadFeaturesToProject do |options|
   app_target_folder_name = options[:appName] || $appName
 
   project_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features.json"
-  common_features_file_path = File.expand_path "../common/build_options/Features.json"
+  common_features_file_path = File.expand_path "../common/build_options/Features.yaml"
 
   builder_features_list = options[:features] # [ "Feature1", "Feature2", "Feature3" ]
   
