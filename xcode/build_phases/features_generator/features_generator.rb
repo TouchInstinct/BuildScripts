@@ -1,6 +1,8 @@
 require 'yaml'
 require 'erb'
 
+require_relative 'managers/managers'
+
 # Input files paths
 build_settings_file_path = ARGV[0]
 generated_features_enum_file_path = ARGV[1]
@@ -9,9 +11,9 @@ features_enum_template =
 "
 //MARK: - Feature toggles
 
-public enum FeatureToggles: String, Codable, RawRepresentable, CaseIterable {
-    <% for @item in @items %>
-    case <%= @item %>
+public enum FeatureToggle: String, Codable, RawRepresentable, CaseIterable {
+    <% for @feature in @features %>
+    case <%= @feature %>
     <% end %>
 }
 "
@@ -19,10 +21,10 @@ public enum FeatureToggles: String, Codable, RawRepresentable, CaseIterable {
 class FeatureUtils
   include ERB::Util
 
-  attr_accessor :items
+  attr_accessor :features
 
-  def initialize(items)
-    @items = items
+  def initialize(features)
+    @features = features
   end
 
   def render(template)
@@ -30,26 +32,9 @@ class FeatureUtils
   end
 end
 
-def save(path, data)
-  unless File.exists? path
-    raise "Unable to safe features to file at #{path}"
-  else
-    File.open(path, "w") do |f|
-      f.write(data)
-    end
-  end
-end
+build_settings_features_list = Managers::FileManager.load_from_file_YAML(build_settings_file_path)["features"]
 
-def get_features_from_file(path)
-  unless File.exists? path
-    raise "Unable to load features from file at #{path}"
-  else
-    YAML.load_file(path)
-  end
-end
-
-build_settings_features_list = get_features_from_file(build_settings_file_path)["features"]
 utils = FeatureUtils.new(build_settings_features_list)
+rendered_enum = utils.render(features_enum_template).strip
 
-data = utils.render(features_enum_template).strip
-save(generated_features_enum_file_path, data)
+Managers::FileManager.save_data_to_file(generated_features_enum_file_path, rendered_enum)

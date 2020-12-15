@@ -106,17 +106,17 @@ private_lane :addShield do |options|
   end
 end
 
-private_lane :uploadFeaturesToProject do |options|
+private_lane :generateFeaturesJSONFile do |options|
   app_target_folder_name = options[:appName] || $appName
 
   project_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features.json"
-  common_features_file_path = File.expand_path "../common/build_options/Features.yaml"
+  build_settings_file_path = File.expand_path "../common/build_settings.yaml"
 
   builder_features_list = options[:features]
   	.split(",").map { |feature_name| feature_name.strip } # [ "Feature1", "Feature2", "Feature3" ]
   	.reject { |feature_name| feature_name.empty? }
 
-  Touchlane::Features.generate_features_file_in_project(builder_features_list, common_features_file_path, project_features_file_path)
+  Touchlane::Features.generate_features_file_in_project(builder_features_list, build_settings_file_path, project_features_file_path)
 end
 
 private_lane :buildConfiguration do |options|
@@ -149,7 +149,7 @@ private_lane :buildConfiguration do |options|
 
   installDependencies(options)
 
-  if options[:features]
+  unless options[:features].nil?
     uploadFeaturesToProject(options)
   end
 
