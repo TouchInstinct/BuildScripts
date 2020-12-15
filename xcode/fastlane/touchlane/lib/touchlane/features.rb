@@ -1,6 +1,6 @@
 require 'json'
 
-require_relative 'managers/managers'
+require_relative File.expand_path "../build-scripts/xcode/managers/managers"
 
 module Touchlane
   class Features

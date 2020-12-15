@@ -106,10 +106,10 @@ private_lane :addShield do |options|
   end
 end
 
-private_lane :generateFeaturesJSONFile do |options|
+private_lane :generateFeaturesFile do |options|
   app_target_folder_name = options[:appName] || $appName
 
-  project_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features.json"
+  project_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features/Features.json"
   build_settings_file_path = File.expand_path "../common/build_settings.yaml"
 
   builder_features_list = options[:features]
@@ -150,7 +150,7 @@ private_lane :buildConfiguration do |options|
   installDependencies(options)
 
   unless options[:features].nil?
-    uploadFeaturesToProject(options)
+    generateFeaturesFile(options)
   end
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])

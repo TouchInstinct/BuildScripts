@@ -1,7 +1,5 @@
 require "yaml"
 
-require_relative 'managers/managers'
-
 module Touchlane
   class Configuration
     def initialize(type, app_identifier, apple_id, team_id, itc_team_id)
