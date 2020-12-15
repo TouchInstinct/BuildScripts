@@ -38,6 +38,7 @@ if build_settings_features_list.nil? or build_settings_features_list.empty?
 	raise "There are no features in " + build_settings_file_path
 end
 
+# Generate enum Feature Toggles
 utils = FeatureUtils.new(build_settings_features_list)
 rendered_enum = utils.render(features_enum_template).strip
 
