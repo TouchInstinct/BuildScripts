@@ -1,4 +1,5 @@
 require 'yaml'
+require 'json'
 
 module Managers
   class FileManager
@@ -19,6 +20,11 @@ module Managers
       else
         YAML.load_file(path)
       end
+    end
+    
+    def self.save_data_to_file_in_json(path, data)
+        json_data = JSON.pretty_generate(data)
+        save_data_to_file(path, json_data)
     end
 
     private_class_method :new
