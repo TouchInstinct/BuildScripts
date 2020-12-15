@@ -1,6 +1,6 @@
 # Input paths
 readonly BUILD_SETTINGS_FILE_PATH=${1:-${PROJECT_DIR}/common/build_settings.yaml}
-readonly FEATURES_ENUM_FILE_PATH=${2:-${PROJECT_DIR}/${PRODUCT_NAME}/Resources/Features/FeatureToggles.swift}
+readonly FEATURES_ENUM_FILE_PATH=${2:-${PROJECT_DIR}/${PRODUCT_NAME}/Resources/Features/FeatureToggle.swift}
 
 # Features enunm generator script
 readonly GENERATOR_SCRIPT=${PROJECT_DIR}/build-scripts/xcode/build_phases/features_generator/features_generator.rb
