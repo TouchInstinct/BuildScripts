@@ -1,7 +1,7 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
 require_relative 'fastlane/touchlane/lib/touchlane'
-require_relative File.expand_path "../build-scripts/xcode/managers/managers"
+require_relative 'managers/managers'
 
 # ugly hack to add support for custom storage
 
