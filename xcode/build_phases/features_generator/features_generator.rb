@@ -1,7 +1,7 @@
 require 'yaml'
 require 'erb'
 
-require_relative "../../managers/managers"
+require_relative '../../managers/managers'
 
 # Input files paths
 build_settings_file_path = ARGV[0]
