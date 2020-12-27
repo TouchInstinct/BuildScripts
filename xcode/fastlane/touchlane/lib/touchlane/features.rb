@@ -1,6 +1,3 @@
-require 'yaml'
-require 'erb'
-
 require_relative '../../managers/managers'
 require_relative '../../templates/templates'
 
