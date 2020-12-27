@@ -138,7 +138,7 @@ private_lane :buildConfiguration do |options|
   installDependencies(options)
 
   unless options[:features].nil?
-    generateFeaturesFile(options)
+    generate_enabled_features_extension(options)
   end
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
@@ -402,10 +402,10 @@ def get_google_services_plist_path(app_target_folder_name, configuration_type)
   File.expand_path "../#{app_target_folder_name}/Resources/#{configuration_type.prefix}-GoogleService-Info.plist"
 end
 
-def generateFeaturesFile(options)
+def generate_enabled_features_extension(options)
   app_target_folder_name = options[:appName] || $appName
 
-  project_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features/Features.json"
+  project_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features/Enabled.swift"
   build_settings_file_path = File.expand_path "../common/build_settings.yaml"
 
   builder_features_list = options[:features]
@@ -413,7 +413,7 @@ def generateFeaturesFile(options)
 
   build_settings_features_list = Managers::FileManager.load_from_file_YAML(build_settings_file_path)["features"]
 
-  features_hash = Touchlane::Features.generate_features_hash(builder_features_list, build_settings_features_list)
+  enabled_features_hash = Touchlane::Features.generate_enabled_features_hash(builder_features_list, build_settings_features_list)
   
   Managers::FileManager.save_data_to_file_in_json(project_features_file_path, features_hash)
 end
