@@ -1,5 +1,5 @@
-require_relative '../../managers/managers'
-require_relative '../../templates/templates'
+require_relative '../../../../managers/managers'
+require_relative '../../../../templates/templates'
 
 module Touchlane
   class Features
