@@ -73,6 +73,7 @@ opt_in_rules:
 excluded:
   - Carthage
   - Pods
+  - Generated
   - "**/Generated"
 
 line_length:
