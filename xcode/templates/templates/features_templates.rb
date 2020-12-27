@@ -22,7 +22,7 @@ public extension Feature {
     static var enabled: [Feature] {
         [
           <% for @item in @items %>
-          .<%= @item %>,
+         \.<%= @item %>,
           <% end %>
         ]
     }

@@ -137,9 +137,7 @@ private_lane :buildConfiguration do |options|
 
   installDependencies(options)
 
-  unless options[:features].nil?
-    generate_enabled_features_extension(options)
-  end
+  generate_enabled_features_extension_if_needed(options)
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
     options[:skip_package_ipa] = true
@@ -402,20 +400,32 @@ def get_google_services_plist_path(app_target_folder_name, configuration_type)
   File.expand_path "../#{app_target_folder_name}/Resources/#{configuration_type.prefix}-GoogleService-Info.plist"
 end
 
-def generate_enabled_features_extension(options)
+def generate_enabled_features_extension_if_needed(options)
   app_target_folder_name = options[:appName] || $appName
 
-  project_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features/Enabled.swift"
+  project_enabled_features_file_path = File.expand_path "../#{app_target_folder_name}/Resources/Features/Enabled.swift"
   build_settings_file_path = File.expand_path "../common/build_settings.yaml"
 
-  builder_features_list = options[:features]
-  	.split(",").map { |feature_name| feature_name.strip } # [ "Feature1", "Feature2", "Feature3" ]
+  unless is_feature_extension_needed?(options, project_enabled_features_file_path)
+    return
+  end
+
+  if options[:features].nil?
+    builder_features_list = [] # If Enabled.swift exists and features option is nil we need to create empty extension to avoid unexpected features 
+  else
+    builder_features_list = (options[:features] || [])
+      .split(",").map { |feature_name| feature_name.strip } # [ "Feature1", "Feature2", "Feature3" ]
+  end  
 
   build_settings_features_list = Managers::FileManager.load_from_file_YAML(build_settings_file_path)["features"]
 
-  enabled_features_hash = Touchlane::Features.generate_enabled_features_hash(builder_features_list, build_settings_features_list)
+  enabled_features_extension = Touchlane::Features.generate_enabled_features_extension(builder_features_list, build_settings_features_list)
   
-  Managers::FileManager.save_data_to_file_in_json(project_features_file_path, features_hash)
+  Managers::FileManager.save_data_to_file(project_enabled_features_file_path, enabled_features_extension)
+end
+
+def is_feature_extension_needed?(options, project_enabled_features_file_path)
+  !options[:features].nil? || File.exists?(project_enabled_features_file_path)
 end
 
 def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
