@@ -413,7 +413,7 @@ def generate_enabled_features_extension_if_needed(options)
   if options[:features].nil?
     builder_features_list = [] # If Enabled.swift exists and features option is nil we need to create empty extension to avoid unexpected features 
   else
-    builder_features_list = (options[:features] || [])
+    builder_features_list = options[:features]
       .split(",").map { |feature_name| feature_name.strip } # [ "Feature1", "Feature2", "Feature3" ]
   end  
 
