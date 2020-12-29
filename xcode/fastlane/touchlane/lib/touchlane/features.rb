@@ -13,7 +13,7 @@ module Touchlane
         raise "Unexpected features: " + features_diff.join(', ')
       end
 
-      # Generate FeatureToggle extension hash from feature names
+      # Generate enabled features extension from feature names
       enabled_features_extension_template = Templates::FeatureTemplates.enabled_features_extension
       utils = Managers::TemplateManager.new(builder_features_list)
 

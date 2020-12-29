@@ -3,7 +3,7 @@ module Templates
 
     def self.features_enum
 "
-//MARK: - Generated feature toggles
+// MARK: - Generated feature toggles
 
 public enum Feature: String, Codable, RawRepresentable, CaseIterable {
     <% for @item in @items %>
