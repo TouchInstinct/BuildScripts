@@ -1,6 +1,6 @@
 # Input paths
 readonly BUILD_SETTINGS_FILE_PATH=${1:-${PROJECT_DIR}/common/build_settings.yaml}
-readonly FEATURES_ENUM_FILE_PATH=${2:-${PROJECT_DIR}/${PRODUCT_NAME}/Resources/Features/FeatureToggle.swift}
+readonly FEATURES_ENUM_FILE_PATH=${2:-${PROJECT_DIR}/${PRODUCT_NAME}/Resources/Features/Feature.swift}
 
 # Features enunm generator script
 readonly CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
