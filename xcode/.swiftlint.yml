@@ -278,6 +278,12 @@ custom_rules:
     message: "Use `ParameterClosure` instead of declaring an explicit return value of `Void`."
     severity: error
 
+  strong_self:
+    name: "Strong self"
+    regex: '(if|guard)\s+let\s+self\s+=\s+self'
+    message: "Use a local function instead of capture strong self"
+    severity: error
+
   # Rx
 
   unused_map_parameter:
