@@ -75,27 +75,11 @@ def generate_provisioning_profile(provisioning_key, bundle_id, distribution_type
   end
 end
 
-def generate_google_service_info_plist_path(google_service_info_plist_key, target_name, distribution_type)
-    google_service_info_plist_path = target_name + "/Resources/"
-
-    path_suffix = case distribution_type
-                  when "development"
-                    "Standard-GoogleService-Info.plist"
-                  when "enterprise"
-                    "Enterprise-GoogleService-Info.plist"
-                  else
-                    "AppStore-GoogleService-Info.plist"
-                  end
-
-    return config_option(google_service_info_plist_key, google_service_info_plist_path + path_suffix)
-end
-
 # Generate missing properties if needed
 def generate_missing_properties(target_name, properties, distribution_type)
     result = []
     development_team_key = "DEVELOPMENT_TEAM"
     provisioning_key = "PROVISIONING_PROFILE_SPECIFIER"
-    google_service_info_plist_key = "GOOGLE_SERVICE_INFO_PLIST_PATH"
     bundle_id_key = "PRODUCT_BUNDLE_IDENTIFIER"
 
     # Bundle_id_key should be among the properties (required by fastlane)
@@ -109,10 +93,6 @@ def generate_missing_properties(target_name, properties, distribution_type)
 
     unless properties.key?(provisioning_key)
         result.append(generate_provisioning_profile(provisioning_key, properties[bundle_id_key], distribution_type))
-    end
-
-    unless properties.key?(google_service_info_plist_key)
-        result.append(generate_google_service_info_plist_path(google_service_info_plist_key, target_name, distribution_type))
     end
 
     return result
