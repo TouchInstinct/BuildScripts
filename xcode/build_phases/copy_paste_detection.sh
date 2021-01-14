@@ -13,7 +13,7 @@
 #
 # Modified files:
 #   ${PROJECT_DIR}/code-quality-reports/CPDLog.txt - check report.
-#   ${PROJECT_DIR}/code-quality-reports/CPDCommit.txt - last checked commit.
+#   ${PROJECT_DIR}/code-quality-reports/CPDCommit - last checked commit.
 #
 # Example of usage:
 #   copy_paste_detection.sh Generated Localization Pods
@@ -31,9 +31,9 @@ read_input_file_names()
     if [ "${SCRIPT_INPUT_FILE_COUNT}" -gt 0 ] ; then
         for i in `seq 0 $((${SCRIPT_INPUT_FILE_COUNT}-1))`
         do
-            SCRIPT_INPUT_FILE_VARIABLE_NAME="SCRIPT_INPUT_FILE_${i}"
-            COMMAND="echo \${${SCRIPT_INPUT_FILE_VARIABLE_NAME}}"
-            INPUT_FILE_NAME=`eval ${COMMAND}`
+            local SCRIPT_INPUT_FILE_VARIABLE_NAME="SCRIPT_INPUT_FILE_${i}"
+            local COMMAND="echo \${${SCRIPT_INPUT_FILE_VARIABLE_NAME}}"
+            local INPUT_FILE_NAME=`eval ${COMMAND}`
             INPUT_FILE_NAMES=${INPUT_FILE_NAMES}${INPUT_FILE_NAME}" "
         done
 
@@ -66,7 +66,7 @@ is_nothing_changed_since_last_check()
 if which pmd >/dev/null; then
     readonly REPORTS_DIR="${PROJECT_DIR}/code-quality-reports"
 
-    readonly CPD_COMMIT_FILE_PATH="${REPORTS_DIR}/CPDCommit.txt"
+    readonly CPD_COMMIT_FILE_PATH="${REPORTS_DIR}/CPDCommit"
 
     readonly CURRENT_GIT_COMMIT=`git rev-parse --verify HEAD`
 
