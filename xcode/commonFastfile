@@ -57,8 +57,6 @@ private_lane :uploadToFirebase do |options|
   releaseNotesFile = "release-notes.txt"
   sh("touch ../#{releaseNotesFile}")
 
-  sh("yarn install")
-
   app_target_folder_name = options[:appName] || $appName
   configuration_type = Touchlane::ConfigurationType.from_type(options[:type])
 
@@ -70,8 +68,7 @@ private_lane :uploadToFirebase do |options|
       app: google_app_id,
       ipa_path: options[:ipa_path],
       groups: "touch-instinct",
-      release_notes_file: releaseNotesFile,
-      firebase_cli_path: File.expand_path("../node_modules/firebase-tools/lib/bin/firebase.js")
+      release_notes_file: releaseNotesFile
   )
 
   upload_symbols_to_crashlytics(
@@ -411,16 +408,16 @@ def generate_enabled_features_extension_if_needed(options)
   end
 
   if options[:features].nil?
-    builder_features_list = [] # If Enabled.swift exists and features option is nil we need to create empty extension to avoid unexpected features 
+    builder_features_list = [] # If Enabled.swift exists and features option is nil we need to create empty extension to avoid unexpected features
   else
     builder_features_list = options[:features]
       .split(",").map { |feature_name| feature_name.strip } # [ "Feature1", "Feature2", "Feature3" ]
-  end  
+  end
 
   build_settings_features_list = Managers::FileManager.load_from_file_YAML(build_settings_file_path)["features"]
 
   enabled_features_extension = Touchlane::Features.generate_enabled_features_extension(builder_features_list, build_settings_features_list)
-  
+
   Managers::FileManager.save_data_to_file(project_enabled_features_file_path, enabled_features_extension)
 end
 
