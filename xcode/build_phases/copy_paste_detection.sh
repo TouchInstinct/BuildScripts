@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Description:
 #   Validates code for copy-paste, prints results to standard output and report file.
 #
@@ -10,51 +12,62 @@
 # Optional environment variables:
 #   SCRIPT_INPUT_FILE_COUNT - number of files listed in "Input files" of build phase.
 #   SCRIPT_INPUT_FILE_{N} - file path to directory that should be checked.
+#   REFACTORING_MODE - special bool flag for unconditional code checking.
 #
 # Modified files:
 #   ${PROJECT_DIR}/code-quality-reports/CPDLog.txt - check report.
 #   ${PROJECT_DIR}/code-quality-reports/CPDCommit - last checked commit.
 #
 # Example of usage:
-#   copy_paste_detection.sh Generated Localization Pods
+#   runner.sh copy_paste_detection.sh Generated Localization Pods
 #
 
-readonly EXIT_SUCCESS=0
-readonly EXIT_FAILURE=1
-
-read_input_file_names()
+is_refactoring_mode()
 {
-    local -r DEFAULT_VALUE=${1}
-
-    local INPUT_FILE_NAMES=""
-
-    if [ "${SCRIPT_INPUT_FILE_COUNT}" -gt 0 ] ; then
-        for i in `seq 0 $((${SCRIPT_INPUT_FILE_COUNT}-1))`
-        do
-            local SCRIPT_INPUT_FILE_VARIABLE_NAME="SCRIPT_INPUT_FILE_${i}"
-            local COMMAND="echo \${${SCRIPT_INPUT_FILE_VARIABLE_NAME}}"
-            local INPUT_FILE_NAME=`eval ${COMMAND}`
-            INPUT_FILE_NAMES=${INPUT_FILE_NAMES}${INPUT_FILE_NAME}" "
-        done
-
-        echo ${INPUT_FILE_NAMES}
-    else
-        echo ${DEFAULT_VALUE}
+    if [ -z "${REFACTORING_MODE}" ]; then
+        return ${FALSE}
     fi
+
+    local -r STR_MODE=`tr "[:upper:]" "[:lower:]" <<< ${REFACTORING_MODE}`
+
+    if [ ${STR_MODE} == "yes" ] || [ ${STR_MODE} == "true" ] || [ ${STR_MODE} == "1" ]; then
+        return ${TRUE}
+    fi
+
+    return ${FALSE}
 }
 
 is_nothing_changed_since_last_check()
 {
-    local -r COMMIT_FILE_PATH=${1}
-    local -r LAST_LINTED_COMMIT=`cat ${COMMIT_FILE_PATH}` || ""
+    if is_refactoring_mode; then
+        echo "Refactoring mode detected. Skipping commits comparison."
+        return ${EXIT_FAILURE}
+    fi
 
-    local -r CURRENT_COMMIT=${2}
-
-    if [[ "${CURRENT_GIT_COMMIT}" = "${LAST_LINTED_COMMIT}" ]]; then
-        if git diff --quiet --exit-code; then
-            echo "Commit your changes and build again."
+    if [ -z "${COMMIT_FILE_PATH}" ]; then
+        if [ ! -z "${1}" ]; then
+            local -r COMMIT_FILE_PATH=${1}
         else
-            echo "Nothing was changed since ${LAST_LINTED_COMMIT}. Skipping code checking."
+            echo "COMMIT_FILE_PATH should be defined or passed as first argument!"
+            return ${EXIT_FAILURE}
+        fi
+    fi
+
+    if [ -z "${CURRENT_COMMIT}" ]; then
+        if [ ! -z "${2}" ]; then
+            local -r CURRENT_COMMIT=${2}
+        else
+            local -r CURRENT_COMMIT=`git rev-parse --verify HEAD`
+        fi
+    fi
+
+    local -r LAST_CHECKED_COMMIT=`cat ${COMMIT_FILE_PATH}` || ""
+
+    if [ ${CURRENT_COMMIT} = ${LAST_CHECKED_COMMIT} ]; then
+        if git diff --quiet --exit-code; then
+            echo "Commit your changes and run script again."
+        else
+            echo "Nothing was changed since ${LAST_CHECKED_COMMIT}. Skipping."
         fi
 
         return ${EXIT_SUCCESS}
@@ -63,20 +76,45 @@ is_nothing_changed_since_last_check()
     fi
 }
 
-if which pmd >/dev/null; then
-    readonly REPORTS_DIR="${PROJECT_DIR}/code-quality-reports"
-
-    readonly CPD_COMMIT_FILE_PATH="${REPORTS_DIR}/CPDCommit"
-
-    readonly CURRENT_GIT_COMMIT=`git rev-parse --verify HEAD`
-
-    if is_nothing_changed_since_last_check ${CPD_COMMIT_FILE_PATH} ${CURRENT_GIT_COMMIT}; then
+record_current_commit()
+{
+    if is_refactoring_mode; then
+        echo "Refactoring mode detected. Commit won't be recorder."
         exit ${EXIT_SUCCESS}
     fi
 
-    readonly SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+    if [ -v "${CURRENT_COMMIT}" ]; then
+        if [ ! -v "${1}" ]; then
+            local -r CURRENT_COMMIT=${1}
+        else
+            local -r CURRENT_COMMIT=`git rev-parse --verify HEAD`
+        fi
+    fi
 
-    readonly SOURCES_DIRS=`read_input_file_names ${PROJECT_DIR}`
+    if [ -v "${COMMIT_FILE_PATH}" ]; then
+        if [ ! -v "${2}" ]; then
+            local -r COMMIT_FILE_PATH=${2}
+        else
+            echo "COMMIT_FILE_PATH should be defined or passed as second argument!"
+            return ${EXIT_FAILURE}
+        fi
+    fi
+
+    echo ${CURRENT_COMMIT} > ${COMMIT_FILE_PATH}
+}
+
+if which pmd >/dev/null; then
+    readonly REPORTS_DIR="${PROJECT_DIR}/code-quality-reports"
+
+    readonly COMMIT_FILE_PATH="${REPORTS_DIR}/CPDCommit"
+
+    readonly CURRENT_COMMIT=`git rev-parse --verify HEAD`
+
+    if is_nothing_changed_since_last_check; then
+        exit ${EXIT_SUCCESS}
+    fi
+
+    readonly SOURCES_DIRS=`. ${SCRIPT_DIR}/common/read_input_file_names.sh " " ${PROJECT_DIR}`
 
     readonly COMMAND_LINE_ARGUMENTS=$@
 
@@ -102,7 +140,7 @@ if which pmd >/dev/null; then
 
     sed -i '' "s/${SED_REPLACEMENT_STRING}//g" "${REPORTS_DIR}/CPDLog.txt"
 
-    echo ${CURRENT_GIT_COMMIT} > ${CPD_COMMIT_FILE_PATH}
+    record_current_commit
 else
     echo "warning: pmd not installed, install using 'brew install pmd'"
 
