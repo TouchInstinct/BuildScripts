@@ -8,6 +8,7 @@
 #
 # Required environment variables:
 #   PROJECT_DIR - project directory.
+#   SCRIPT_DIR - directory of current script.
 #
 # Optional environment variables:
 #   SCRIPT_INPUT_FILE_COUNT - number of files listed in "Input files" of build phase.
