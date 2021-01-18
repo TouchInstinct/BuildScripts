@@ -65,6 +65,7 @@ opt_in_rules:
   - identical_operands
   - overridden_super_call
   - unowned_variable_capture
+  - comment_spacing
 
   # metrics
 
@@ -187,26 +188,12 @@ custom_rules:
     regex: '(?!\n)[^ \n]+ {2,}.+'
     message: "Remove excess empty spaces"
     severity: warning
-    match_kinds:
-      - argument
-      - attribute.builtin
-      - attribute.id
-      - buildconfig.id
-      - buildconfig.keyword
-      - identifier
-      - keyword
-      - number
-      - objectliteral
-      - parameter
-      - placeholder
-      # - string # all except string literals
-      # - comment # and comments
-      # - comment.mark
-      # - comment.url
-      # - doccomment
-      # - doccomment.field
-      - string_interpolation_anchor
-      - typeidentifier
+    excluded_match_kinds:
+      - comment
+      - comment.mark
+      - comment.url
+      - doccomment
+      - doccomment.field
 
   getter_setter_style:
     name: "Wrong getter/setter code style"
@@ -221,26 +208,12 @@ custom_rules:
     regex: "(== true)|(== false)|(!= true)|(!= false)"
     message: "Comparing a boolean to true is redundant (use `?? false` for optionals), and `!`-syntax is preferred over comparing to false."
     severity: error
-    match_kinds:
-      - argument
-      - attribute.builtin
-      - attribute.id
-      - buildconfig.id
-      - buildconfig.keyword
-      - identifier
-      - keyword
-      - number
-      - objectliteral
-      - parameter
-      - placeholder
-      # - string # all except string literals
-      # - comment # and comments
-      # - comment.mark
-      # - comment.url
-      # - doccomment
-      # - doccomment.field
-      - string_interpolation_anchor
-      - typeidentifier
+    excluded_match_kinds:
+      - comment
+      - comment.mark
+      - comment.url
+      - doccomment
+      - doccomment.field
 
   redundant_ternary_operator:
     name: "Redundant Ternary Operator"
