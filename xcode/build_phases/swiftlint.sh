@@ -1,2 +1,44 @@
-SOURCES_DIR=${1:-${TARGET_NAME}} # first argument or TARGET_NAME
-${PODS_ROOT}/SwiftLint/swiftlint autocorrect --path ${SOURCES_DIR} --config ${PROJECT_DIR}/build-scripts/xcode/.swiftlint.yml && ${PODS_ROOT}/SwiftLint/swiftlint --path ${SOURCES_DIR} --config ${PROJECT_DIR}/build-scripts/xcode/.swiftlint.yml
+#!/bin/sh
+
+# Description:
+#   Runs swiftlint with selected or default config file.
+#
+# Parameters:
+#   $1 - path to swiftlint executable.
+#   $2 - path to swiftlint config.
+#
+# Required environment variables:
+#   SCRIPT_DIR - directory of current script.
+#   PODS_ROOT - cocoapods installation directory (eg. ${SRCROOT}/Pods).
+#
+# Optional environment variables:
+#   SWIFTLINT_EXECUTABLE - path to swiftlint executable.
+#   SWIFTLINT_CONFIG_PATH - path to swiftlint config.
+#
+# Example of usage:
+#   swiftlint.sh
+#   swiftlint.sh Pods/Swiftlint/swiftlint build-scripts/xcode/.swiftlint.yml
+#
+
+readonly SOURCES_DIRS=`. ${SCRIPT_DIR}/common/read_input_file_names.sh "\n" ${PROJECT_DIR}`
+
+if [ -z "${SWIFTLINT_EXECUTABLE}" ]; then
+    if [ ! -z "${1}" ]; then
+        readonly SWIFTLINT_EXECUTABLE=${1}
+    else
+        readonly SWIFTLINT_EXECUTABLE=${PODS_ROOT}/SwiftLint/swiftlint
+    fi
+fi
+
+if [ -z "${SWIFTLINT_CONFIG_PATH}" ]; then
+    if [ ! -z "${2}" ]; then
+        readonly SWIFTLINT_CONFIG_PATH=${2}
+    else
+        readonly SWIFTLINT_CONFIG_PATH=${SCRIPT_DIR}/../.swiftlint.yml
+    fi
+fi
+
+for SOURCE_DIR in ${SOURCES_DIRS}; do
+    ${SWIFTLINT_EXECUTABLE} autocorrect --path ${SOURCE_DIR} --config ${SWIFTLINT_CONFIG_PATH}
+    ${SWIFTLINT_EXECUTABLE} --path ${SOURCE_DIR} --config ${SWIFTLINT_CONFIG_PATH}
+done
