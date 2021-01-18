@@ -9,6 +9,7 @@
 #
 # Required environment variables:
 #   SCRIPT_DIR - directory of current script.
+#   SRCROOT - project directory.
 #   PODS_ROOT - cocoapods installation directory (eg. ${SRCROOT}/Pods).
 #
 # Optional environment variables:
@@ -20,7 +21,7 @@
 #   swiftlint.sh Pods/Swiftlint/swiftlint build-scripts/xcode/.swiftlint.yml
 #
 
-readonly SOURCES_DIRS=`. ${SCRIPT_DIR}/common/read_input_file_names.sh "\n" ${PROJECT_DIR}`
+readonly SOURCES_DIRS=`. ${SCRIPT_DIR}/common/read_input_file_names.sh "\n" ${SRCROOT}`
 
 if [ -z "${SWIFTLINT_EXECUTABLE}" ]; then
     if [ ! -z "${1}" ]; then
