@@ -15,6 +15,8 @@
 # Optional environment variables:
 #   SWIFTLINT_EXECUTABLE - path to swiftlint executable.
 #   SWIFTLINT_CONFIG_PATH - path to swiftlint config.
+#   SCRIPT_INPUT_FILE_COUNT - number of files listed in "Input files" of build phase.
+#   SCRIPT_INPUT_FILE_{N} - file path to directory that should be checked.
 #
 # Example of usage:
 #   swiftlint.sh
