@@ -24,9 +24,6 @@
 readonly EXIT_SUCCESS=0
 readonly EXIT_FAILURE=1
 
-readonly TRUE=0
-readonly FALSE=1
-
 if which pmd >/dev/null; then
     readonly REPORTS_DIR="${PROJECT_DIR}/code-quality-reports"
 
