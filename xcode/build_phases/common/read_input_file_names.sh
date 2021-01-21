@@ -21,11 +21,21 @@
 #   read_input_file_names.sh " " path/to/project
 #
 
+has_input_files()
+{
+    [ ! -z "${SCRIPT_INPUT_FILE_COUNT}" ] && [ ${SCRIPT_INPUT_FILE_COUNT} -gt 0 ]
+}
+
+has_input_file_lists()
+{
+    [ ! -z "${SCRIPT_INPUT_FILE_LIST_COUNT}" ] && [ ${SCRIPT_INPUT_FILE_LIST_COUNT} -gt 0 ]
+}
+
 if [ -z "${FILE_NAMES_SEPARATOR}" ]; then
     if [ ! -z "${1}" ]; then
         FILE_NAMES_SEPARATOR=${1}
     else
-        FILE_NAMES_SEPARATOR=""
+        FILE_NAMES_SEPARATOR=" "
     fi
 fi
 
@@ -39,7 +49,11 @@ fi
 
 INPUT_FILE_NAMES=""
 
-if [ ! -z "${SCRIPT_INPUT_FILE_COUNT}" ] && \
+if has_input_files && has_input_file_lists; then
+    >&2 echo "Passing Input Files and Input Files Lists is not supported!\nOnly Input Files will be used."
+fi
+
+if has_input_files && \
     [ ${SCRIPT_INPUT_FILE_COUNT} -gt 0 ]; then
 
     for i in `seq 0 $((${SCRIPT_INPUT_FILE_COUNT}-1))`
@@ -58,7 +72,7 @@ if [ ! -z "${SCRIPT_INPUT_FILE_COUNT}" ] && \
         # remove separator prefix
         INPUT_FILE_NAMES=`cut -c${FILE_NAMES_SEPARATOR_LENGTH}- <<< ${INPUT_FILE_NAMES}`
     fi
-elif [ "${SCRIPT_INPUT_FILE_LIST_COUNT}" -gt 0 ]; then
+elif has_input_file_lists; then
     for i in `seq 0 $((${SCRIPT_INPUT_FILE_LIST_COUNT}-1))`
     do
         SCRIPT_INPUT_FILE_LIST_VARIABLE_NAME="SCRIPT_INPUT_FILE_LIST_${i}"
