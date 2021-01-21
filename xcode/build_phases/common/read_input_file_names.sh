@@ -1,15 +1,20 @@
 #!/bin/sh
 
 # Description:
-#   Converts SCRIPT_INPUT_FILE_{N} variables to single string using passed separator.
+#   Converts SCRIPT_INPUT_FILE_{N} or SCRIPT_INPUT_FILE_LIST_{N} variables to string that contains
+#   list of file names splitted by given separator.
 #
 # Parameters:
 #   $1 - separator to use.
-#   $2 - default value to return if SCRIPT_INPUT_FILE_COUNT is zero.
+#   $2 - default value to return if SCRIPT_INPUT_FILE_COUNT or SCRIPT_INPUT_FILE_LIST_COUNT is zero.
 #
 # Optional environment variables:
-#   FILE_NAMES_SEPARATOR - number of files listed in "Input files" of build phase.
-#   DEFAULT_FILE_NAMES - file path to directory that should be checked.
+#   FILE_NAMES_SEPARATOR - separator to use.
+#   DEFAULT_FILE_NAMES - default value if was found in environment variables.
+#   SCRIPT_INPUT_FILE_COUNT - number of files listed in "Input files" section of build phase.
+#   SCRIPT_INPUT_FILE_{N} - file path of specific input file at index.
+#   SCRIPT_INPUT_FILE_LIST_COUNT - number of files listed in "Input File Lists" section of build phase.
+#   SCRIPT_INPUT_FILE_LIST_{N} - file path to specifis xcfilelist file at index.
 #
 # Examples of usage:
 #   read_input_file_names
@@ -32,23 +37,43 @@ if [ -z "${DEFAULT_FILE_NAMES}" ]; then
     fi
 fi
 
-if [ "${SCRIPT_INPUT_FILE_COUNT}" -gt 0 ] ; then
-    INPUT_FILE_NAMES=""
+INPUT_FILE_NAMES=""
+
+if [ ! -z "${SCRIPT_INPUT_FILE_COUNT}" ] && \
+    [ ${SCRIPT_INPUT_FILE_COUNT} -gt 0 ]; then
 
     for i in `seq 0 $((${SCRIPT_INPUT_FILE_COUNT}-1))`
     do
         SCRIPT_INPUT_FILE_VARIABLE_NAME="SCRIPT_INPUT_FILE_${i}"
-        COMMAND="echo \${${SCRIPT_INPUT_FILE_VARIABLE_NAME}}"
-        INPUT_FILE_NAME=`eval ${COMMAND}`
-        INPUT_FILE_NAMES=${INPUT_FILE_NAMES}${INPUT_FILE_NAME}${FILE_NAMES_SEPARATOR}
+        SHELL_VARIABLE="\${${SCRIPT_INPUT_FILE_VARIABLE_NAME}}"
+        RESOLVED_FILE_NAME=`envsubst <<< ${SHELL_VARIABLE}`
+        INPUT_FILE_NAMES=${INPUT_FILE_NAMES}${FILE_NAMES_SEPARATOR}${RESOLVED_FILE_NAME}
     done
 
-    FILE_NAMES_SEPARATOR_LENGTH=`awk '{ print length; }' <<< ${FILE_NAMES_SEPARATOR}`
-    INPUT_FILE_NAMES_LENGTH=`awk '{ print length; }' <<< ${INPUT_FILE_NAMES}`
-    INPUT_FILE_NAMES_TRIMMED_LENGTH=$((INPUT_FILE_NAMES_LENGTH - FILE_NAMES_SEPARATOR_LENGTH))
+    FILE_NAMES_SEPARATOR_LENGTH=`awk '{ print length; }' <<< "${FILE_NAMES_SEPARATOR}"`
 
-    # remove separator suffix
-    echo ${INPUT_FILE_NAMES} | cut -c1-${INPUT_FILE_NAMES_TRIMMED_LENGTH}
+    if [ ${FILE_NAMES_SEPARATOR_LENGTH} -gt 0 ] && \
+       [ ! -z "${INPUT_FILE_NAMES}" ]; then
+
+        # remove separator prefix
+        INPUT_FILE_NAMES=`cut -c${FILE_NAMES_SEPARATOR_LENGTH}- <<< ${INPUT_FILE_NAMES}`
+    fi
+elif [ "${SCRIPT_INPUT_FILE_LIST_COUNT}" -gt 0 ]; then
+    for i in `seq 0 $((${SCRIPT_INPUT_FILE_LIST_COUNT}-1))`
+    do
+        SCRIPT_INPUT_FILE_LIST_VARIABLE_NAME="SCRIPT_INPUT_FILE_LIST_${i}"
+        SHELL_VARIABLE="\${${SCRIPT_INPUT_FILE_LIST_VARIABLE_NAME}}"
+        FILE_NAME=`envsubst <<< ${SHELL_VARIABLE}`
+        RESOLVED_FILE_NAMES=`envsubst < ${FILE_NAME}`
+
+        for INPUT_FILE_NAME in ${RESOLVED_FILE_NAMES}; do
+            INPUT_FILE_NAMES=${INPUT_FILE_NAMES}${INPUT_FILE_NAME}${FILE_NAMES_SEPARATOR}
+        done
+    done
+fi
+
+if [ -z "${INPUT_FILE_NAMES}" ]; then
+    echo ${DEFAULT_FILE_NAMES}
 else
-    echo ${DEFAULT_VALUE}
+    echo ${INPUT_FILE_NAMES}
 fi
