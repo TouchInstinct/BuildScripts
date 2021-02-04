@@ -14,16 +14,21 @@ module Touchlane
     def initialize(type)
       @type = type
 
+      @is_app_store = type == APP_STORE
+      @is_development = type == DEVELOPMENT
+
       case type
-      when DEVELOPMENT, ENTERPRISE
+      when DEVELOPMENT
           @export_method = type
-          @configuration = type == DEVELOPMENT ? "Debug" : "Release"
-          @is_app_store = false
-          @prefix = type == DEVELOPMENT ? DEVELOPMENT_PREFIX : ENTERPRISE_PREFIX
+          @configuration = "Debug"
+          @prefix = DEVELOPMENT_PREFIX
+      when ENTERPRISE
+          @export_method = type
+          @configuration = "Release"
+          @prefix = ENTERPRISE_PREFIX
       when APP_STORE
           @export_method = "app-store"
           @configuration = "AppStore"
-          @is_app_store = true
           @prefix = APP_STORE_PREFIX
       else
         raise "Unknown type passed #{type}"
@@ -32,7 +37,7 @@ module Touchlane
 
     private_class_method :new
 
-    attr_reader :export_method, :type, :configuration, :is_app_store, :prefix
+    attr_reader :export_method, :type, :configuration, :is_app_store, :is_development, :prefix
 
     def self.from_lane_name(lane_name)
       case

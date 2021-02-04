@@ -1,5 +1,4 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
-$API_KEY_PATH="fastlane/api_key.json"
 
 require_relative 'fastlane/touchlane/lib/touchlane'
 require_relative 'managers/managers'
@@ -80,15 +79,16 @@ private_lane :uploadToFirebase do |options|
   )
 end
 
-private_lane :uploadToAppStore do |options|
+def upload_to_app_store_using_options(options)
   upload_to_app_store(
     username: options[:username] || options[:apple_id],
-    api_key_path: $API_KEY_PATH,
+    api_key_path: options[:api_key_path],
     ipa: options[:ipa_path],
     force: true, # skip metainfo prompt
     skip_metadata: true,
     team_id: options[:itc_team_id],
-    dev_portal_team_id: options[:team_id]
+    dev_portal_team_id: options[:team_id],
+    precheck_include_in_app_purchases: false
   )
 end
 
@@ -164,7 +164,7 @@ private_lane :buildConfiguration do |options|
     sync_code_signing_using_options(options)
 
     buildArchive(options)
-    uploadToAppStore(options)
+    upload_to_app_store_using_options(options)
   end
 end
 
@@ -346,7 +346,7 @@ def sync_code_signing_using_options(options)
   match(
     app_identifier: options[:app_identifier],
     username: options[:username] || options[:apple_id],
-    api_key_path: $API_KEY_PATH,
+    api_key_path: options[:api_key_path],
     team_id: options[:team_id],
     type: options[:type],
     readonly: options[:readonly].nil? ? true : options[:readonly],
@@ -371,7 +371,16 @@ end
 def fill_up_options_using_configuration_type(options, configuration_type)
   configuration = get_configuration_for_type(configuration_type.type)
 
-  configuration.to_options
+  if configuration_type.is_app_store || configuration_type.is_development
+    api_key_path = "fastlane/#{configuration_type.prefix}_api_key.json"
+  else
+    api_key_path = nil
+  end
+
+  default_options = {:api_key_path => api_key_path}
+
+  default_options
+    .merge(configuration.to_options)
     .merge(get_keychain_options(options))
     .merge(options)
 end
@@ -414,16 +423,16 @@ def generate_enabled_features_extension_if_needed(options)
   end
 
   if options[:features].nil?
-    builder_features_list = [] # If Enabled.swift exists and features option is nil we need to create empty extension to avoid unexpected features 
+    builder_features_list = [] # If Enabled.swift exists and features option is nil we need to create empty extension to avoid unexpected features
   else
     builder_features_list = options[:features]
       .split(",").map { |feature_name| feature_name.strip } # [ "Feature1", "Feature2", "Feature3" ]
-  end  
+  end
 
   build_settings_features_list = Managers::FileManager.load_from_file_YAML(build_settings_file_path)["features"]
 
   enabled_features_extension = Touchlane::Features.generate_enabled_features_extension(builder_features_list, build_settings_features_list)
-  
+
   Managers::FileManager.save_data_to_file(project_enabled_features_file_path, enabled_features_extension)
 end
 
