@@ -284,6 +284,12 @@ custom_rules:
     message: "Use a local function instead of capture strong self"
     severity: error
 
+  pattern_matching:
+    name: "Pattern matching"
+    regex: 'case[^\n\(]+\([^\)]*(let|var)\s'
+    message: "Use a let|var keyword behind parentheses"
+    severity: warning
+
   # Rx
 
   unused_map_parameter:
