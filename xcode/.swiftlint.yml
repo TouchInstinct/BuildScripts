@@ -288,13 +288,7 @@ custom_rules:
     name: "Pattern matching"
     regex: 'case[^\n\(]+\([^\)]*(let|var)\s'
     message: "Use a let|var keyword behind parentheses"
-    severity: error
-
-  fallthrough:
-    name: "Fallthrough"
-    regex: '\sfallthrough\s'
-    message: "Fallthrough usage is restricted!"
-    severity: error
+    severity: warning
 
   # Rx
 
