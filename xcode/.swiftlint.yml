@@ -284,6 +284,18 @@ custom_rules:
     message: "Use a local function instead of capture strong self"
     severity: error
 
+  pattern_matching:
+    name: "Pattern matching"
+    regex: 'case[^\(]+\([^\)]*(let|var)\s'
+    message: "Use a let|var keyword behind parentheses"
+    severity: error
+
+  fallthrough:
+    name: "Fallthrough"
+    regex: '\sfallthrough\s'
+    message: "Fallthrough usage is restricted!"
+    severity: error
+
   # Rx
 
   unused_map_parameter:
