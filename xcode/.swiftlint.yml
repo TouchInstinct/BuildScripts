@@ -33,6 +33,7 @@ opt_in_rules:
   - extension_access_modifier
   - explicit_init
   - prefer_zero_over_explicit_init
+  - fallthrough
 
   # style
 
@@ -201,13 +202,13 @@ custom_rules:
     match_kinds:
     - keyword
     message: "Make a new line break when use getter or setter"
-    severity: error
+    severity: warning
 
   redundant_boolean_condition:
     name: "Redundant Boolean Condition"
     regex: "(== true)|(== false)|(!= true)|(!= false)"
     message: "Comparing a boolean to true is redundant (use `?? false` for optionals), and `!`-syntax is preferred over comparing to false."
-    severity: error
+    severity: warning
     excluded_match_kinds:
       - comment
       - comment.mark
@@ -219,43 +220,43 @@ custom_rules:
     name: "Redundant Ternary Operator"
     regex: "(\\? true \\: false)|(\\? false \\: true)"
     message: "Returning a boolean as true is redundant, and `!`-syntax is preferred over returning as false."
-    severity: error
+    severity: warning
 
   single_line_closure:
     name: "Single line closure"
     regex: '\{([^\n\/]*\[[^\]]+\][^\n\/]*)?([^\n\/]*[a-zA-Z]\w*(, \w+)*)? in [^\n\/]+'
     message: "Too complex expression for single line closure. Improve readability by making it multiline."
-    severity: error
+    severity: warning
 
   addSubview_in_cell:
     name: "Usage addSubview in cell"
     regex: '(extension|class)\s*\w+Cell(:| )(?s).*(self\.|\s{2,})add(Subv|V)iews?\(\w'
     message: "Use сontentView instead of self for addSubview or addSubviews methods in cell."
-    severity: error
+    severity: warning
 
   redundant_type_annotation_bool:
     name: "Redundant type annotation for Bool"
     regex: '\s((var|let))\s{1,}\w+ *((: *Bool *=)|((\w| |<|>|:)*= *BehaviorRelay<Bool>\( *value *:)) *((true)|(false))'
     message: "Using a type annotation for Bool is redundant."
-    severity: error
+    severity: warning
 
   parameter_repetition:
     name: "Parameter repetition"
     regex: 'func ((\w+([A-Z]\w+))|(\w+)) *(<[^>]+>)? *\( *(?i)(\3|\4):'
     message: "The parameter name is actually used in the function name. Use _ instead."
-    severity: error
+    severity: warning
 
   parameter_closure:
     name: "Parameter closure"
     regex: '\w*Closure<[^\r\n\t\f\v]*, Void[^\r\n\t\f\v]*>'
     message: "Use `ParameterClosure` instead of declaring an explicit return value of `Void`."
-    severity: error
+    severity: warning
 
   strong_self:
     name: "Strong self"
     regex: '(if|guard)\s+let\s+self\s+=\s+self'
     message: "Use a local function instead of capture strong self"
-    severity: error
+    severity: warning
 
   # Rx
 
