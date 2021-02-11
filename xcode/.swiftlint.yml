@@ -286,7 +286,7 @@ custom_rules:
 
   pattern_matching:
     name: "Pattern matching"
-    regex: 'case[^\(]+\([^\)]*(let|var)\s'
+    regex: 'case[^\n\(]+\([^\)]*(let|var)\s'
     message: "Use a let|var keyword behind parentheses"
     severity: error
 
