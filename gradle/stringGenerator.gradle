@@ -27,7 +27,7 @@ private def generate(Map<String, String> sources) {
         xml.resources() {
             json.each {
                 k, v ->
-                    string(name: "${k}", formatted: "false", "${v}".replace('\n', '\\n'))
+                    string(name: "${k}", formatted: "false", "${v}".replace('\n', '\\n').replace('\"', '\\"'))
             }
         }
 
