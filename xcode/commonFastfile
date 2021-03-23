@@ -108,6 +108,7 @@ private_lane :buildConfiguration do |options|
 
   installDependencies(options)
 
+  run_code_generation_phase_if_needed(options)
   generate_enabled_features_extension_if_needed(options)
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
@@ -424,4 +425,15 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
 
 
   project.save()
+end
+
+# Build phases
+
+def run_code_generation_phase_if_needed(options)
+  code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
+  xcodeproj_path = File.expand_path options[:xcodeproj_path]
+
+  if File.exists? code_generation_script_path
+    sh(code_generation_script_path, xcodeproj_path)
+  end
 end
