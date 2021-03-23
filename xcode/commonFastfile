@@ -433,9 +433,7 @@ def run_code_generation_phase_if_needed(options)
   code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
   xcodeproj_path = File.expand_path options[:xcodeproj_path]
 
-
   if File.exists? code_generation_script_path
     sh(code_generation_script_path, xcodeproj_path)
   end
-
 end
