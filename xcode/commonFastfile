@@ -434,7 +434,7 @@ def run_code_generation_phase_if_needed(options)
   xcodeproj_path = File.expand_path options[:xcodeproj_path]
 
   if File.exists? code_generation_script_path
-    sh("code_generation_script_path ${xcodeproj_path}")
+    sh("#{code_generation_script_path} #{xcodeproj_path}")
   end
 
 end
