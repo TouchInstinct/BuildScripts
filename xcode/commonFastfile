@@ -23,41 +23,11 @@ private_lane :installDependencies do |options|
   cocoapods(
     repo_update: true
   )
-
-  if File.exists? "../Cartfile"
-    use_rome = File.exists? "../Romefile"
-
-    swift_version = sh("xcrun swift --version | head -1 | sed 's/.*\\(\(.*\)\\).*/\\1/' | tr -d \"()\" | tr \" \" \"-\"").chop
-    rome_path = "Pods/Rome/rome"
-    rome_options = "--platform iOS --cache-prefix #{swift_version} --romefile Romefile"
-
-    carthage_install = lambda do
-      if use_rome
-        sh("cd .. && #{rome_path} download #{rome_options}")
-      end
-
-      carthage(command: "bootstrap", platform: "iOS", cache_builds: true)
-
-      if use_rome
-        sh("cd .. && #{rome_path} list --missing #{rome_options} | awk '{print $1}' | xargs -I framework_name #{rome_path} upload framework_name #{rome_options}")
-      end
-    end
-
-    begin
-      carthage_install.call
-    rescue
-      # workaround for https://github.com/Carthage/Carthage/issues/2298
-      sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
-      carthage_install.call
-    end
-  end
 end
 
 private_lane :uploadToFirebase do |options|
   releaseNotesFile = "release-notes.txt"
   sh("touch ../#{releaseNotesFile}")
-
-  sh("yarn install")
 
   app_target_folder_name = options[:appName] || $appName
   configuration_type = Touchlane::ConfigurationType.from_type(options[:type])
@@ -70,8 +40,7 @@ private_lane :uploadToFirebase do |options|
       app: google_app_id,
       ipa_path: options[:ipa_path],
       groups: "touch-instinct",
-      release_notes_file: releaseNotesFile,
-      firebase_cli_path: File.expand_path("../node_modules/firebase-tools/lib/bin/firebase.js")
+      release_notes_file: releaseNotesFile
   )
 
   upload_symbols_to_crashlytics(
@@ -139,6 +108,7 @@ private_lane :buildConfiguration do |options|
 
   installDependencies(options)
 
+  run_code_generation_phase_if_needed(options)
   generate_enabled_features_extension_if_needed(options)
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
@@ -464,4 +434,15 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
 
 
   project.save()
+end
+
+# Build phases
+
+def run_code_generation_phase_if_needed(options)
+  code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
+  xcodeproj_path = File.expand_path options[:xcodeproj_path]
+
+  if File.exists? code_generation_script_path
+    sh(code_generation_script_path, xcodeproj_path)
+  end
 end
