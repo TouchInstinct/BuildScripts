@@ -47,6 +47,8 @@ if [ -z "${DEFAULT_FILE_NAMES}" ]; then
     fi
 fi
 
+readonly envsubst="/usr/local/bin/envsubst"
+
 INPUT_FILE_NAMES=""
 
 if has_input_files && has_input_file_lists; then
@@ -60,7 +62,7 @@ if has_input_files && \
     do
         SCRIPT_INPUT_FILE_VARIABLE_NAME="SCRIPT_INPUT_FILE_${i}"
         SHELL_VARIABLE="\${${SCRIPT_INPUT_FILE_VARIABLE_NAME}}"
-        RESOLVED_FILE_NAME=`envsubst <<< ${SHELL_VARIABLE}`
+        RESOLVED_FILE_NAME=`$envsubst <<< ${SHELL_VARIABLE}`
         INPUT_FILE_NAMES=${INPUT_FILE_NAMES}${FILE_NAMES_SEPARATOR}${RESOLVED_FILE_NAME}
     done
 
@@ -77,8 +79,8 @@ elif has_input_file_lists; then
     do
         SCRIPT_INPUT_FILE_LIST_VARIABLE_NAME="SCRIPT_INPUT_FILE_LIST_${i}"
         SHELL_VARIABLE="\${${SCRIPT_INPUT_FILE_LIST_VARIABLE_NAME}}"
-        FILE_NAME=`envsubst <<< ${SHELL_VARIABLE}`
-        RESOLVED_FILE_NAMES=`envsubst < ${FILE_NAME}`
+        FILE_NAME=`$envsubst <<< ${SHELL_VARIABLE}`
+        RESOLVED_FILE_NAMES=`$envsubst < ${FILE_NAME}`
 
         for INPUT_FILE_NAME in ${RESOLVED_FILE_NAMES}; do
             INPUT_FILE_NAMES=${INPUT_FILE_NAMES}${INPUT_FILE_NAME}${FILE_NAMES_SEPARATOR}
