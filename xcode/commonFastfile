@@ -55,6 +55,7 @@ def upload_to_app_store_using_options(options)
     ipa: options[:ipa_path],
     force: true, # skip metainfo prompt
     skip_metadata: true,
+    skip_app_version_update: true,
     team_id: options[:itc_team_id],
     dev_portal_team_id: options[:team_id],
     precheck_include_in_app_purchases: false
