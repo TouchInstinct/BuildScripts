@@ -42,8 +42,6 @@ module Touchlane
       # Those doesn't mean they're new, it might just be they're changed
       # Either way, we'll upload them using the same technique
 
-      Dir.mkdir(self.signing_identities_path) unless File.exists?(self.signing_identities_path)
-
       files_to_upload.each do |current_file|
         # Go from
         #   "/var/folders/px/bz2kts9n69g8crgv4jpjh6b40000gn/T/d20181026-96528-1av4gge/profiles/development/Development_me.mobileprovision"
@@ -53,7 +51,11 @@ module Touchlane
 
         # We also have to remove the trailing `/` as Google Cloud doesn't handle it nicely
         target_path = current_file.gsub(self.working_directory + "/", "")
-        FileUtils.cp_r(current_file, File.join(self.signing_identities_path, target_path), remove_destination: true)
+        absolute_target_path = File.join(self.signing_identities_path, target_path)
+
+        FileUtils.mkdir_p(File.dirname(absolute_target_path))
+
+        FileUtils.cp_r(current_file, absolute_target_path, remove_destination: true)
       end
     end
 
