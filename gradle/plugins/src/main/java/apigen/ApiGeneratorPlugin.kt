@@ -12,14 +12,14 @@ abstract class ApiGeneratorPlugin : Plugin<Project> {
     companion object {
         const val API_GENERATOR_CONFIG = "apiGenerator"
         const val API_GENERATOR_EXT_NAME = "apiGenerator"
-        const val API_GENERATOR_DEFAULT_VERSION = "1.4.0-beta5"
+        const val API_GENERATOR_DEFAULT_VERSION = "1.4.0-beta10"
     }
 
     override fun apply(target: Project) {
         with(target) {
             repositories {
                 maven {
-                    url = uri("https://dl.bintray.com/touchin/touchin-tools")
+                    url = uri("https://maven.dev.touchin.ru")
                     metadataSources {
                         artifact()
                     }
