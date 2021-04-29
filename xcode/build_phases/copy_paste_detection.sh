@@ -24,7 +24,7 @@
 readonly EXIT_SUCCESS=0
 readonly EXIT_FAILURE=1
 
-if which /usr/local/bin/pmd >/dev/null; then
+if which pmd >/dev/null; then
     readonly REPORTS_DIR="${PROJECT_DIR}/code-quality-reports"
 
     readonly SOURCES_DIRS=`. ${SCRIPT_DIR}/common/read_input_file_names.sh " " ${PROJECT_DIR}`
@@ -44,7 +44,7 @@ if which /usr/local/bin/pmd >/dev/null; then
 
     mkdir -p ${REPORTS_DIR}
 
-    /usr/local/bin/pmd cpd --files ${SOURCES_DIRS} --exclude ${FILES_TO_EXCLUDE} --minimum-tokens 50 --language swift --encoding UTF-8 --format net.sourceforge.pmd.cpd.XMLRenderer --failOnViolation true > ${REPORTS_DIR}/cpd-output.xml
+    pmd cpd --files ${SOURCES_DIRS} --exclude ${FILES_TO_EXCLUDE} --minimum-tokens 50 --language swift --encoding UTF-8 --format net.sourceforge.pmd.cpd.XMLRenderer --failOnViolation true > ${REPORTS_DIR}/cpd-output.xml
 
     php ${SCRIPT_DIR}/../aux_scripts/cpd_script.php ${REPORTS_DIR}/cpd-output.xml | tee ${REPORTS_DIR}/CPDLog.txt
 
