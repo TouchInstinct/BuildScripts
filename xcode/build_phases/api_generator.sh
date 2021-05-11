@@ -135,7 +135,7 @@ fi
 mkdir -p ${OUTPUT_PATH}
 
 # download api generator
-readonly DOWNLOAD_URL="https://maven.dev.touchin.ru/ru/touchin/api-generator/api-generator/${VERSION}/${FILE_NAME}"
+readonly DOWNLOAD_URL="https://maven.dev.touchin.ru/ru/touchin/api-generator/${VERSION}/${FILE_NAME}"
 . build-scripts/xcode/aux_scripts/download_file.sh ${FILE_NAME} ${DOWNLOAD_URL}
 
 # execute api generator
