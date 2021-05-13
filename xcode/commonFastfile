@@ -108,7 +108,7 @@ private_lane :buildConfiguration do |options|
 
   installDependencies(options)
 
-  run_code_generation_phase_if_needed(options)
+  run_code_generation_phase_if_needed()
   generate_enabled_features_extension_if_needed(options)
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
@@ -438,9 +438,9 @@ end
 
 # Build phases
 
-def run_code_generation_phase_if_needed(options)
+def run_code_generation_phase_if_needed:
   code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
-  workspace_path = File.expand_path options[:workspace]
+  workspace_path = File.expand_path "../#{appName}.xcworkspace"
 
   if File.exists? code_generation_script_path
     sh(code_generation_script_path, workspace_path)
