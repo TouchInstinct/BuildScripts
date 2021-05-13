@@ -438,7 +438,7 @@ end
 
 # Build phases
 
-def run_code_generation_phase_if_needed:
+def run_code_generation_phase_if_needed()
   code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
   workspace_path = File.expand_path "../#{appName}.xcworkspace"
 
