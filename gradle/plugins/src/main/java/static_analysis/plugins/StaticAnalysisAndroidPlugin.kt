@@ -34,6 +34,7 @@ class StaticAnalysisAndroidPlugin : StaticAnalysisPlugin() {
         }
     }
 
+    //TODO: return CpdLinter after finding better way to disable it
     override fun createLinters(): List<Linter> = listOf(
             DetektLinter(),
             AndroidLinter()
