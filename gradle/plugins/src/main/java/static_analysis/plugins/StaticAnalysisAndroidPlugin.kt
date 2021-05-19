@@ -36,7 +36,6 @@ class StaticAnalysisAndroidPlugin : StaticAnalysisPlugin() {
 
     override fun createLinters(): List<Linter> = listOf(
             DetektLinter(),
-            CpdLinter(),
             AndroidLinter()
     )
 
