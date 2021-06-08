@@ -55,6 +55,8 @@ def upload_to_app_store_using_options(options)
     ipa: options[:ipa_path],
     force: true, # skip metainfo prompt
     skip_metadata: true,
+    skip_app_version_update: options[:skip_app_version_update],
+    skip_screenshots: options[:skip_screenshots],
     team_id: options[:itc_team_id],
     dev_portal_team_id: options[:team_id],
     precheck_include_in_app_purchases: false
@@ -130,6 +132,9 @@ private_lane :buildConfiguration do |options|
   if options[:uploadToAppStore]
     options[:compileBitcode] = options[:compileBitcode].nil? ? true : options[:compileBitcode]
     options[:include_symbols] = options[:include_symbols].nil? ? true : options[:include_symbols]
+
+    options[:skip_app_version_update] = options[:skipAppVersionUpdate].nil? ? false : options[:skipAppVersionUpdate]
+    options[:skip_screenshots] = options[:skipAppVersionUpdate].nil? ? false : options[:skipAppVersionUpdate]
 
     sync_code_signing_using_options(options)
 
