@@ -379,7 +379,7 @@ def get_configuration_for_type(type)
 end
 
 def get_google_services_plist_path(app_target_folder_name, configuration_type)
-  File.expand_path "../#{app_target_folder_name}/Resources/#{configuration_type.prefix}-GoogleService-Info.plist"
+  File.expand_path "../#{app_target_folder_name}/Resources/GoogleService-Info.plist"
 end
 
 def generate_enabled_features_extension_if_needed(options)
