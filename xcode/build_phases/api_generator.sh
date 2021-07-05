@@ -2,7 +2,7 @@ VERSION=$1
 FILE_NAME="api-generator-${VERSION}.jar"
 
 # download api generator
-link="https://dl.bintray.com/touchin/touchin-tools/ru/touchin/api-generator/${VERSION}/${FILE_NAME}"
+link="https://maven.dev.touchin.ru/ru/touchin/api-generator/${VERSION}/${FILE_NAME}"
 . build-scripts/xcode/aux_scripts/download_file.sh ${FILE_NAME} ${link}
 
 # execute api generator
