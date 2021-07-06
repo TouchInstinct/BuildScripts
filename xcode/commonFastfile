@@ -237,7 +237,7 @@ private_lane :openKeychain do |options|
       name: options[:keychain_name],
       password: options[:keychain_password],
       unlock: true,
-      timeout: 0,
+      timeout: false,
       add_to_search_list: !keychain_exists
     )
   else
