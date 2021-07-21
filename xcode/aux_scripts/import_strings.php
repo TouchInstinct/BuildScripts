@@ -41,6 +41,7 @@
                                  '// swiftlint:disable superfluous_disable_command'.PHP_EOL.
                                  '// swiftlint:disable line_length'.PHP_EOL.
                                  '// swiftlint:disable file_length'.PHP_EOL.
+                                 '// swiftlint:disable cyrillic_strings'.PHP_EOL.
                                  '// swiftlint:disable identifier_name'.PHP_EOL.PHP_EOL.
                                  'public extension String {'.PHP_EOL;
             foreach ($json as $key=>$value) {
