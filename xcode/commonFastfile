@@ -86,17 +86,6 @@ private_lane :buildConfiguration do |options|
   options[:scheme] = options[:scheme] || options[:appName]
   options[:lane_name] = lane_name
 
-  configuration_type = Touchlane::ConfigurationType.from_lane_name(lane_name)
-  options = fill_up_options_using_configuration_type(options, configuration_type)
-
-  openKeychain(options)
-
-  if !options[:buildNumber].nil?
-    increment_build_number(
-      build_number: options[:buildNumber]
-    )
-  end
-
   ipa_name = "#{options[:appName]}.ipa"
   options[:output_name] = ipa_name
 
@@ -106,7 +95,18 @@ private_lane :buildConfiguration do |options|
   options[:xcodeproj_path] = options[:xcodeproj_path] || "../#{options[:appName]}.xcodeproj"
   options[:workspace] = options[:workspace] || "./#{options[:appName]}.xcworkspace"
 
+  configuration_type = Touchlane::ConfigurationType.from_lane_name(lane_name)
+  options = fill_up_options_using_configuration_type(options, configuration_type)
+
   generate_xcodeproj_if_needed(options)
+
+  openKeychain(options)
+
+  if !options[:buildNumber].nil?
+    increment_build_number(
+      build_number: options[:buildNumber]
+    )
+  end
 
   installDependencies(options)
 
