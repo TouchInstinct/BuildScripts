@@ -79,11 +79,11 @@ private_lane :addShield do |options|
 end
 
 private_lane :buildConfiguration do |options|
-  appName = options[:appName] || $appName
+  options[:appName] = options[:appName] || $appName
 
   lane_name = options[:lane_name] || lane_context[SharedValues::LANE_NAME]
 
-  options[:scheme] = options[:scheme] || appName
+  options[:scheme] = options[:scheme] || options[:appName]
   options[:lane_name] = lane_name
 
   configuration_type = Touchlane::ConfigurationType.from_lane_name(lane_name)
@@ -97,14 +97,16 @@ private_lane :buildConfiguration do |options|
     )
   end
 
-  ipa_name = "#{appName}.ipa"
+  ipa_name = "#{options[:appName]}.ipa"
   options[:output_name] = ipa_name
 
   options[:ipa_path] = "./#{ipa_name}"
-  options[:dsym_path] = "./#{appName}.app.dSYM.zip"
+  options[:dsym_path] = "./#{options[:appName]}.app.dSYM.zip"
 
-  options[:xcodeproj_path] = "../#{appName}.xcodeproj"
-  options[:workspace] = "./#{appName}.xcworkspace"
+  options[:xcodeproj_path] = options[:xcodeproj_path] || "../#{options[:appName]}.xcodeproj"
+  options[:workspace] = options[:workspace] || "./#{options[:appName]}.xcworkspace"
+
+  generate_xcodeproj_if_needed(options)
 
   installDependencies(options)
 
@@ -436,14 +438,22 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
   project.save()
 end
 
+def generate_xcodeproj_if_needed(options)
+  project_yml_path = File.expand_path "../project.yml"
+
+  if !File.exists?(options[:xcodeproj_path]) && File.exists?(project_yml_path)
+    xcodegen(
+      spec: project_yml_path
+    )
+  end
+end
+
 # Build phases
 
 def run_code_generation_phase_if_needed(options)
-  appName = options[:appName] || $appName
   code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
-  workspace_path = File.expand_path "../#{appName}.xcworkspace"
 
   if File.exists? code_generation_script_path
-    sh(code_generation_script_path, workspace_path)
+    sh(code_generation_script_path, options[:workspace_path])
   end
 end
