@@ -102,7 +102,11 @@ targets.each do |target_name, target|
 
         # Add properties from settings file
         properties.each do |key, value|
-          config["xcconfig_options"].append(config_option(key, value))
+            if config["xcconfig_options"].any? { |option| key == option["key"] }
+                config["xcconfig_options"].map! { |option| key == option["key"] ? config_option(key, value) : option }
+            else
+                config["xcconfig_options"].append(config_option(key, value))
+            end
         end
 
         # Add missing properties if needed
