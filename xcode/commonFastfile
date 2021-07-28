@@ -420,7 +420,8 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
   target_to_modify_selector = lambda do |t|
     supported_product_types = [
         Xcodeproj::Constants::PRODUCT_TYPE_UTI[:application],
-        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension]
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension],
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:framework]
     ]
     return !t.test_target_type? && supported_product_types.include?(t.product_type)
   end
@@ -428,10 +429,13 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
   application_targets = project.native_targets.select(&target_to_modify_selector)
 
   application_targets.each do |target|
-    build_configuration = target.build_configuration_list[configuration]
     config_name = target.name + lane_name
     build_configuration_reference = project.files.select { |f| f.path.start_with?(config_name) }.first
-    build_configuration.base_configuration_reference = build_configuration_reference
+
+    if !build_configuration_reference.nil? # target has custom xcconfig
+      build_configuration = target.build_configuration_list[configuration]
+      build_configuration.base_configuration_reference = build_configuration_reference
+    end
   end
 
 
