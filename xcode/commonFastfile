@@ -93,7 +93,7 @@ private_lane :buildConfiguration do |options|
   options[:dsym_path] = "./#{options[:appName]}.app.dSYM.zip"
 
   options[:xcodeproj_path] = options[:xcodeproj_path] || "../#{options[:appName]}.xcodeproj"
-  options[:workspace] = options[:workspace] || "./#{options[:appName]}.xcworkspace"
+  options[:workspace] = options[:workspace] || File.expand_path("../#{options[:appName]}.xcworkspace")
 
   configuration_type = Touchlane::ConfigurationType.from_lane_name(lane_name)
   options = fill_up_options_using_configuration_type(options, configuration_type)
@@ -458,6 +458,6 @@ def run_code_generation_phase_if_needed(options)
   code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
 
   if File.exists? code_generation_script_path
-    sh(code_generation_script_path, options[:workspace_path])
+    sh(code_generation_script_path, options[:workspace])
   end
 end
