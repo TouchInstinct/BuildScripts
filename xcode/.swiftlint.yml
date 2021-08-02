@@ -265,6 +265,12 @@ custom_rules:
     message: "Use a let|var keyword behind parentheses"
     severity: warning
 
+  while_ban:
+    name: "While ban"
+    regex: '^\s*+while'
+    message: "Use a forEach instead of a while"
+    severity: error
+
   # Rx
 
   unused_map_parameter:
