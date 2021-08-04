@@ -46,7 +46,7 @@
                                  'public extension String {'.PHP_EOL;
             foreach ($json as $key=>$value) {
                 $value_without_linefeed = preg_replace("/\r|\n/", " ", $value);
-                $ios_swift_strings .= "\t/// ".$value_without_linefeed."\n\t".'static let '.preg_replace_callback('/_(.?)/', function ($m) { return strtoupper($m[1]); }, $key).' = NSLocalizedString("'.$key.'", bundle: '.$BUNDLE.', comment: "'.$value_without_linefeed.'")'."\n".PHP_EOL;
+                $ios_swift_strings .= "\t/// ".$value_without_linefeed."\n\t".'static let '.preg_replace_callback('/_(.?)/', function ($m) { return strtoupper($m[1]); }, $key).' = NSLocalizedString("'.$key.'", bundle: '.$BUNDLE.', comment: "'.addslashes($value_without_linefeed).'")'."\n".PHP_EOL;
             }
             $ios_swift_strings .= '}'.PHP_EOL;
             echo $ios_swift_strings;
