@@ -49,7 +49,6 @@
                 $ios_swift_strings .= "\t/// ".$value_without_linefeed."\n\t".'static let '.preg_replace_callback('/_(.?)/', function ($m) { return strtoupper($m[1]); }, $key).' = NSLocalizedString("'.$key.'", bundle: '.$BUNDLE.', comment: "'.addslashes($value_without_linefeed).'")'."\n".PHP_EOL;
             }
             $ios_swift_strings .= '}'.PHP_EOL;
-            echo $ios_swift_strings;
             file_put_contents($LOCALIZATION_PATH.'String+Localization.swift', $ios_swift_strings);
         }
     }
