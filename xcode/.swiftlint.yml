@@ -264,6 +264,12 @@ custom_rules:
     regex: 'case[^\n\(]+\([^\)]*(let|var)\s'
     message: "Use a let|var keyword behind parentheses"
     severity: warning
+    
+  lazy_var:
+    name: "Using lazy var"
+    regex: '(?<!private\(set\)\s)lazy\s+var'
+    message: "Use lazy var can only with private(set) modifier"
+    severity: warning
 
   # Rx
 
