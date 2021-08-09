@@ -268,7 +268,7 @@ custom_rules:
   lazy_var:
     name: "Lazy var access modifier"
     regex: '(?<!private\(set\)\s)lazy\s+var'
-    message: "Lazy var can use only with private(set) modifier."
+    message: "Lazy var can only be used with private(set) modifier."
     severity: warning
 
   # Rx
