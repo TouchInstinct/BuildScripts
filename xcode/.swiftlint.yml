@@ -264,6 +264,12 @@ custom_rules:
     regex: 'case[^\n\(]+\([^\)]*(let|var)\s'
     message: "Use a let|var keyword behind parentheses"
     severity: warning
+    
+  output_methods:
+    name: "Output methods"
+    regex: 'print|debugPrint|dump'
+    message: "Need to use os_log or swift-log for logging"
+    severity: error
 
   # Rx
 
