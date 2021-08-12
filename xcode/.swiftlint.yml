@@ -126,12 +126,6 @@ custom_rules:
     message: "Do not use UIWebView. Use WKWebView Instead. https://developer.apple.com/reference/uikit/uiwebview"
     severity: error
 
-  native_print:
-    name: "print -> DDLog"
-    regex: '(print|NSLog)\('
-    message: "Please use CocoaLumberjack instead `print` and `NSlog`"
-    severity: error
-
   uiedge_insets_zero:
     name: "UIEdgeInsets .zero"
     regex: '\(top: 0, left: 0, bottom: 0, right: 0\)'
@@ -265,11 +259,11 @@ custom_rules:
     message: "Use a let|var keyword behind parentheses"
     severity: warning
     
-  output_methods:
-    name: "Output methods"
+  logging_methods:
+    name: "Logging methods"
     regex: 'print|debugPrint|dump'
-    message: "Need to use os_log or swift-log for logging"
-    severity: error
+    message: "Use os or swift-log frameworks for logging"
+    severity: warning
 
   # Rx
 
