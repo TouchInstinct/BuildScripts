@@ -273,7 +273,7 @@ custom_rules:
     
   final_class_for_configurable:
     name: "Final class for ConfigurableView and ConfigurableCell"
-    regex: '(?<!final\s)(class\s\w*:(\s\w*,)?\s(ConfigurableView|ConfigurableCell))'
+    regex: '(?<!final\s)((class|extention)\s.*:(\s\w*,)*?\s(ConfigurableView|ConfigurableCell))'
     message: "Use final class for ConfigurableView and ConfigurableCell"
     severity: warning
 
