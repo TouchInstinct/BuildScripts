@@ -153,6 +153,12 @@ private_lane :buildArchive do |options|
     set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
   end
 
+  if configuration == "Debug"
+    codesigning_identity_name = "iPhone Developer"
+  else
+    codesigning_identity_name = "iPhone Distribution"
+  end
+  
   gym(
     clean: true,
     workspace: options[:workspace],
@@ -166,6 +172,7 @@ private_lane :buildArchive do |options|
     skip_package_ipa: options[:skip_package_ipa],
     include_symbols: options[:include_symbols] || false,
     include_bitcode: options[:compileBitcode] || false,
+    codesigning_identity: codesigning_identity_name,
   )
 end
 
