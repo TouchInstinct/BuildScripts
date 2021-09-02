@@ -26,9 +26,9 @@ jobs:
     - name: Run pr size checker
       env:
         DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: bundle exec danger --dangerfile "BuildScripts/github_workflows/ios/pull-request/danger_pr_size"
+      run: bundle exec danger --dangerfile ".github/workflows/danger_pr_size"
 
     - name: Run copypaste detector
       env:
         DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: bundle exec danger --dangerfile "BuildScripts/github_workflows/ios/pull-request/danger_copypaste"
+      run: bundle exec danger --dangerfile ".github/workflows/danger_copypaste"
