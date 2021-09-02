@@ -1,0 +1,6 @@
+diff = git.diff_for_file("CPDLog.txt")
+isCopypasteAdded = (diff.insertions - diff.deletions) > 0
+
+if diff && isCopypasteAdded
+  fail("Кажется, добавилась копипаста в коде 😞 Надо её убрать 🧰", sticky: false)
+end

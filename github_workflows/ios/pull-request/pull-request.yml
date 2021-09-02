@@ -1,0 +1,34 @@
+name: pull-request
+
+on:
+  pull_request:
+    branches-ignore:
+      - 'master'
+      - 'main'
+      - 'dev'
+      - 'develop'
+      - 'develop*'
+      - 'release/**'
+
+jobs:
+  danger:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Ruby 2.6
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.6
+        bundler-cache: true
+  
+    - name: Run pr size checker
+      env:
+        DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: bundle exec danger --dangerfile "BuildScripts/github_workflows/ios/pull-request/danger_pr_size"
+
+    - name: Run copypaste detector
+      env:
+        DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: bundle exec danger --dangerfile "BuildScripts/github_workflows/ios/pull-request/danger_copypaste"
