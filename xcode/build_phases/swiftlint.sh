@@ -73,5 +73,5 @@ done
 
 swiftlint_files_path="@${lint_files_path}"
 
-${SWIFTLINT_EXECUTABLE} autocorrect --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH}
-${SWIFTLINT_EXECUTABLE} lint --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH}
+${SWIFTLINT_EXECUTABLE} autocorrect --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH} --force-exclude
+${SWIFTLINT_EXECUTABLE} lint --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH} --force-exclude
