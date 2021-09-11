@@ -41,7 +41,37 @@ if [ -z "${SWIFTLINT_CONFIG_PATH}" ]; then
     fi
 fi
 
+# Xcode упадет, если будем использовать большое количество Script Input Files, 
+# так как просто переполнится стек - https://unix.stackexchange.com/questions/357843/setting-a-long-environment-variable-breaks-a-lot-of-commands
+# Поэтому воспользуемся "скрытым" параметром Swiflint - https://github.com/realm/SwiftLint/pull/3313
+# Создадим временный файл swiftlint_files с префиксом @ и в нем уже определим список файлов
+# необходимых для линтовки :)
+
+lint_files_path="${SRCROOT}/build_phases/swiftlint_files"
+
+if [ ! -z "${lint_files_path}" ]; then
+    > ${lint_files_path} # Если файл существует, то просто его отчистим
+else
+    touch ${lint_files_path} # Если файла нет, то создадим его
+fi
+
+# Проходимся по папкам, которые требуют линтовки
 for SOURCE_DIR in ${SOURCES_DIRS}; do
-    ${SWIFTLINT_EXECUTABLE} autocorrect --path ${SOURCE_DIR} --config ${SWIFTLINT_CONFIG_PATH}
-    ${SWIFTLINT_EXECUTABLE} --path ${SOURCE_DIR} --config ${SWIFTLINT_CONFIG_PATH}
+
+    # Отбираем файлы, которые были изменены или созданы
+    source_unstaged_files=$(git diff --diff-filter=d --name-only ${SOURCE_DIR} | grep "\.swift$")
+    source_staged_files=$(git diff --diff-filter=d --name-only --cached ${SOURCE_DIR} | grep "\.swift$")
+
+    if [ ! -z "${source_unstaged_files}" ]; then
+        echo "${source_unstaged_files}" >> ${lint_files_path}
+    fi
+
+    if [ ! -z "${source_staged_files}" ]; then
+        echo "${source_staged_files}" >> ${lint_files_path}
+    fi
 done
+
+swiftlint_files_path="@${lint_files_path}"
+
+${SWIFTLINT_EXECUTABLE} autocorrect --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH}
+${SWIFTLINT_EXECUTABLE} lint --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH}
