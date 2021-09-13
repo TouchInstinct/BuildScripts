@@ -50,7 +50,7 @@ fi
 lint_files_path="${SRCROOT}/build_phases/swiftlint_files"
 
 if [ ! -z "${lint_files_path}" ]; then
-    > ${lint_files_path} # Если файл существует, то просто его отчистим
+    > ${lint_files_path} # Если файл существует, то просто его очистим
 else
     touch ${lint_files_path} # Если файла нет, то создадим его
 fi
