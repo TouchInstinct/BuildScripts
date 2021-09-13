@@ -148,7 +148,6 @@ private_lane :buildArchive do |options|
   lane_name = options[:lane_name]
   configuration = options[:configuration]
   xcodeproj_path = options[:xcodeproj_path]
-  xcargs = "FORCE_LINT='true'" # To enable linting on project without CodeLint target
 
   if configuration != "AppStore" # AppStore uses xcconfig choosen in Xcode
     set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
@@ -167,7 +166,6 @@ private_lane :buildArchive do |options|
     skip_package_ipa: options[:skip_package_ipa],
     include_symbols: options[:include_symbols] || false,
     include_bitcode: options[:compileBitcode] || false,
-    xcargs: xcargs
   )
 end
 
