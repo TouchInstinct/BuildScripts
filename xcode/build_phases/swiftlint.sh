@@ -61,11 +61,8 @@ else
 
     lint_files_path="${SRCROOT}/build_phases/swiftlint_files"
 
-    if [ ! -z "${lint_files_path}" ]; then
-        > ${lint_files_path} # Если файл существует, то просто его очистим
-    else
-        touch ${lint_files_path} # Если файла нет, то создадим его
-    fi
+    # Если файл существует, то просто его очистим, если нет - создадим
+    > ${lint_files_path}
 
     # Проходимся по папкам, которые требуют линтовки
     for SOURCE_DIR in ${SOURCES_DIRS}; do
