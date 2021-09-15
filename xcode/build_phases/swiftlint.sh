@@ -12,9 +12,6 @@
 #   SRCROOT - project directory.
 #   PODS_ROOT - cocoapods installation directory (eg. ${SRCROOT}/Pods).
 #
-# Available environment variables:
-#   FORCE_LINT - lint all project.
-#
 # Optional environment variables:
 #   SWIFTLINT_EXECUTABLE - path to swiftlint executable.
 #   SWIFTLINT_CONFIG_PATH - path to swiftlint config.
