@@ -115,6 +115,8 @@ identifier_name:
 
 warning_threshold: 1
 
+allow_zero_lintable_files: true
+
 custom_rules:
 
   # General

@@ -17,9 +17,11 @@
 #   SWIFTLINT_CONFIG_PATH - path to swiftlint config.
 #   SCRIPT_INPUT_FILE_COUNT - number of files listed in "Input files" of build phase.
 #   SCRIPT_INPUT_FILE_{N} - file path to directory that should be checked.
+#   FORCE_LINT - lint all project.
 #
 # Example of usage:
 #   swiftlint.sh
+#   FORCE_LINT=true; swiftlint.sh
 #   swiftlint.sh Pods/Swiftlint/swiftlint build-scripts/xcode/.swiftlint.yml
 #
 
@@ -41,7 +43,42 @@ if [ -z "${SWIFTLINT_CONFIG_PATH}" ]; then
     fi
 fi
 
-for SOURCE_DIR in ${SOURCES_DIRS}; do
-    ${SWIFTLINT_EXECUTABLE} autocorrect --path ${SOURCE_DIR} --config ${SWIFTLINT_CONFIG_PATH}
-    ${SWIFTLINT_EXECUTABLE} --path ${SOURCE_DIR} --config ${SWIFTLINT_CONFIG_PATH}
-done
+if [ ! -z "${FORCE_LINT}" ]; then
+    # Если задана переменная FORCE_LINT, то проверяем все файлы проекта
+    for SOURCE_DIR in ${SOURCES_DIRS}; do
+        ${SWIFTLINT_EXECUTABLE} autocorrect --path ${SOURCE_DIR} --config ${SWIFTLINT_CONFIG_PATH}
+        ${SWIFTLINT_EXECUTABLE} --path ${SOURCE_DIR} --config ${SWIFTLINT_CONFIG_PATH}
+    done
+else 
+    # Xcode упадет, если будем использовать большое количество Script Input Files, 
+    # так как просто переполнится стек - https://unix.stackexchange.com/questions/357843/setting-a-long-environment-variable-breaks-a-lot-of-commands
+    # Поэтому воспользуемся "скрытым" параметром Swiflint - https://github.com/realm/SwiftLint/pull/3313
+    # Создадим временный файл swiftlint_files с префиксом @ и в нем уже определим список файлов
+    # необходимых для линтовки :)
+
+    lint_files_path="${SRCROOT}/build_phases/swiftlint_files"
+
+    # Если файл существует, то просто его очистим, если нет - создадим
+    > ${lint_files_path}
+
+    # Проходимся по папкам, которые требуют линтовки
+    for SOURCE_DIR in ${SOURCES_DIRS}; do
+
+        # Отбираем файлы, которые были изменены или созданы
+        source_unstaged_files=$(git diff --diff-filter=d --name-only ${SOURCE_DIR} | grep "\.swift$")
+        source_staged_files=$(git diff --diff-filter=d --name-only --cached ${SOURCE_DIR} | grep "\.swift$")
+
+        if [ ! -z "${source_unstaged_files}" ]; then
+            echo "${source_unstaged_files}" >> ${lint_files_path}
+        fi
+
+        if [ ! -z "${source_staged_files}" ]; then
+            echo "${source_staged_files}" >> ${lint_files_path}
+        fi
+    done
+
+    swiftlint_files_path="@${lint_files_path}"
+
+    ${SWIFTLINT_EXECUTABLE} autocorrect --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH} --force-exclude --use-alternative-excluding
+    ${SWIFTLINT_EXECUTABLE} --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH} --force-exclude --use-alternative-excluding
+fi
