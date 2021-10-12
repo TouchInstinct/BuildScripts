@@ -148,16 +148,19 @@ private_lane :buildArchive do |options|
   lane_name = options[:lane_name]
   configuration = options[:configuration]
   xcodeproj_path = options[:xcodeproj_path]
+  xcode_version = options[:xcodeVersion]
   default_xcode_version = sh("xcodebuild -version") # Xcode <version> Build version <version>
     .split(" ")[1]
-
-  xcode_version = options[:xcodeVersion] || default_xcode_version
 
   if configuration != "AppStore" # AppStore uses xcconfig choosen in Xcode
     set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
   end
 
-  xcversion(version: xcode_version)
+  if xcode_version.nil?
+    xcversion(version: default_xcode_version)
+  else
+    xcversion(version: xcode_version)
+  end
 
   gym(
     clean: true,
