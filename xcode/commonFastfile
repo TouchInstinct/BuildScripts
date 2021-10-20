@@ -149,8 +149,11 @@ private_lane :buildArchive do |options|
   configuration = options[:configuration]
   xcodeproj_path = options[:xcodeproj_path]
   xcode_version = options[:xcodeVersion]
-  default_xcode_version = sh("xcodebuild -version") # Xcode <version> Build version <version>
-    .split(" ")[1]
+
+  default_xcode_version = sh("system_profiler -json SPDeveloperToolsDataType | jq -r '.SPDeveloperToolsDataType # getting json with version data
+  |=sort_by(.spdevtools_version) # sort by increasing the version of xcode
+  |.SPDeveloperToolsDataType[-1].spdevtools_version'") # take the largest version in format: "13.0 (13A5212g)"
+  .split(" ")[0] # take version number
 
   if configuration != "AppStore" # AppStore uses xcconfig choosen in Xcode
     set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
