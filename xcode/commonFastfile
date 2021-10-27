@@ -141,6 +141,9 @@ private_lane :buildConfiguration do |options|
 end
 
 private_lane :buildArchive do |options|
+
+  require 'json'
+
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
   exportOptions[:compileBitcode] = options[:compileBitcode] || false
@@ -148,9 +151,23 @@ private_lane :buildArchive do |options|
   lane_name = options[:lane_name]
   configuration = options[:configuration]
   xcodeproj_path = options[:xcodeproj_path]
+  xcode_version = options[:xcodeVersion]
+
+  cmd = 'system_profiler -json SPDeveloperToolsDataType'
+  cmd_result = `#{cmd}`
+  spdeveloperToolsDataType = JSON.parse(cmd_result)['SPDeveloperToolsDataType']
+  sortedSPDeveloperToolsDataType = spdeveloperToolsDataType.sort_by { |hash| hash['spdevtools_version'].split(' ').first.to_i } # sort by increasing the version of xcode
+  default_xcode_version = sortedSPDeveloperToolsDataType.last['spdevtools_version'] # take the largest version in format: "13.0 (13A5212g)"
+  default_xcode_version_number = default_xcode_version.split(' ').first # take version number
 
   if configuration != "AppStore" # AppStore uses xcconfig choosen in Xcode
     set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
+  end
+
+  if xcode_version.nil?
+    xcversion(version: default_xcode_version_number)
+  else
+    xcversion(version: xcode_version)
   end
 
   gym(
