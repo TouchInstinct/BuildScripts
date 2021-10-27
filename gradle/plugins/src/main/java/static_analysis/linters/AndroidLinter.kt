@@ -62,7 +62,11 @@ class AndroidLinter : Linter {
                 .mapNotNull { subproject: Project ->
                     subproject
                             .tasks
-                            .find { task -> task.name.contains(buildType, ignoreCase = true) && task.name.contains("lint") }
+                            .find { task ->
+                                task.name.contains(buildType, ignoreCase = true)
+                                        && task.name.contains("lint")
+                                        && !task.name.contains("lintVital")
+                            }
                             ?.path
                 }
     }
