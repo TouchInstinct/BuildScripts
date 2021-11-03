@@ -63,10 +63,12 @@ else
 
     # Проходимся по папкам, которые требуют линтовки
     for SOURCE_DIR in ${SOURCES_DIRS}; do
+        # Путь к папке репозитория
+        path_prefix="`git rev-parse --show-toplevel`/"
 
         # Отбираем файлы, которые были изменены или созданы
-        source_unstaged_files=$(git diff --diff-filter=d --name-only ${SOURCE_DIR} | grep "\.swift$")
-        source_staged_files=$(git diff --diff-filter=d --name-only --cached ${SOURCE_DIR} | grep "\.swift$")
+        source_unstaged_files=$(git diff --diff-filter=d --name-only --line-prefix=${path_prefix} ${SOURCE_DIR} | grep "\.swift$")
+        source_staged_files=$(git diff --diff-filter=d --name-only --line-prefix=${path_prefix} --cached ${SOURCE_DIR} | grep "\.swift$")
 
         if [ ! -z "${source_unstaged_files}" ]; then
             echo "${source_unstaged_files}" >> ${lint_files_path}
