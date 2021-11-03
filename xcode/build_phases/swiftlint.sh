@@ -67,7 +67,7 @@ else
         path_prefix="`git rev-parse --show-toplevel`/"
 
         # Отбираем файлы, которые были изменены или созданы
-        source_unstaged_files=$(git diff --diff-filter=d --name-only --line-prefix=${path_prefix} | grep "\.swift$")
+        source_unstaged_files=$(git diff --diff-filter=d --name-only --line-prefix=${path_prefix} ${SOURCE_DIR} | grep "\.swift$")
         source_staged_files=$(git diff --diff-filter=d --name-only --line-prefix=${path_prefix} --cached ${SOURCE_DIR} | grep "\.swift$")
 
         if [ ! -z "${source_unstaged_files}" ]; then
