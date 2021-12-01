@@ -21,5 +21,5 @@ function source_home_file {
 if [ -z "$(which $1)" ]; then
    source_home_file ".bash_profile" || source_home_file ".zshrc" || true
 
-   echo "User defined enviroment has been set"
+   echo "User defined enviroment has been set for ${1}"
 fi

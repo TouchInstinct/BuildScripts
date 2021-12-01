@@ -24,11 +24,7 @@
 readonly EXIT_SUCCESS=0
 readonly EXIT_FAILURE=1
 
-if ! which pmd >/dev/null; then
-    echo "pmd is not found, trying add user defined enviroment"
-
-    . ${SCRIPT_DIR}/../aux_scripts/install_env.sh pmd
-fi
+. ${SCRIPT_DIR}/../aux_scripts/install_env.sh pmd
 
 if which pmd >/dev/null; then
     readonly REPORTS_DIR="${PROJECT_DIR}/code-quality-reports"
