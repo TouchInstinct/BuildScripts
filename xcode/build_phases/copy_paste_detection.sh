@@ -24,6 +24,8 @@
 readonly EXIT_SUCCESS=0
 readonly EXIT_FAILURE=1
 
+. ${SCRIPT_DIR}/../aux_scripts/install_env.sh pmd
+
 if which pmd >/dev/null; then
     readonly REPORTS_DIR="${PROJECT_DIR}/code-quality-reports"
 
