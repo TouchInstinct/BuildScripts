@@ -30,12 +30,12 @@ BUNDLE=${3:-".main"}
 
 if ! [ -e ${LOCALIZATION_PATH} ]; then
 	echo "${LOCALIZATION_PATH} path does not exist. Add these folders and try again."
-	exit 1
+	exit ${EXIT_FAILURE}
 fi
 
 if ! [ -e "${STRINGS_FOLDER}" ]; then
 	echo "${STRINGS_FOLDER} path does not exist. Submodule with strings should be named common and contain strings folder."
-	exit 1
+	exit ${EXIT_FAILURE}
 fi
 
 if which php >/dev/null; then
