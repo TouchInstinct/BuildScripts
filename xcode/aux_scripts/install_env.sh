@@ -17,15 +17,13 @@
 function source_home_file {
   file="$HOME/$1"
 
-  #echo $file
-
   if [[ -f "${file}" ]]; then
-    paathes="$(cat "${file}" | grep "^export PATH=")"
+    export_commands="$(cat "${file}" | grep "^export PATH=")"
 
-    while read paath
+    while read export_command
     do
-      eval "$paath"
-    done <<< "$paathes"
+      eval "$export_command"
+    done <<< "$export_commands"
   else
     return 1
   fi
