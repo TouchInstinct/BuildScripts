@@ -38,7 +38,7 @@ fi
 if which php >/dev/null; then
 	php ${SCRIPT_DIR}/../aux_scripts/import_strings.php ${LOCALIZATION_PATH} ${STRINGS_FOLDER} ${BUNDLE}
 else
-    echo "warning: php not installed, install using 'brew install php'"
+	echo "warning: php not installed, install using 'brew install php'"
 
-    exit ${EXIT_FAILURE}
+	exit ${EXIT_FAILURE}
 fi
