@@ -24,11 +24,9 @@ function source_home_file {
     do
       eval "$export_command"
     done <<< "$export_commands"
-  else
-    return 1
   fi
 
-  return 0
+  return 1
 }
 
 # Use specific exec due to Xcode has custom value of $PATH 
