@@ -19,6 +19,8 @@
 #   . localization.sh common/strings Resources/Localization/ .main
 #
 
+. ${SCRIPT_DIR}/../aux_scripts/install_env.sh php
+
 STRINGS_FOLDER=${1:-"common/strings"}
 LOCALIZATION_PATH=${2:-"${PRODUCT_NAME}/Resources/Localization/"}
 BUNDLE=${3:-".main"}
