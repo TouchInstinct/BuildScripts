@@ -19,6 +19,9 @@
 #   . localization.sh common/strings Resources/Localization/ .main
 #
 
+readonly EXIT_SUCCESS=0
+readonly EXIT_FAILURE=1
+
 . ${SCRIPT_DIR}/../aux_scripts/install_env.sh php
 
 STRINGS_FOLDER=${1:-"common/strings"}
