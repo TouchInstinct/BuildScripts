@@ -35,4 +35,10 @@ if ! [ -e "${STRINGS_FOLDER}" ]; then
 	exit 1
 fi
 
-php ${SCRIPT_DIR}/../aux_scripts/import_strings.php ${LOCALIZATION_PATH} ${STRINGS_FOLDER} ${BUNDLE}
+if which php >/dev/null; then
+	php ${SCRIPT_DIR}/../aux_scripts/import_strings.php ${LOCALIZATION_PATH} ${STRINGS_FOLDER} ${BUNDLE}
+else
+    echo "warning: php not installed, install using 'brew install php'"
+
+    exit ${EXIT_FAILURE}
+fi
