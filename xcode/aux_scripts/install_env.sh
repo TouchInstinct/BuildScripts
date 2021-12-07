@@ -18,12 +18,14 @@ function source_home_file {
   file="$HOME/$1"
 
   if [[ -f "${file}" ]]; then
-    export_commands="$(cat "${file}" | grep "^export PATH=")"
+    if ! source "${file}"; then
+      export_commands="$(cat "${file}" | grep "^export PATH=")"
 
-    while read export_command
-    do
-      eval "$export_command"
-    done <<< "$export_commands"
+      while read export_command
+      do
+        eval "$export_command"
+      done <<< "$export_commands"
+    fi
   fi
 
   return 1
