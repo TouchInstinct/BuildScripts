@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Description:
 #   Add user defined enviroment if programm not found
 #
@@ -14,7 +16,19 @@
 
 function source_home_file {
   file="$HOME/$1"
-  [[ -f "${file}" ]] && source "${file}"
+
+  if [[ -f "${file}" ]]; then
+    if ! source "${file}"; then
+      export_commands="$(cat "${file}" | grep "^export PATH=")"
+
+      while read export_command
+      do
+        eval "$export_command"
+      done <<< "$export_commands"
+    fi
+  fi
+
+  return 1
 }
 
 # Use specific exec due to Xcode has custom value of $PATH 
