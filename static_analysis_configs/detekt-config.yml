@@ -387,9 +387,6 @@ style:
   UnusedPrivateMember:
     active: true
     allowedNames: "(_|ignored|expected|serialVersionUID)"
-  UseDataClass:
-    active: true
-    excludeAnnotatedClasses: ""
   UtilityClassWithPublicConstructor:
     active: false
   VarCouldBeVal:
