@@ -61,11 +61,11 @@ else
     # Если файл существует, то просто его очистим, если нет - создадим
     > ${lint_files_path}
 
+    # Путь к папке репозитория
+    path_prefix="`git rev-parse --show-toplevel`/"
+
     # Проходимся по папкам, которые требуют линтовки
     for SOURCE_DIR in ${SOURCES_DIRS}; do
-        # Путь к папке репозитория
-        path_prefix="`git rev-parse --show-toplevel`/"
-
         # Отбираем файлы, которые были изменены или созданы
         source_unstaged_files=$(git diff --diff-filter=d --name-only --line-prefix=${path_prefix} ${SOURCE_DIR} | grep "\.swift$")
         source_staged_files=$(git diff --diff-filter=d --name-only --line-prefix=${path_prefix} --cached ${SOURCE_DIR} | grep "\.swift$")
@@ -81,6 +81,6 @@ else
 
     swiftlint_files_path="@${lint_files_path}"
 
-    ${SWIFTLINT_EXECUTABLE} autocorrect --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH} --force-exclude --use-alternative-excluding
+    ${SWIFTLINT_EXECUTABLE} --fix --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH} --force-exclude --use-alternative-excluding
     ${SWIFTLINT_EXECUTABLE} --path ${swiftlint_files_path} --config ${SWIFTLINT_CONFIG_PATH} --force-exclude --use-alternative-excluding
 fi
