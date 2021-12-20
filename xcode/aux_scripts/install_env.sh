@@ -33,7 +33,7 @@ function source_home_file {
 
 # Use specific exec due to Xcode has custom value of $PATH 
 if [ -z "$(which $1)" ]; then
-   source_home_file ".bash_profile" || source_home_file ".zshrc" || true
+   source_home_file ".bash_profile" || source_home_file ".zshrc" || source_home_file ".zprofile" || true
 
    echo "User defined enviroment has been set for ${1}"
 fi
