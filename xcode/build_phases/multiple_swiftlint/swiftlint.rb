@@ -3,7 +3,10 @@ require_relative 'setting_option.rb'
 require_relative 'strategy_maker.rb'
 
 setting = SettingOption.new
-strategy_maker = StrategyMaker.new(setting.project_root_path, setting.swiftlint_executable_path, setting.touchin_swiftlint_yaml_path)
+strategy_maker = StrategyMaker.new(setting.project_root_path,
+    setting.swiftlint_executable_path,
+    setting.touchin_swiftlint_yaml_path,
+    setting.old_swiftlint_yaml_path)
 
 if setting.check_mode.eql? 'fully' and setting.use_multiple.true?
     strategy_maker.run_fully_multiple_strategy(setting.source_date)
