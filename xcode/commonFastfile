@@ -113,7 +113,8 @@ private_lane :buildConfiguration do |options|
   if is_ci
     increment_build_number_in_xcodeproj(
       build_number: options[:buildNumber],
-      xcodeproj: "./#{options[:appName]}.xcodeproj"
+      xcodeproj: "./#{options[:appName]}.xcodeproj",
+      target: options[:appName]
     )
   end
 
