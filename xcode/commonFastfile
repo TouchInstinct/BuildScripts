@@ -1,6 +1,15 @@
 $appName = File.basename(Dir['../*.xcworkspace'].first, '.*')
 
 require_relative 'fastlane/touchlane/lib/touchlane'
+require_relative 'managers/managers'
+
+# ugly hack to add support for custom storage
+
+Match.module_eval do
+  def self.storage_modes
+    return %w(git google_cloud s3 local)
+  end
+end
 
 # ugly hack to add support for custom storage
 
@@ -19,48 +28,14 @@ private_lane :installDependencies do |options|
     sh("rm -rf #{podsReposPath}")
   end
 
-  if File.exists? "../Gemfile"
-    bundle_install(path: "../.gem")
-  end
-
   cocoapods(
     repo_update: true
   )
-
-  if File.exists? "../Cartfile"
-    use_rome = File.exists? "../Romefile"
-
-    swift_version = sh("xcrun swift --version | head -1 | sed 's/.*\\(\(.*\)\\).*/\\1/' | tr -d \"()\" | tr \" \" \"-\"").chop
-    rome_path = "Pods/Rome/rome"
-    rome_options = "--platform iOS --cache-prefix #{swift_version} --romefile Romefile"
-
-    carthage_install = lambda do
-      if use_rome
-        sh("cd .. && #{rome_path} download #{rome_options}")
-      end
-
-      carthage(command: "bootstrap", platform: "iOS", cache_builds: true)
-
-      if use_rome
-        sh("cd .. && #{rome_path} list --missing #{rome_options} | awk '{print $1}' | xargs -I framework_name #{rome_path} upload framework_name #{rome_options}")
-      end
-    end
-
-    begin
-      carthage_install.call
-    rescue
-      # workaround for https://github.com/Carthage/Carthage/issues/2298
-      sh("rm -rf ~/Library/Caches/org.carthage.CarthageKit")
-      carthage_install.call
-    end
-  end
 end
 
 private_lane :uploadToFirebase do |options|
   releaseNotesFile = "release-notes.txt"
   sh("touch ../#{releaseNotesFile}")
-
-  sh("yarn install")
 
   app_target_folder_name = options[:appName] || $appName
   configuration_type = Touchlane::ConfigurationType.from_type(options[:type])
@@ -73,8 +48,7 @@ private_lane :uploadToFirebase do |options|
       app: google_app_id,
       ipa_path: options[:ipa_path],
       groups: "touch-instinct",
-      release_notes_file: releaseNotesFile,
-      firebase_cli_path: File.expand_path("../node_modules/firebase-tools/lib/bin/firebase.js")
+      release_notes_file: releaseNotesFile
   )
 
   upload_symbols_to_crashlytics(
@@ -97,7 +71,7 @@ end
 
 private_lane :addShield do |options|
   buildNumber = options[:buildNumber]
-  buildDescription = options[:xcconfig_name] # EnterpriseCustomerDev1WithoutSSLPinningRelease
+  buildDescription = options[:lane_name] # EnterpriseCustomerDev1WithoutSSLPinningRelease
     .split(/(?=[A-Z])/) # -> ["Enterprise", "Customer", "Dev1", "Without", "S", "S", "L", "Pinning", "Release"]
     .map { |v| v.gsub(/[[:lower:]]+/, "") }[1..2] # -> ["E", "C", "D1", "W", "S", "S", "L", "P", "R"] -> ["C", "D1"]
     .join # -> "CD1"
@@ -113,35 +87,41 @@ private_lane :addShield do |options|
 end
 
 private_lane :buildConfiguration do |options|
-  appName = options[:appName] || $appName
+  options[:appName] = options[:appName] || $appName
 
-  lane_name = lane_context[SharedValues::LANE_NAME]
+  lane_name = options[:lane_name] || lane_context[SharedValues::LANE_NAME]
 
-  options[:scheme] = appName
-  options[:xcconfig_name] = lane_name
+  options[:scheme] = options[:scheme] || options[:appName]
+  options[:lane_name] = lane_name
+
+  ipa_name = "#{options[:appName]}.ipa"
+  options[:output_name] = ipa_name
+
+  options[:ipa_path] = "./#{ipa_name}"
+  options[:dsym_path] = "./#{options[:appName]}.app.dSYM.zip"
+
+  options[:xcodeproj_path] = options[:xcodeproj_path] || "../#{options[:appName]}.xcodeproj"
+  options[:workspace] = options[:workspace] || File.expand_path("../#{options[:appName]}.xcworkspace")
 
   configuration_type = Touchlane::ConfigurationType.from_lane_name(lane_name)
   options = fill_up_options_using_configuration_type(options, configuration_type)
+
+  generate_xcodeproj_if_needed(options)
 
   openKeychain(options)
 
   if is_ci
     increment_build_number_in_xcodeproj(
       build_number: options[:buildNumber],
-      xcodeproj: "./#{appName}.xcodeproj"
+      xcodeproj: "./#{options[:appName]}.xcodeproj",
+      target: options[:appName]
     )
   end
 
-  ipa_name = "#{appName}.ipa"
-  options[:output_name] = ipa_name
-
-  options[:ipa_path] = "./#{ipa_name}"
-  options[:dsym_path] = "./#{appName}.app.dSYM.zip"
-
-  options[:xcodeproj_path] = "../#{appName}.xcodeproj"
-  options[:workspace] = "./#{appName}.xcworkspace"
-
   installDependencies(options)
+
+  run_code_generation_phase_if_needed(options)
+  generate_enabled_features_extension_if_needed(options)
 
   if !(options[:uploadToFabric] || options[:uploadToAppStore])
     options[:skip_package_ipa] = true
@@ -171,16 +151,33 @@ private_lane :buildConfiguration do |options|
 end
 
 private_lane :buildArchive do |options|
+
+  require 'json'
+
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
   exportOptions[:compileBitcode] = options[:compileBitcode] || false
 
-  xcconfig_name = options[:xcconfig_name]
+  lane_name = options[:lane_name]
   configuration = options[:configuration]
   xcodeproj_path = options[:xcodeproj_path]
+  xcode_version = options[:xcodeVersion]
+
+  cmd = 'system_profiler -json SPDeveloperToolsDataType'
+  cmd_result = `#{cmd}`
+  spdeveloperToolsDataType = JSON.parse(cmd_result)['SPDeveloperToolsDataType']
+  sortedSPDeveloperToolsDataType = spdeveloperToolsDataType.sort_by { |hash| hash['spdevtools_version'].split(' ').first.to_i } # sort by increasing the version of xcode
+  default_xcode_version = sortedSPDeveloperToolsDataType.last['spdevtools_version'] # take the largest version in format: "13.0 (13A5212g)"
+  default_xcode_version_number = default_xcode_version.split(' ').first # take version number
 
   if configuration != "AppStore" # AppStore uses xcconfig choosen in Xcode
-    set_xcconfig_for_configuration_of_project(xcconfig_name, configuration, xcodeproj_path)
+    set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
+  end
+
+  if xcode_version.nil?
+    xcversion(version: default_xcode_version_number)
+  else
+    xcversion(version: xcode_version)
   end
 
   gym(
@@ -450,7 +447,8 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
   target_to_modify_selector = lambda do |t|
     supported_product_types = [
         Xcodeproj::Constants::PRODUCT_TYPE_UTI[:application],
-        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension]
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension],
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:framework]
     ]
     return !t.test_target_type? && supported_product_types.include?(t.product_type)
   end
@@ -461,9 +459,33 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
     build_configuration = target.build_configuration_list[configuration]
     config_name = target.name + lane_name
     build_configuration_reference = project.files.select { |f| f.path.start_with?(config_name) }.first
-    build_configuration.base_configuration_reference = build_configuration_reference
+
+    if !build_configuration_reference.nil? # target has custom xcconfig
+      build_configuration = target.build_configuration_list[configuration]
+      build_configuration.base_configuration_reference = build_configuration_reference
+    end
   end
 
 
   project.save()
+end
+
+def generate_xcodeproj_if_needed(options)
+  project_yml_path = File.expand_path "../project.yml"
+
+  if !File.exists?(options[:xcodeproj_path]) && File.exists?(project_yml_path)
+    xcodegen(
+      spec: project_yml_path
+    )
+  end
+end
+
+# Build phases
+
+def run_code_generation_phase_if_needed(options)
+  code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
+
+  if File.exists? code_generation_script_path
+    sh(code_generation_script_path, options[:workspace])
+  end
 end

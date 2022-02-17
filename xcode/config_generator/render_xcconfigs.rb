@@ -64,39 +64,12 @@ def fetch_development_team(development_team_key, distribution_type)
     return config_option(development_team_key, team_value)
 end
 
-# Return empty array or generated provisioning profile hash
-def generate_provisioning_profile(provisioning_key, bundle_id, distribution_type)
-  case distribution_type
-  when "appstore"
-    app_store_profile = "match AppStore " + bundle_id
-    config_option(provisioning_key, app_store_profile)
-  else
-    config_option(provisioning_key, bundle_id)
-  end
-end
-
-def generate_google_service_info_plist_path(google_service_info_plist_key, target_name, distribution_type)
-    google_service_info_plist_path = target_name + "/Resources/"
-
-    path_suffix = case distribution_type
-                  when "development"
-                    "Standard-GoogleService-Info.plist"
-                  when "enterprise"
-                    "Enterprise-GoogleService-Info.plist"
-                  else
-                    "AppStore-GoogleService-Info.plist"
-                  end
-
-    return config_option(google_service_info_plist_key, google_service_info_plist_path + path_suffix)
-end
-
 # Generate missing properties if needed
 def generate_missing_properties(target_name, properties, distribution_type)
     result = []
     development_team_key = "DEVELOPMENT_TEAM"
-    provisioning_key = "PROVISIONING_PROFILE_SPECIFIER"
-    google_service_info_plist_key = "GOOGLE_SERVICE_INFO_PLIST_PATH"
     bundle_id_key = "PRODUCT_BUNDLE_IDENTIFIER"
+    code_sign_style_key = "CODE_SIGN_STYLE"
 
     # Bundle_id_key should be among the properties (required by fastlane)
     unless properties.key?(bundle_id_key)
@@ -107,12 +80,8 @@ def generate_missing_properties(target_name, properties, distribution_type)
         result.append(fetch_development_team(development_team_key, distribution_type))
     end
 
-    unless properties.key?(provisioning_key)
-        result.append(generate_provisioning_profile(provisioning_key, properties[bundle_id_key], distribution_type))
-    end
-
-    unless properties.key?(google_service_info_plist_key)
-        result.append(generate_google_service_info_plist_path(google_service_info_plist_key, target_name, distribution_type))
+    unless properties.key?(code_sign_style_key)
+        result.append(config_option(code_sign_style_key, "Manual"))
     end
 
     return result
@@ -133,7 +102,11 @@ targets.each do |target_name, target|
 
         # Add properties from settings file
         properties.each do |key, value|
-          config["xcconfig_options"].append(config_option(key, value))
+            if config["xcconfig_options"].any? { |option| key == option["key"] }
+                config["xcconfig_options"].map! { |option| key == option["key"] ? config_option(key, value) : option }
+            else
+                config["xcconfig_options"].append(config_option(key, value))
+            end
         end
 
         # Add missing properties if needed
