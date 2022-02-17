@@ -36,12 +36,24 @@ private_lane :uploadToFirebase do |options|
 
   google_app_id = get_info_plist_value(path: gsp_plist_path, key: "GOOGLE_APP_ID")
 
-  firebase_app_distribution(
+  firebase_app_distibution_groups_path = File.expand_path "../firebase_app_distribution_groups"
+
+  # Select groups_file or groups parameter depending on groups file existence
+  if File.exists? firebase_app_distibution_groups_path
+    firebase_app_distribution(
+      app: google_app_id,
+      ipa_path: options[:ipa_path],
+      groups_file: firebase_app_distibution_groups_path,
+      release_notes_file: releaseNotesFile
+    )
+  else
+    firebase_app_distribution(
       app: google_app_id,
       ipa_path: options[:ipa_path],
       groups: "touch-instinct",
       release_notes_file: releaseNotesFile
-  )
+    )
+  end
 
   upload_symbols_to_crashlytics(
     gsp_path: get_google_services_plist_path(app_target_folder_name, configuration_type)
