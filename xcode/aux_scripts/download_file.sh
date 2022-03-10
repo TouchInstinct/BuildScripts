@@ -3,8 +3,8 @@ file_link=$2
 folder=$3
 flag_of_delete=$4
 
-readonly key_of_delete="--remove-cached"
-readonly default_folder="./Downloads"
+key_of_delete="--remove-cached"
+default_folder="./Downloads"
 
 if [[ ${folder} = ${key_of_delete} ]]; then
     folder="${default_folder}"
