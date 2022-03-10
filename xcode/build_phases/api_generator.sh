@@ -9,7 +9,7 @@
 #
 # Optional environment variables:
 #   OUTPUT_PATH - path to Generated folder.
-#   API_SPEC_DIR - path api specification folder
+#   API_SPEC_DIR - path to api specification folder
 #   VERBOSE - print debug messages
 #   API_NAME - project name that will be used by generator (example: OUTPUT_PATH/API_NAME/Classes )
 #
@@ -162,7 +162,7 @@ openapi_codegen()
 
     . build-scripts/xcode/aux_scripts/download_file.sh ${TINETWORKING_CODEGEN_FILE_NAME} ${DOWNLOAD_URL}
 
-    java -cp "Downloads/${CODEGEN_FILE_NAME}:Downloads/${TINETWORKING_CODEGEN_FILE_NAME}" io.swagger.codegen.v3.cli.SwaggerCodegen generate -l TINetworking -i ${YAML_FILE} -o ${OUTPUT_PATH} --additional-properties projectName:PetshopAPI
+    java -cp "Downloads/${CODEGEN_FILE_NAME}:Downloads/${TINETWORKING_CODEGEN_FILE_NAME}" io.swagger.codegen.v3.cli.SwaggerCodegen generate -l TINetworking -i ${YAML_FILE} -o ${OUTPUT_PATH} --additional-properties projectName:${API_NAME}
 }
 
 api_generator_codegen()
