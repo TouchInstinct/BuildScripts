@@ -7,6 +7,9 @@
 #   $1 - api generator version.
 #   $2 - path to generated code directory
 #
+# Required environment variables:
+#   SRCROOT - path to project folder.
+#
 # Optional environment variables:
 #   OUTPUT_PATH - path to Generated folder.
 #   API_SPEC_DIR - path to api specification folder
@@ -162,7 +165,15 @@ openapi_codegen()
 
     . build-scripts/xcode/aux_scripts/download_file.sh ${TINETWORKING_CODEGEN_FILE_NAME} ${DOWNLOAD_URL}
 
-    java -cp "Downloads/${CODEGEN_FILE_NAME}:Downloads/${TINETWORKING_CODEGEN_FILE_NAME}" io.swagger.codegen.v3.cli.SwaggerCodegen generate -l TINetworking -i ${YAML_FILE} -o ${OUTPUT_PATH} --additional-properties projectName:${API_NAME}
+    rm -rf ${OUTPUT_PATH}/${API_NAME} # remove previously generated API (if exists)
+
+    java -cp "Downloads/${CODEGEN_FILE_NAME}:Downloads/${TINETWORKING_CODEGEN_FILE_NAME}" io.swagger.codegen.v3.cli.SwaggerCodegen generate -l TINetworking -i ${YAML_FILE} -o ${OUTPUT_PATH} --additional-properties projectName=${API_NAME}
+
+    # flatten folders hierarchy
+
+    mv ${OUTPUT_PATH}/${API_NAME}/Classes/Swaggers/* ${OUTPUT_PATH}/${API_NAME}/
+
+    rm -rf ${OUTPUT_PATH}/${API_NAME}/Classes
 }
 
 api_generator_codegen()
