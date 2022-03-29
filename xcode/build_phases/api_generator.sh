@@ -119,11 +119,11 @@ record_current_commit()
 
 openapi_codegen()
 {
-    if [ -z "${YAML_FILE}" ]; then
+    if [ -z "${OPEN_API_SPEC_PATH}" ]; then
         if [ ! -v "${1}" ]; then
-            local -r YAML_FILE=${1}
+            local -r OPEN_API_SPEC_PATH=${1}
         else
-            debug "YAML_FILE should be defined or passed as first argument!"
+            debug "OPEN_API_SPEC_PATH should be defined or passed as first argument!"
             return ${EXIT_FAILURE}
         fi
     fi
@@ -150,7 +150,7 @@ openapi_codegen()
         local -r API_NAME="${PROJECT_NAME}API"
     fi
 
-    notice "OpenAPI spec generation for ${YAML_FILE}"
+    notice "OpenAPI spec generation for ${OPEN_API_SPEC_PATH}"
 
     local -r CODEGEN_VERSION="3.0.33"
 
@@ -167,7 +167,7 @@ openapi_codegen()
 
     rm -rf ${OUTPUT_PATH}/${API_NAME} # remove previously generated API (if exists)
 
-    java -cp "Downloads/${CODEGEN_FILE_NAME}:Downloads/${TINETWORKING_CODEGEN_FILE_NAME}" io.swagger.codegen.v3.cli.SwaggerCodegen generate -l TINetworking -i ${YAML_FILE} -o ${OUTPUT_PATH} --additional-properties projectName=${API_NAME}
+    java -cp "Downloads/${CODEGEN_FILE_NAME}:Downloads/${TINETWORKING_CODEGEN_FILE_NAME}" io.swagger.codegen.v3.cli.SwaggerCodegen generate -l TINetworking -i ${OPEN_API_SPEC_PATH} -o ${OUTPUT_PATH} --additional-properties projectName=${API_NAME}
 
     # flatten folders hierarchy
 
@@ -237,18 +237,19 @@ if [ -z "${OUTPUT_PATH}" ]; then
 fi
 
 if [ -z "${API_SPEC_DIR}" ]; then
-    readonly API_SPEC_DIR="common"
+    readonly API_SPEC_DIR="common/api"
 fi
 
 mkdir -p ${OUTPUT_PATH}
 
-readonly YAML_FILE=`find ${API_SPEC_DIR} -maxdepth 1 -name '*.yaml' -o -name '*.yml' | head -n 1`
+readonly OPEN_API_SPEC_PATH=`find ${API_SPEC_DIR} -maxdepth 1 -name '*.yaml' -o -name '*.yml' | head -n 1`
 
-if [ -f "${YAML_FILE}" ]; then
+if [ -f "${OPEN_API_SPEC_PATH}" ]; then
     openapi_codegen
 elif [ -f "${API_SPEC_DIR}/main.json" ]; then
     api_generator_codegen
 else
+    notice "No api spec found!"
     exit ${EXIT_FAILURE}
 fi
 
