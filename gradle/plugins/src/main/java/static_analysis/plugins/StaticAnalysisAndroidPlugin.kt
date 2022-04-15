@@ -7,6 +7,7 @@ import static_analysis.linters.AndroidLinter
 import static_analysis.linters.CpdLinter
 import static_analysis.linters.DetektLinter
 import static_analysis.linters.Linter
+import java.util.Locale
 
 class StaticAnalysisAndroidPlugin : StaticAnalysisPlugin() {
 
@@ -24,7 +25,7 @@ class StaticAnalysisAndroidPlugin : StaticAnalysisPlugin() {
                     project.tasks.register("staticAnalysis") {
                         setupStaticAnalysisTask(
                                 linters = linters,
-                                buildVariant = applicationVariants.first { it.name.contains("Debug") }.name
+                                buildVariant = applicationVariants.first { it.name.toLowerCase(Locale.ROOT).contains("debug") }.name
                         )
                     }
                 }
