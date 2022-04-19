@@ -115,6 +115,7 @@ targets.each do |target_name, target|
         # Create settings pack
         config_data = {
             "target_name": target_name,
+            "abstract_targets_prefix": target["abstract_targets_prefix"],
             "configuration": config
         }
 

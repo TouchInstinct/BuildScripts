@@ -1,5 +1,6 @@
 targets:
   TestProject:
+    abstract_targets_prefix: "-TestProjectKit"
     development:
       PRODUCT_BUNDLE_IDENTIFIER: "ru.touchin.testproject"
       PROVISIONING_PROFILE_SPECIFIER: "TestProjectDev"
