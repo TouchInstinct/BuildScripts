@@ -26,7 +26,7 @@ abstract class StaticAnalysisPlugin : Plugin<Project> {
 
             val linters = createLinters()
 
-            afterEvaluate {
+            beforeEvaluate {
                 linters.forEach { it.setupForProject(target, extensions.getByType()) }
             }
 

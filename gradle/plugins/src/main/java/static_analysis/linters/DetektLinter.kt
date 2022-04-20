@@ -43,11 +43,11 @@ class DetektLinter : Linter {
 
                     config.setFrom(project.files("${extension.buildScriptDir!!}/static_analysis_configs/detekt-config.yml"))
                     reports {
-                        txt.enabled = false
-                        html.enabled = false
+                        txt.required.set(false)
+                        html.required.set(false)
                         xml {
-                            enabled = true
-                            destination = project.getDetektReportFile()
+                            required.set(true)
+                            outputLocation.set(project.getDetektReportFile())
                         }
                     }
 
