@@ -26,9 +26,7 @@ abstract class StaticAnalysisPlugin : Plugin<Project> {
 
             val linters = createLinters()
 
-            beforeEvaluate {
-                linters.forEach { it.setupForProject(target, extensions.getByType()) }
-            }
+            linters.forEach { it.setupForProject(target, extensions.getByType()) }
 
             gradle.projectsEvaluated {
                 createStaticAnalysisTasks(target, linters)
