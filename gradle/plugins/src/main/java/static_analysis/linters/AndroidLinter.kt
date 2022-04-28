@@ -43,6 +43,7 @@ class AndroidLinter : Linter {
                         isWarningsAsErrors = false
                         xmlReport = true
                         htmlReport = false
+                        textReport = false
                         isCheckDependencies = true
                         disable("MissingConstraints", "VectorRaster")
                         xmlOutput = getLintReportFile()
@@ -58,13 +59,16 @@ class AndroidLinter : Linter {
 
         return project
                 .subprojects
+                .onEach { println(it) }
                 .filter { it.plugins.hasPlugin(AppPlugin::class.java) }
+                .onEach { println(it) }
                 .mapNotNull { subproject: Project ->
                     subproject
                             .tasks
                             .find { task -> task.name.contains(buildType, ignoreCase = true) && task.name.contains("lint") }
                             ?.path
                 }
+                .onEach { println(it) }
     }
 
     private fun Project.getLintReportFile() = file("${rootProject.buildDir}/reports/lint-report.xml")
