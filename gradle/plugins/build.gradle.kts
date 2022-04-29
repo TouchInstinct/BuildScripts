@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     // android gradle plugin, required by custom plugin
-    implementation("com.android.tools.build:gradle:4.0.1")
+    implementation("com.android.tools.build:gradle:7.1.3")
 
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.10.0")
     implementation("de.aaschmid:gradle-cpd-plugin:3.1")

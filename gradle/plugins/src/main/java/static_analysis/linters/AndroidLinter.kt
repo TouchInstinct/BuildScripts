@@ -1,6 +1,6 @@
 package static_analysis.linters
 
-import com.android.build.gradle.AppExtension
+import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.gradle.AppPlugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.findByType
@@ -32,22 +32,28 @@ class AndroidLinter : Linter {
             }
             .flatten()
 
+    @Suppress("UnstableApiUsage")
     override fun setupForProject(project: Project, extension: StaticAnalysisExtension) {
+        // Make sure to set lint options manually in app module gradle file
+        // Otherwise you will get java.io.FileNotFoundException
+
         project.beforeEvaluate {
             subprojects
-                    .mapNotNull { it.extensions.findByType<AppExtension>() }
+                    .mapNotNull { it.extensions.findByType(AndroidComponentsExtension::class) }
                     .first()
-                    .lintOptions.apply {
-                        isAbortOnError = false
-                        isCheckAllWarnings = true
-                        isWarningsAsErrors = false
-                        xmlReport = true
-                        htmlReport = false
-                        textReport = false
-                        isCheckDependencies = true
-                        disable("MissingConstraints", "VectorRaster")
-                        xmlOutput = getLintReportFile()
-                        lintConfig = file("${extension.buildScriptDir}/static_analysis_configs/lint.xml")
+                    .finalizeDsl { ext ->
+                        ext.lint {
+                            abortOnError = false
+                            checkAllWarnings = true
+                            warningsAsErrors = false
+                            checkDependencies = true
+                            htmlReport = false
+                            textReport = false
+                            xmlReport = true
+                            disable.addAll(listOf("MissingConstraints", "VectorRaster"))
+                            xmlOutput = project.getLintReportFile()
+                            lintConfig = file("${extension.buildScriptDir}/static_analysis_configs/lint.xml")
+                        }
                     }
         }
     }
@@ -59,16 +65,13 @@ class AndroidLinter : Linter {
 
         return project
                 .subprojects
-                .onEach { println(it) }
                 .filter { it.plugins.hasPlugin(AppPlugin::class.java) }
-                .onEach { println(it) }
                 .mapNotNull { subproject: Project ->
                     subproject
                             .tasks
-                            .find { task -> task.name.contains(buildType, ignoreCase = true) && task.name.contains("lint") }
+                            .find { task -> task.name.equals("lint$buildType") }
                             ?.path
                 }
-                .onEach { println(it) }
     }
 
     private fun Project.getLintReportFile() = file("${rootProject.buildDir}/reports/lint-report.xml")
