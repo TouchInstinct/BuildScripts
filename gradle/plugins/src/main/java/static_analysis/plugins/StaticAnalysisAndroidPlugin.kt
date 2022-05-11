@@ -3,6 +3,7 @@ package static_analysis.plugins
 import com.android.build.gradle.AppExtension
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getByType
+import static_analysis.linters.AndroidLinter
 import static_analysis.linters.CpdLinter
 import static_analysis.linters.DetektLinter
 import static_analysis.linters.Linter
@@ -34,8 +35,7 @@ class StaticAnalysisAndroidPlugin : StaticAnalysisPlugin() {
     override fun createLinters(): List<Linter> = listOf(
             DetektLinter(),
             CpdLinter(),
-            //TODO temporary disable Android Linter to avoid FileNotFoundException when generating report
-            //AndroidLinter()
+            AndroidLinter()
     )
 
 }
