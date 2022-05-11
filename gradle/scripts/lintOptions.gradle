@@ -8,5 +8,6 @@ android {
         textReport false
         xmlReport true
         xmlOutput file("${rootProject.buildDir}/reports/lint-report.xml")
+        lintConfig file("${rootProject.ext["buildScriptsDir"]}/static_analysis_configs/lint.xml")
     }
 }
