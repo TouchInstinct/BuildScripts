@@ -1,9 +1,7 @@
 package static_analysis.linters
 
-import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.gradle.AppPlugin
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.findByType
 import static_analysis.errors.AndroidLintError
 import static_analysis.errors.StaticAnalysisError
 import static_analysis.plugins.StaticAnalysisExtension
@@ -32,30 +30,11 @@ class AndroidLinter : Linter {
             }
             .flatten()
 
-    @Suppress("UnstableApiUsage")
     override fun setupForProject(project: Project, extension: StaticAnalysisExtension) {
-        // Make sure to set lint options manually in app module gradle file
+        // Make sure to set lint options manually in modules gradle file
         // Otherwise you will get java.io.FileNotFoundException
 
-        project.beforeEvaluate {
-            subprojects
-                    .mapNotNull { it.extensions.findByType(AndroidComponentsExtension::class) }
-                    .first()
-                    .finalizeDsl { ext ->
-                        ext.lint {
-                            abortOnError = false
-                            checkAllWarnings = true
-                            warningsAsErrors = false
-                            checkDependencies = true
-                            htmlReport = false
-                            textReport = false
-                            xmlReport = true
-                            disable.addAll(listOf("MissingConstraints", "VectorRaster"))
-                            xmlOutput = project.getLintReportFile()
-                            lintConfig = file("${extension.buildScriptDir}/static_analysis_configs/lint.xml")
-                        }
-                    }
-        }
+        // See issue: https://github.com/TouchInstinct/BuildScripts/issues/310
     }
 
     override fun getTaskNames(project: Project, buildType: String?): List<String> {
@@ -69,7 +48,7 @@ class AndroidLinter : Linter {
                 .mapNotNull { subproject: Project ->
                     subproject
                             .tasks
-                            .find { task -> task.name.equals("lint$buildType") }
+                            .find { task -> task.name.equals("lint$buildType", ignoreCase = true) }
                             ?.path
                 }
     }

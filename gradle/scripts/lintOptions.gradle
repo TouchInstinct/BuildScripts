@@ -1,0 +1,12 @@
+android {
+    lint {
+        abortOnError false
+        checkAllWarnings true
+        warningsAsErrors false
+        checkDependencies true
+        htmlReport false
+        textReport false
+        xmlReport true
+        xmlOutput file("${rootProject.buildDir}/reports/lint-report.xml")
+    }
+}
