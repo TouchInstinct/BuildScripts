@@ -21,7 +21,7 @@ private_lane :installDependencies do |options|
   end
 
   cocoapods(
-    repo_update: true
+    try_repo_update_on_error: true
   )
 end
 
@@ -186,8 +186,8 @@ private_lane :buildArchive do |options|
     clean: true,
     workspace: options[:workspace],
     scheme: options[:scheme],
-    archive_path: "./",
-    output_directory: "./",
+    archive_path: "./#{$appName}.xcarchive",
+    buildlog_path: "./",
     output_name: options[:output_name],
     configuration: configuration,
     export_method: options[:export_method],
