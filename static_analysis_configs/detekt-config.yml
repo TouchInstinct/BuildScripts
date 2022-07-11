@@ -73,7 +73,8 @@ complexity:
     threshold: 40
   LongParameterList:
     active: true
-    threshold: 10
+    functionThreshold: 10
+    constructorThreshold: 10
     ignoreDefaultParameters: false
   MethodOverloading:
     active: false
@@ -268,7 +269,7 @@ potential-bugs:
     active: false
   LateinitUsage:
     active: false
-    excludeAnnotatedProperties: ""
+    ignoreAnnotated: []
     ignoreOnClassesPattern: ""
   UnconditionalJumpStatementInLoop:
     active: false
@@ -369,7 +370,7 @@ style:
     active: true
   UnnecessaryAbstractClass:
     active: false
-    excludeAnnotatedClasses: "dagger.Module"
+    ignoreAnnotated: ["dagger.Module"]
   UnnecessaryApply:
     active: true
   UnnecessaryInheritance:
@@ -389,7 +390,7 @@ style:
     allowedNames: "(_|ignored|expected|serialVersionUID)"
   UseDataClass:
     active: true
-    excludeAnnotatedClasses: ""
+    ignoreAnnotated: []
   UtilityClassWithPublicConstructor:
     active: false
   VarCouldBeVal:
