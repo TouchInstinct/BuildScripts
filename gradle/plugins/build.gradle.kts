@@ -7,7 +7,7 @@ plugins {
 
 // The kotlin-dsl plugin requires a repository to be declared
 repositories {
-    jcenter()
+    mavenCentral()
     google()
 }
 
@@ -15,7 +15,7 @@ dependencies {
     // android gradle plugin, required by custom plugin
     implementation("com.android.tools.build:gradle:4.0.1")
 
-    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.10.0")
+    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.19.0")
     implementation("de.aaschmid:gradle-cpd-plugin:3.1")
 
     // kotlin plugin, required by custom plugin
