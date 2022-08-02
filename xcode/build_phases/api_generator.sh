@@ -56,6 +56,22 @@ is_force_run()
     return ${FALSE}
 }
 
+is_single_file()
+{
+    if [ -z "${SINGLE_FILE}" ]; then
+        echo "true"
+        return
+    fi
+
+    local -r STR_MODE=`tr "[:upper:]" "[:lower:]" <<< ${SINGLE_FILE}`
+
+    if [ ${STR_MODE} == "no" ] || [ ${STR_MODE} == "false" ] || [ ${STR_MODE} == "0" ]; then
+        echo "false"
+    else 
+        echo "true"
+    fi
+}
+
 get_current_commit()
 {
     if [ -z "${API_SPEC_DIR}" ]; then
@@ -212,7 +228,7 @@ api_generator_codegen()
 
     . build-scripts/xcode/aux_scripts/download_file.sh ${FILE_NAME} ${DOWNLOAD_URL}
 
-    java -Xmx6g -jar "Downloads/${FILE_NAME}" generate-client-code --output-language SWIFT --specification-path ${API_SPEC_DIR} --output-path ${OUTPUT_PATH} --single-file true
+    java -Xmx6g -jar "Downloads/${FILE_NAME}" generate-client-code --output-language SWIFT --specification-path ${API_SPEC_DIR} --output-path ${OUTPUT_PATH} --single-file $(is_single_file)
 }
 
 readonly BUILD_PHASES_DIR=${SRCROOT}/build_phases
