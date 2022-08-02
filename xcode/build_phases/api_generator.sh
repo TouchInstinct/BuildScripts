@@ -3,6 +3,9 @@
 # Description:
 #   Generates API models & methods.
 #
+# Optional flags:
+#   -m - generate api in multiple files
+#
 # Parameters:
 #   $1 - api generator version.
 #   $2 - path to generated code directory
@@ -28,6 +31,14 @@ readonly TRUE=0
 readonly FALSE=1
 
 readonly LOG_TAG="API-GENERATOR"
+
+help()
+{
+    local HELP_MESSAGE="Flags:
+    -m - Generate multiple files api"
+
+    echo "${HELP_MESSAGE}"
+}
 
 notice()
 {
@@ -178,6 +189,8 @@ openapi_codegen()
 
 api_generator_codegen()
 {
+    local SINGLE_FILE="$1"
+
     if [ -z "${API_SPEC_DIR}" ]; then
         if [ ! -v "${1}" ]; then
             local -r API_SPEC_DIR=${1}
@@ -212,8 +225,28 @@ api_generator_codegen()
 
     . build-scripts/xcode/aux_scripts/download_file.sh ${FILE_NAME} ${DOWNLOAD_URL}
 
-    java -Xmx6g -jar "Downloads/${FILE_NAME}" generate-client-code --output-language SWIFT --specification-path ${API_SPEC_DIR} --output-path ${OUTPUT_PATH} --single-file true
+    java -Xmx6g -jar "Downloads/${FILE_NAME}" generate-client-code --output-language SWIFT --specification-path ${API_SPEC_DIR} --output-path ${OUTPUT_PATH} --single-file ${SINGLE_FILE}
 }
+
+SINGLE_FILE=true
+
+while getopts "hm" OPTION; do
+  case "${OPTION}" in
+    h)
+      help
+      ;;
+    m)
+      notice "Multiple files option detected"
+      SINGLE_FILE=false  # Defines -m flag to generate api with multiple files
+      ;;
+    ?)
+      notice "Unknown option -$OPTARG"
+      exit ${EXIT_FAILURE} 
+      ;;
+  esac
+done
+
+shift "$(($OPTIND -1))" # Remove the parsed options from positional params
 
 readonly BUILD_PHASES_DIR=${SRCROOT}/build_phases
 
@@ -247,7 +280,7 @@ readonly OPEN_API_SPEC_PATH=`find ${API_SPEC_DIR} -maxdepth 1 -name '*.yaml' -o 
 if [ -f "${OPEN_API_SPEC_PATH}" ]; then
     openapi_codegen
 elif [ -f "${API_SPEC_DIR}/main.json" ]; then
-    api_generator_codegen
+    api_generator_codegen ${SINGLE_FILE}
 else
     notice "No api spec found!"
     exit ${EXIT_FAILURE}
