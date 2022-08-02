@@ -227,7 +227,6 @@ api_generator_codegen()
     local -r DOWNLOAD_URL="https://maven.dev.touchin.ru/ru/touchin/api-generator/${VERSION}/${FILE_NAME}"
 
     . build-scripts/xcode/aux_scripts/download_file.sh ${FILE_NAME} ${DOWNLOAD_URL}
-    notice $(is_single_file)
     java -Xmx6g -jar "Downloads/${FILE_NAME}" generate-client-code --output-language SWIFT --specification-path ${API_SPEC_DIR} --output-path ${OUTPUT_PATH} --single-file $(is_single_file)
 }
 
