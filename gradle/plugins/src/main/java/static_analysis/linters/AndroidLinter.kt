@@ -35,7 +35,7 @@ class AndroidLinter : Linter {
                     }
                     .flatten()
         } else {
-            listOf()
+            emptyList()
         }
     }
 
