@@ -1,13 +1,16 @@
 targets:
   TestProject:
+    abstract_targets_prefix: "-TestProjectKit"
     development:
       PRODUCT_BUNDLE_IDENTIFIER: "ru.touchin.testproject"
       PROVISIONING_PROFILE_SPECIFIER: "TestProjectDev"
       CODE_SIGN_ENTITLEMENTS: "TestProject/Standard.entitlements"
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) DEBUG_MENU"
     enterprise:
       PRODUCT_BUNDLE_IDENTIFIER: "com.touchin.testproject"
       PROVISIONING_PROFILE_SPECIFIER: "TestProjectEnterprise"
       CODE_SIGN_ENTITLEMENTS: "TestProject/Enterprise.entitlements"
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) DEBUG_MENU"
     appstore:
       PRODUCT_BUNDLE_IDENTIFIER: "ru.customer.domain"
       PROVISIONING_PROFILE_SPECIFIER: "TestProjectAppStore"
@@ -15,13 +18,13 @@ targets:
 
 types:
   development:
-    apple_id: "apple@touchin.ru"
+    apple_id: "iosdev@touchin.ru"
     team_id: "**********"
     itc_team_id: "**********"
   enterprise:
     apple_id: "enterpriseapple@touchin.ru"
     team_id: "**********"
   appstore:
-    apple_id: "apple@touchin.ru"
+    apple_id: "iosdev@touchin.ru"
     team_id: "**********"
     itc_team_id: "**********"

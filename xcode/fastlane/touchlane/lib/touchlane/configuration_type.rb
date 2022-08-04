@@ -57,6 +57,20 @@ module Touchlane
       new(type)
     end
 
+    def self.from_account_type(account_type)
+      case account_type
+      when DEVELOPMENT_PREFIX
+        from_type(DEVELOPMENT)
+      when ENTERPRISE_PREFIX
+        from_type(ENTERPRISE)
+      when APP_STORE_PREFIX
+        from_type(APP_STORE)
+      else
+        raise "Unable to map #{account_type} to #{ConfigurationType.class}."
+        + "Available account types: #{DEVELOPMENT_PREFIX}, #{ENTERPRISE_PREFIX}, #{APP_STORE_PREFIX}"
+      end
+    end
+
     def to_options
       {
         :type => @type,

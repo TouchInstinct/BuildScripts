@@ -34,15 +34,18 @@ class CpdLinter : Linter {
             }
 
     override fun setupForProject(project: Project, extension: StaticAnalysisExtension) {
-        project.extensions.findByType<CpdExtension>()!!.apply {
-            isSkipLexicalErrors = true
-            language = "kotlin"
-            minimumTokenCount = 60
-        }
-        project.tasks.withType<Cpd> {
-            reports.xml.destination = project.getCpdReportFile()
-            ignoreFailures = true
-            source = project.getSources(extension.excludes)
+        project.afterEvaluate {
+            extensions.findByType<CpdExtension>()!!.apply {
+                isSkipLexicalErrors = true
+                language = "kotlin"
+                minimumTokenCount = 60
+            }
+            tasks.withType<Cpd> {
+                reports.xml.required.set(true)
+                reports.xml.destination = getCpdReportFile()
+                ignoreFailures = true
+                source = getSources(extension.excludes)
+            }
         }
     }
 

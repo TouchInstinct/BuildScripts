@@ -33,8 +33,8 @@ class AndroidLinter : Linter {
             .flatten()
 
     override fun setupForProject(project: Project, extension: StaticAnalysisExtension) {
-        project.gradle.projectsEvaluated {
-            project.subprojects
+        project.beforeEvaluate {
+            subprojects
                     .mapNotNull { it.extensions.findByType<AppExtension>() }
                     .first()
                     .lintOptions.apply {
@@ -45,8 +45,8 @@ class AndroidLinter : Linter {
                         htmlReport = false
                         isCheckDependencies = true
                         disable("MissingConstraints", "VectorRaster")
-                        xmlOutput = project.getLintReportFile()
-                        lintConfig = project.file("${extension.buildScriptDir}/static_analysis_configs/lint.xml")
+                        xmlOutput = getLintReportFile()
+                        lintConfig = file("${extension.buildScriptDir}/static_analysis_configs/lint.xml")
                     }
         }
     }

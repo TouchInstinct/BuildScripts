@@ -32,27 +32,27 @@ class DetektLinter : Linter {
             .flatten()
 
     override fun setupForProject(project: Project, extension: StaticAnalysisExtension) {
-        project
-                .tasks
-                .withType(Detekt::class.java) {
-                    exclude("**/test/**")
-                    exclude("resources/")
-                    exclude("build/")
-                    exclude("tmp/")
-                    jvmTarget = "1.8"
+        project.afterEvaluate {
+            tasks.withType(Detekt::class.java) {
+                exclude("**/test/**")
+                exclude("resources/")
+                exclude("build/")
+                exclude("tmp/")
+                jvmTarget = "1.8"
 
-                    config.setFrom(project.files("${extension.buildScriptDir!!}/static_analysis_configs/detekt-config.yml"))
-                    reports {
-                        txt.enabled = false
-                        html.enabled = false
-                        xml {
-                            enabled = true
-                            destination = project.getDetektReportFile()
-                        }
+                config.setFrom(files("${extension.buildScriptDir!!}/static_analysis_configs/detekt-config.yml"))
+                reports {
+                    txt.enabled = false
+                    html.enabled = false
+                    xml {
+                        enabled = true
+                        destination = getDetektReportFile()
                     }
-
-                    source = project.getSources(extension.excludes)
                 }
+
+                source = getSources(extension.excludes)
+            }
+        }
     }
 
     override fun getTaskNames(project: Project, buildType: String?): List<String> = listOf(":detekt")

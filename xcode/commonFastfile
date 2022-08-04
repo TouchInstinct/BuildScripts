@@ -21,7 +21,7 @@ private_lane :installDependencies do |options|
   end
 
   cocoapods(
-    repo_update: true
+    try_repo_update_on_error: true
   )
 end
 
@@ -36,12 +36,24 @@ private_lane :uploadToFirebase do |options|
 
   google_app_id = get_info_plist_value(path: gsp_plist_path, key: "GOOGLE_APP_ID")
 
-  firebase_app_distribution(
+  firebase_app_distibution_groups_path = File.expand_path "../firebase_app_distribution_groups"
+
+  # Select groups_file or groups parameter depending on groups file existence
+  if File.exists? firebase_app_distibution_groups_path
+    firebase_app_distribution(
+      app: google_app_id,
+      ipa_path: options[:ipa_path],
+      groups_file: firebase_app_distibution_groups_path,
+      release_notes_file: releaseNotesFile
+    )
+  else
+    firebase_app_distribution(
       app: google_app_id,
       ipa_path: options[:ipa_path],
       groups: "touch-instinct",
       release_notes_file: releaseNotesFile
-  )
+    )
+  end
 
   upload_symbols_to_crashlytics(
     gsp_path: get_google_services_plist_path(app_target_folder_name, configuration_type)
@@ -79,15 +91,26 @@ private_lane :addShield do |options|
 end
 
 private_lane :buildConfiguration do |options|
-  appName = options[:appName] || $appName
+  options[:appName] = options[:appName] || $appName
 
   lane_name = options[:lane_name] || lane_context[SharedValues::LANE_NAME]
 
-  options[:scheme] = options[:scheme] || appName
+  options[:scheme] = options[:scheme] || options[:appName]
   options[:lane_name] = lane_name
+
+  ipa_name = "#{options[:appName]}.ipa"
+  options[:output_name] = ipa_name
+
+  options[:ipa_path] = "./#{ipa_name}"
+  options[:dsym_path] = "./#{options[:appName]}.app.dSYM.zip"
+
+  options[:xcodeproj_path] = options[:xcodeproj_path] || "../#{options[:appName]}.xcodeproj"
+  options[:workspace] = options[:workspace] || File.expand_path("../#{options[:appName]}.xcworkspace")
 
   configuration_type = Touchlane::ConfigurationType.from_lane_name(lane_name)
   options = fill_up_options_using_configuration_type(options, configuration_type)
+
+  generate_xcodeproj_if_needed(options)
 
   openKeychain(options)
 
@@ -96,15 +119,6 @@ private_lane :buildConfiguration do |options|
       build_number: options[:buildNumber]
     )
   end
-
-  ipa_name = "#{appName}.ipa"
-  options[:output_name] = ipa_name
-
-  options[:ipa_path] = "./#{ipa_name}"
-  options[:dsym_path] = "./#{appName}.app.dSYM.zip"
-
-  options[:xcodeproj_path] = "../#{appName}.xcodeproj"
-  options[:workspace] = "./#{appName}.xcworkspace"
 
   installDependencies(options)
 
@@ -139,6 +153,9 @@ private_lane :buildConfiguration do |options|
 end
 
 private_lane :buildArchive do |options|
+
+  require 'json'
+
   icloudEnvironment = options[:iCloudContainerEnvironment] || ""
   exportOptions = icloudEnvironment.to_s.empty? ? {} : {iCloudContainerEnvironment: icloudEnvironment}
   exportOptions[:compileBitcode] = options[:compileBitcode] || false
@@ -146,17 +163,31 @@ private_lane :buildArchive do |options|
   lane_name = options[:lane_name]
   configuration = options[:configuration]
   xcodeproj_path = options[:xcodeproj_path]
+  xcode_version = options[:xcodeVersion]
+
+  cmd = 'system_profiler -json SPDeveloperToolsDataType'
+  cmd_result = `#{cmd}`
+  spdeveloperToolsDataType = JSON.parse(cmd_result)['SPDeveloperToolsDataType']
+  sortedSPDeveloperToolsDataType = spdeveloperToolsDataType.sort_by { |hash| hash['spdevtools_version'].split(' ').first.to_i } # sort by increasing the version of xcode
+  default_xcode_version = sortedSPDeveloperToolsDataType.last['spdevtools_version'] # take the largest version in format: "13.0 (13A5212g)"
+  default_xcode_version_number = default_xcode_version.split(' ').first # take version number
 
   if configuration != "AppStore" # AppStore uses xcconfig choosen in Xcode
     set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodeproj_path)
+  end
+
+  if xcode_version.nil?
+    xcversion(version: default_xcode_version_number)
+  else
+    xcversion(version: xcode_version)
   end
 
   gym(
     clean: true,
     workspace: options[:workspace],
     scheme: options[:scheme],
-    archive_path: "./",
-    output_directory: "./",
+    archive_path: "./#{$appName}.xcarchive",
+    buildlog_path: "./",
     output_name: options[:output_name],
     configuration: configuration,
     export_method: options[:export_method],
@@ -237,7 +268,7 @@ private_lane :openKeychain do |options|
       name: options[:keychain_name],
       password: options[:keychain_password],
       unlock: true,
-      timeout: false,
+      timeout: 0,
       add_to_search_list: !keychain_exists
     )
   else
@@ -379,7 +410,7 @@ def get_configuration_for_type(type)
 end
 
 def get_google_services_plist_path(app_target_folder_name, configuration_type)
-  File.expand_path "../#{app_target_folder_name}/Resources/#{configuration_type.prefix}-GoogleService-Info.plist"
+  File.expand_path "../#{app_target_folder_name}/Resources/GoogleService-Info.plist"
 end
 
 def generate_enabled_features_extension_if_needed(options)
@@ -418,7 +449,8 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
   target_to_modify_selector = lambda do |t|
     supported_product_types = [
         Xcodeproj::Constants::PRODUCT_TYPE_UTI[:application],
-        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension]
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:app_extension],
+        Xcodeproj::Constants::PRODUCT_TYPE_UTI[:framework]
     ]
     return !t.test_target_type? && supported_product_types.include?(t.product_type)
   end
@@ -426,23 +458,35 @@ def set_xcconfig_for_configuration_of_project(lane_name, configuration, xcodepro
   application_targets = project.native_targets.select(&target_to_modify_selector)
 
   application_targets.each do |target|
-    build_configuration = target.build_configuration_list[configuration]
     config_name = target.name + lane_name
     build_configuration_reference = project.files.select { |f| f.path.start_with?(config_name) }.first
-    build_configuration.base_configuration_reference = build_configuration_reference
+
+    if !build_configuration_reference.nil? # target has custom xcconfig
+      build_configuration = target.build_configuration_list[configuration]
+      build_configuration.base_configuration_reference = build_configuration_reference
+    end
   end
 
 
   project.save()
 end
 
+def generate_xcodeproj_if_needed(options)
+  project_yml_path = File.expand_path "../project.yml"
+
+  if !File.exists?(options[:xcodeproj_path]) && File.exists?(project_yml_path)
+    xcodegen(
+      spec: project_yml_path
+    )
+  end
+end
+
 # Build phases
 
 def run_code_generation_phase_if_needed(options)
   code_generation_script_path = File.expand_path "../.githooks/scripts/CodeGen.sh"
-  xcodeproj_path = File.expand_path options[:xcodeproj_path]
 
   if File.exists? code_generation_script_path
-    sh(code_generation_script_path, xcodeproj_path)
+    sh(code_generation_script_path, options[:workspace])
   end
 end
