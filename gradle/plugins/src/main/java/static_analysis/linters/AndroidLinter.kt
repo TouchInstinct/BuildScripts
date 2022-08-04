@@ -17,7 +17,7 @@ class AndroidLinter : Linter {
     override fun getErrors(project: Project): List<StaticAnalysisError> {
         val lintRepostFile = project.getLintReportFile()
         return if (lintRepostFile.exists()) {
-            xmlParser(project.getLintReportFile())
+            xmlParser(lintRepostFile)
                     .typedChildren()
                     .filter { it.name() == "issue" && (it.attribute("severity") as String) == "Error" }
                     .map { errorNode ->
