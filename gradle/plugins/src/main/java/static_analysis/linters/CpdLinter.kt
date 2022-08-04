@@ -39,6 +39,7 @@ class CpdLinter : Linter {
                 isSkipLexicalErrors = true
                 language = "kotlin"
                 minimumTokenCount = 60
+                encoding = "UTF-8"
             }
             tasks.withType<Cpd> {
                 reports.xml.required.set(true)

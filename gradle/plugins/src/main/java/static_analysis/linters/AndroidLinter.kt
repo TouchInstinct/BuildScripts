@@ -9,28 +9,33 @@ import static_analysis.errors.StaticAnalysisError
 import static_analysis.plugins.StaticAnalysisExtension
 import static_analysis.utils.typedChildren
 import static_analysis.utils.xmlParser
+import java.io.FileNotFoundException
 
 class AndroidLinter : Linter {
 
     override val name: String = "Android lint"
 
-    override fun getErrors(project: Project): List<StaticAnalysisError> = xmlParser(project.getLintReportFile())
-            .typedChildren()
-            .filter { it.name() == "issue" && (it.attribute("severity") as String) == "Error" }
-            .map { errorNode ->
-                errorNode
-                        .typedChildren()
-                        .filter { it.name() == "location" }
-                        .map { locationNode ->
-                            AndroidLintError(
-                                    filePath = locationNode.attribute("file") as String,
-                                    fileLine = locationNode.attribute("line") as String?,
-                                    errorId = errorNode.attribute("id") as String,
-                                    description = errorNode.attribute("message") as String
-                            )
-                        }
-            }
-            .flatten()
+    override fun getErrors(project: Project): List<StaticAnalysisError> = try {
+        xmlParser(project.getLintReportFile())
+                .typedChildren()
+                .filter { it.name() == "issue" && (it.attribute("severity") as String) == "Error" }
+                .map { errorNode ->
+                    errorNode
+                            .typedChildren()
+                            .filter { it.name() == "location" }
+                            .map { locationNode ->
+                                AndroidLintError(
+                                        filePath = locationNode.attribute("file") as String,
+                                        fileLine = locationNode.attribute("line") as String?,
+                                        errorId = errorNode.attribute("id") as String,
+                                        description = errorNode.attribute("message") as String
+                                )
+                            }
+                }
+                .flatten()
+    } catch (ex: FileNotFoundException) {
+        listOf()
+    }
 
     override fun setupForProject(project: Project, extension: StaticAnalysisExtension) {
         project.beforeEvaluate {
