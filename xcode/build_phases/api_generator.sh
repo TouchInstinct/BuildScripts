@@ -72,16 +72,29 @@ is_single_file()
     fi
 }
 
-get_current_commit()
+get_api_spec_current_commit()
 {
     if [ -z "${API_SPEC_DIR}" ]; then
         if [ ! -z "${1}" ]; then
-            echo `git -C ${1} rev-parse --verify HEAD`
+            echo `git rev-parse HEAD:${1}`
         else
-            echo `git rev-parse --verify HEAD`
+            echo `git rev-parse HEAD`
         fi
     else
-        echo `git -C ${API_SPEC_DIR} rev-parse --verify HEAD`
+        echo `git rev-parse HEAD:${API_SPEC_DIR}`
+    fi
+}
+
+is_api_spec_under_source_control()
+{
+    if [ -z "${API_SPEC_DIR}" ]; then
+        if [ ! -z "${1}" ]; then
+            echo `git -C ${1} rev-parse --is-inside-work-tree 2>/dev/null`
+        else
+            echo `git rev-parse --is-inside-work-tree 2>/dev/null`
+        fi
+    else
+        echo `git -C ${API_SPEC_DIR} rev-parse --is-inside-work-tree 2>/dev/null`
     fi
 }
 
@@ -101,15 +114,19 @@ is_nothing_changed_since_last_check()
         fi
     fi
 
-    local -r CURRENT_COMMIT=`get_current_commit`
+    if [ is_api_spec_under_source_control == "true" ]; then
+        local -r CURRENT_COMMIT=`get_api_spec_current_commit`
 
-    local -r LAST_CHECKED_COMMIT=`cat ${COMMIT_FILE_PATH} 2> /dev/null || echo ""`
+        local -r LAST_CHECKED_COMMIT=`cat ${COMMIT_FILE_PATH} 2> /dev/null || echo ""`
 
-    if [ ${CURRENT_COMMIT} = "${LAST_CHECKED_COMMIT}" ]; then
-        return ${EXIT_SUCCESS}
+        if [ ${CURRENT_COMMIT} = "${LAST_CHECKED_COMMIT}" ]; then
+            return ${EXIT_SUCCESS}
+        else
+            return ${EXIT_FAILURE}
+        fi
     else
-        return ${EXIT_FAILURE}
-    fi
+        return ${EXIT_SUCCESS} 
+    fi    
 }
 
 record_current_commit()
@@ -128,7 +145,7 @@ record_current_commit()
         fi
     fi
 
-    local -r CURRENT_COMMIT=`get_current_commit`
+    local -r CURRENT_COMMIT=`get_api_spec_current_commit`
 
     echo ${CURRENT_COMMIT} > ${COMMIT_FILE_PATH}
 }
@@ -168,7 +185,7 @@ openapi_codegen()
 
     notice "OpenAPI spec generation for ${OPEN_API_SPEC_PATH}"
 
-    local -r CODEGEN_VERSION="3.0.33"
+    local -r CODEGEN_VERSION="3.0.34"
 
     local -r CODEGEN_FILE_NAME="swagger-codegen-cli-${CODEGEN_VERSION}.jar"
     local -r CODEGEN_DOWNLOAD_URL="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/${CODEGEN_VERSION}/${CODEGEN_FILE_NAME}"
@@ -238,7 +255,7 @@ mkdir -p ${BUILD_PHASES_DIR}
 readonly COMMIT_FILE_PATH=${BUILD_PHASES_DIR}/api-generator-commit
 
 if is_nothing_changed_since_last_check; then
-    notice "Nothing was changed api generation skipped."
+    notice "Nothing was changed. API generation skipped."
     exit ${EXIT_SUCCESS}
 fi
 

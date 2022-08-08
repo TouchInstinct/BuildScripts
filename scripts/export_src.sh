@@ -12,7 +12,7 @@
 #
 # Example of usage:
 #   export_src.sh TestProject ios android backend
-#   GIT_BRANCH="develop"; ./export_src.sh TestProject ios web
+#   GIT_BRANCH="develop" ./export_src.sh TestProject ios web
 #
 
 if [ -z "${GIT_BRANCH}" ]; then
