@@ -21,7 +21,8 @@ private_lane :installDependencies do |options|
   end
 
   cocoapods(
-    try_repo_update_on_error: true
+    try_repo_update_on_error: true,
+    verbose: true
   )
 end
 
