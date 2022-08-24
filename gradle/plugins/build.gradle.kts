@@ -36,6 +36,10 @@ gradlePlugin {
             id = "api-generator-android"
             implementationClass = "apigen.ApiGeneratorAndroidPlugin"
         }
+        create("swagger-generator-android") {
+            id = "swagger-generator-android"
+            implementationClass = "apigen.SwaggerApiGeneratorAndroidPlugin"
+        }
         create("api-generator-backend") {
             id = "api-generator-backend"
             implementationClass = "apigen.ApiGeneratorBackendPlugin"
