@@ -114,7 +114,7 @@ is_nothing_changed_since_last_check()
         fi
     fi
 
-    if [ is_api_spec_under_source_control == "true" ]; then
+    if [ `is_api_spec_under_source_control` == "true" ]; then
         local -r CURRENT_COMMIT=`get_api_spec_current_commit`
 
         local -r LAST_CHECKED_COMMIT=`cat ${COMMIT_FILE_PATH} 2> /dev/null || echo ""`
