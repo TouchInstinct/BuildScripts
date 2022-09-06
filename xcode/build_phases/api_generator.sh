@@ -76,26 +76,30 @@ get_api_spec_current_commit()
 {
     if [ -z "${API_SPEC_DIR}" ]; then
         if [ ! -z "${1}" ]; then
-            echo `git rev-parse HEAD:${1}`
+            echo `git -C ${1} rev-parse --verify HEAD`
         else
-            echo `git rev-parse HEAD`
+            echo `git rev-parse --verify HEAD`
         fi
     else
-        echo `git rev-parse HEAD:${API_SPEC_DIR}`
+        echo `git -C ${API_SPEC_DIR} rev-parse --verify HEAD`
     fi
 }
 
 is_api_spec_under_source_control()
 {
+    local IS_UNDER_SOURCE_CONTROL_CHECK
+    
     if [ -z "${API_SPEC_DIR}" ]; then
         if [ ! -z "${1}" ]; then
-            echo `git -C ${1} rev-parse --is-inside-work-tree 2>/dev/null`
+            IS_UNDER_SOURCE_CONTROL_CHECK=`git -C ${1} rev-parse --is-inside-work-tree 2>/dev/null`
         else
-            echo `git rev-parse --is-inside-work-tree 2>/dev/null`
+            IS_UNDER_SOURCE_CONTROL_CHECK=`git rev-parse --is-inside-work-tree 2>/dev/null`
         fi
     else
-        echo `git -C ${API_SPEC_DIR} rev-parse --is-inside-work-tree 2>/dev/null`
+        IS_UNDER_SOURCE_CONTROL_CHECK=`git -C ${API_SPEC_DIR} rev-parse --is-inside-work-tree 2>/dev/null`
     fi
+    
+    [ ${IS_UNDER_SOURCE_CONTROL_CHECK} = "true" ]
 }
 
 is_nothing_changed_since_last_check()
@@ -114,7 +118,7 @@ is_nothing_changed_since_last_check()
         fi
     fi
 
-    if [ is_api_spec_under_source_control == "true" ]; then
+    if is_api_spec_under_source_control; then
         local -r CURRENT_COMMIT=`get_api_spec_current_commit`
 
         local -r LAST_CHECKED_COMMIT=`cat ${COMMIT_FILE_PATH} 2> /dev/null || echo ""`
