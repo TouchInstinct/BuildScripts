@@ -10,19 +10,20 @@ import org.gradle.kotlin.dsl.repositories
 
 class SwaggerApiGeneratorAndroidPlugin : Plugin<Project> {
 
-    companion object {
+    private companion object {
         const val GENERATOR_CONFIG = "swaggerCodegen"
         const val GENERATOR_VERSION = "3.0.34"
         const val TI_GENERATOR_CONFIG = "TIKotlin-swagger-codegen"
         const val TI_GENERATOR_VERSION = "1.0.0"
         const val GENERATOR_EXT_NAME = "swaggerApiGenerator"
+        const val MAVEN_URL = "https://maven.dev.touchin.ru"
     }
 
     override fun apply(target: Project) {
         with(target) {
             repositories {
                 maven {
-                    url = uri("https://maven.dev.touchin.ru")
+                    url = uri(MAVEN_URL)
                     metadataSources {
                         artifact()
                     }
