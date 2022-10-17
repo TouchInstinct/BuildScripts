@@ -64,6 +64,7 @@ def upload_to_app_store_using_options(options)
   upload_to_app_store(
     username: options[:username] || options[:apple_id],
     api_key_path: options[:api_key_path],
+    api_key: options[:api_key],
     ipa: options[:ipa_path],
     force: true, # skip metainfo prompt
     skip_metadata: true,
@@ -348,6 +349,7 @@ def sync_code_signing_using_options(options)
     app_identifier: options[:app_identifier],
     username: options[:username] || options[:apple_id],
     api_key_path: options[:api_key_path],
+    api_key: options[:api_key],
     team_id: options[:team_id],
     type: options[:type],
     readonly: options[:readonly].nil? ? true : options[:readonly],
@@ -372,18 +374,48 @@ end
 def fill_up_options_using_configuration_type(options, configuration_type)
   configuration = get_configuration_for_type(configuration_type.type)
 
-  if configuration_type.is_app_store || configuration_type.is_development
-    api_key_path = "fastlane/#{configuration_type.prefix}_api_key.json"
-  else
-    api_key_path = nil
-  end
+  api_key_path = File.expand_path "../fastlane/#{configuration_type.prefix}_api_key.json"
+  is_api_key_file_exists = File.exists?(api_key_path)
 
-  default_options = {:api_key_path => api_key_path}
+  # Check whether configuration type is required to configure one of api key parameters or not
+
+  if configuration_type.is_app_store || configuration_type.is_development
+
+    # Check whether API key JSON file exists or not
+
+    if is_api_key_file_exists
+
+      # If exists then fill in all required information through api_key_path parameter
+      # and set a value to an options` parameter respectively 
+
+      default_options = {:api_key_path => api_key_path}
+    else
+
+      # If doesn't exist then build api_key parameter through app_store_connect_api_key action
+      # and set a value to an options` parameter respectively also
+
+      default_options = {:api_key => get_app_store_connect_api_key()}
+    end
+  end
 
   default_options
     .merge(configuration.to_options)
     .merge(get_keychain_options(options))
     .merge(options)
+end
+
+def get_app_store_connect_api_key()
+  require 'json'
+
+  api_key_parameters = JSON.parse(ENV['API_KEY_JSON'])
+
+  return app_store_connect_api_key(
+    key_id: api_key_parameters['key_id'],
+    issuer_id: api_key_parameters['issuer_id'],
+    key_content: api_key_parameters['key'],
+    duration: api_key_parameters['duration'],
+    in_house: api_key_parameters['in_house']
+  )
 end
 
 def get_keychain_options(options)
