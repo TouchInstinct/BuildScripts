@@ -377,6 +377,10 @@ def fill_up_options_using_configuration_type(options, configuration_type)
   api_key_path = File.expand_path "../fastlane/#{configuration_type.prefix}_api_key.json"
   is_api_key_file_exists = File.exists?(api_key_path)
 
+  # default_options required to be empty due to the possibility of skipping the configuration type check below
+
+  default_options = {}
+
   # Check whether configuration type is required to configure one of api key parameters or not
 
   if configuration_type.is_app_store || configuration_type.is_development
