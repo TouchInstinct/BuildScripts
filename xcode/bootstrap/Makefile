@@ -43,7 +43,7 @@ init:
 
     bundle install
 
-    xcodegen generate
+    xcodegen
 
     $(call install_pods)
 
@@ -65,7 +65,7 @@ dev_certs:
 
 ## Открывает папку для ручного редактирования сертификатов и профайлов
 update_certs:
-    bundle exec fastlane ManuallyUpdateCodeSignin
+    bundle exec fastlane ManuallyUpdateCodeSigning
 
 ## Поднимает версию приложения (параметр "X.Y.Z")
 bumpAppVersion:
