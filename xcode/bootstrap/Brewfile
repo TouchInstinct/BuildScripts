@@ -1,0 +1,14 @@
+# Working environment
+brew "rbenv" # ruby + bundler
+brew "gettext"
+
+# Code, configs and project generation
+brew "php"
+brew "python"
+brew "xcodegen"
+
+# code quality
+brew "pmd"
+
+# CI badge
+# brew "imagemagick"
