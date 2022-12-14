@@ -46,4 +46,8 @@ done
 find . -name ".git*" -print0 | xargs -0 rm -rf
 zip -r -q ${SRC_FOLDER_NAME}.zip .
 
+find . -name "*[<>:\\|?*]*"
+./ProjectName/Extensions/Foundation/Int64?
+./ProjectName/Extensions/Foundation/Int64?/Int64?+Extensions.swift
+
 open .
