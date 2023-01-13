@@ -46,8 +46,10 @@ done
 find . -name ".git*" -print0 | xargs -0 rm -rf
 zip -r -q ${SRC_FOLDER_NAME}.zip .
 
-find . -name "*[<>:\\|?*]*"
-./ProjectName/Extensions/Foundation/Int64?
-./ProjectName/Extensions/Foundation/Int64?/Int64?+Extensions.swift
+if find . -name "*[<>:\\|?*]*" | xargs -I %s echo "in path %s" | xargs -0 echo "Invalid characters [<>:\|?*]" | grep .
+then
+    echo "Abort the script"
+    exit
+fi
 
 open .
