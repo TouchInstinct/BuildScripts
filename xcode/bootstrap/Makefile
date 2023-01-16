@@ -12,75 +12,75 @@ install_pods=(bundle exec pod install || bundle exec pod install --repo-update)
 TARGET_MAX_CHAR_NUM=20
 ## Show help
 help:
-    @echo ''
-    @echo 'Использование:'
-    @echo '  ${YELLOW}make${RESET} ${GREEN}<target>${RESET}'
-    @echo ''
-    @echo 'Команды:'
-    @awk '/^[a-zA-Z\-\_0-9]+:/ { \
-        helpMessage = match(lastLine, /^## (.*)/); \
-        if (helpMessage) { \
-            helpCommand = substr($$1, 0, index($$1, ":")-1); \
-            helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
-            printf "  ${YELLOW}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${GREEN}%s${RESET}\n", helpCommand, helpMessage; \
-        } \
-    } \
-    { lastLine = $$0 }' $(MAKEFILE_LIST)
+	@echo ''
+	@echo 'Использование:'
+	@echo '  ${YELLOW}make${RESET} ${GREEN}<target>${RESET}'
+	@echo ''
+	@echo 'Команды:'
+	@awk '/^[a-zA-Z\-\_0-9]+:/ { \
+		helpMessage = match(lastLine, /^## (.*)/); \
+		if (helpMessage) { \
+			helpCommand = substr($$1, 0, index($$1, ":")-1); \
+			helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
+			printf "  ${YELLOW}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${GREEN}%s${RESET}\n", helpCommand, helpMessage; \
+		} \
+	} \
+	{ lastLine = $$0 }' $(MAKEFILE_LIST)
 
 ## Инициализирует проект и устанавливает системные утилиты
 init:
-    brew bundle
+	brew bundle
 
-    eval "$(rbenv init -)"
+	eval "$(rbenv init -)"
 
-    rbenv install -s ${RUBY_VERSION}
-    rbenv global ${RUBY_VERSION}
+	rbenv install -s ${RUBY_VERSION}
+	rbenv global ${RUBY_VERSION}
 
-    if ! gem spec bundler > /dev/null 2>&1; then\
-        echo "bundler gem is not installed!";\
-        -sudo gem install bundler;\
-    fi
+	if ! gem spec bundler > /dev/null 2>&1; then\
+		echo "bundler gem is not installed!";\
+		-sudo gem install bundler;\
+	fi
 
-    bundle install
+	bundle install
 
-    xcodegen
+	xcodegen
 
-    $(call install_pods)
+	$(call install_pods)
 
-    bundle exec fastlane install_plugins
+	bundle exec fastlane install_plugins
 
-    $(call install_dev_certs)
+	$(call install_dev_certs)
 
-    $(call open_project)
+	$(call open_project)
 
-    git config --local core.hooksPath .githooks
-    
+	git config --local core.hooksPath .githooks
+	
 ## Устанавливает поды
 pod:
-    $(call install_pods)
+	$(call install_pods)
 
 ## Устанавливает сертификат и профили для запуска на девайсе
 dev_certs:
-    $(call install_dev_certs)
+	$(call install_dev_certs)
 
 ## Открывает папку для ручного редактирования сертификатов и профайлов
 update_certs:
-    bundle exec fastlane ManuallyUpdateCodeSigning
+	bundle exec fastlane ManuallyUpdateCodeSigning
 
 ## Поднимает версию приложения (параметр "X.Y.Z")
 bumpAppVersion:
-    ifeq ($(version),undefined)
-        @echo "Version parameter is missing (ex: x.y.z)" $(target)
-    else
-        bundle exec fastlane run increment_version_number version_number:$(version)
-    endif
+	ifeq ($(version),undefined)
+		@echo "Version parameter is missing (ex: x.y.z)" $(target)
+	else
+		bundle exec fastlane run increment_version_number version_number:$(version)
+	endif
 
 ## Позволяет быстро открыть workspace проекта
 start:
-    $(call open_project)
+	$(call open_project)
 
 ## Очищает содержимое папки DerivedData
 clean:
-    rm -rf ~/Library/Developer/Xcode/DerivedData/*
+	rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
 
