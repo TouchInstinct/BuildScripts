@@ -46,15 +46,18 @@ done
 find . -name ".git*" -print0 | xargs -0 rm -rf
 zip -r -q ${SRC_FOLDER_NAME}.zip .
 
-IFS="\n"
-ERR_PATH_ARR=($(find . -name "*[<>:\\|?*]*" | xargs -I %s echo "- %s"))
-unset IFS
+read_err_path() {
+    read -d $'\0' err_path
+}
 
-if [ ${#ERR_PATH_ARR[@]} != 0 ]
-then
-  echo "Export aborted! Invalid characters found in file or directories name(s):"
-  printf "%s\n" "${ERR_PATH_ARR[@]}"
-  exit
+find . -name "*[<>:\\|?*]*" -print0 |
+if read_err_path; then
+    echo "Export aborted! Invalid characters found in file or directories name(s):\n- $err_path"
+    while read_err_path
+    do
+        echo "- $err_path"
+    done
+    exit
 fi
 
 open .
