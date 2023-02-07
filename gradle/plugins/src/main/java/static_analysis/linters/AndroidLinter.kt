@@ -48,11 +48,14 @@ class AndroidLinter : Linter {
                 .mapNotNull { subproject: Project ->
                     subproject
                             .tasks
-                            .find { task -> task.name.equals("lint$buildType", ignoreCase = true) }
-                            ?.path
+                            .filter { task ->
+                                task.name.equals("lint${buildType}", ignoreCase = true)
+                                        || task.name.equals("copy${buildType}AndroidLintReports", ignoreCase = true)
+                            }
+                            .map { it.path }
                 }
+                .flatten()
     }
 
     private fun Project.getLintReportFile() = file("${rootProject.buildDir}/reports/lint-report.xml")
-
 }
