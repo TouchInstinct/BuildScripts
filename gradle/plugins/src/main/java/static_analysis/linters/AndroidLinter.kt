@@ -1,9 +1,7 @@
 package static_analysis.linters
 
-import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.findByType
 import static_analysis.errors.AndroidLintError
 import static_analysis.errors.StaticAnalysisError
 import static_analysis.plugins.StaticAnalysisExtension
@@ -33,22 +31,10 @@ class AndroidLinter : Linter {
             .flatten()
 
     override fun setupForProject(project: Project, extension: StaticAnalysisExtension) {
-        project.beforeEvaluate {
-            subprojects
-                    .mapNotNull { it.extensions.findByType<AppExtension>() }
-                    .first()
-                    .lintOptions.apply {
-                        isAbortOnError = false
-                        isCheckAllWarnings = true
-                        isWarningsAsErrors = false
-                        xmlReport = true
-                        htmlReport = false
-                        isCheckDependencies = true
-                        disable("MissingConstraints", "VectorRaster")
-                        xmlOutput = getLintReportFile()
-                        lintConfig = file("${extension.buildScriptDir}/static_analysis_configs/lint.xml")
-                    }
-        }
+        // Make sure to set lint options manually in modules gradle file
+        // Otherwise you will get java.io.FileNotFoundException
+
+        // See issue: https://github.com/TouchInstinct/BuildScripts/issues/310
     }
 
     override fun getTaskNames(project: Project, buildType: String?): List<String> {
@@ -62,11 +48,14 @@ class AndroidLinter : Linter {
                 .mapNotNull { subproject: Project ->
                     subproject
                             .tasks
-                            .find { task -> task.name.contains(buildType, ignoreCase = true) && task.name.contains("lint") }
-                            ?.path
+                            .filter { task ->
+                                task.name.equals("lint${buildType}", ignoreCase = true)
+                                        || task.name.equals("copy${buildType}AndroidLintReports", ignoreCase = true)
+                            }
+                            .map { it.path }
                 }
+                .flatten()
     }
 
     private fun Project.getLintReportFile() = file("${rootProject.buildDir}/reports/lint-report.xml")
-
 }

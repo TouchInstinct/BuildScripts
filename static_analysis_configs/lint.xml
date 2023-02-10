@@ -16,6 +16,9 @@
     <!--All activities should have locked orientation-->
     <issue id="LockedOrientationActivity" severity="ignore" />
 
+    <!-- TODO: Update Timber version. See this issue: https://github.com/JakeWharton/timber/issues/408 -->
+    <issue id="WrongTimberUsageDetector" severity="ignore" />
+
     <issue id="AllowAllHostnameVerifier" severity="error" />
     <issue id="InvalidUsesTagAttribute" severity="error" />
     <issue id="MissingIntentFilterForMediaSearch" severity="error" />
