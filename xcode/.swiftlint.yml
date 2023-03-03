@@ -107,11 +107,14 @@ enum_case_associated_values_count:
 identifier_name:
   excluded:
     - id
+    - to
     - ok
-    - URL
     - x
     - y
     - z
+
+opening_brace:
+  allow_multiline_func: true
 
 warning_threshold: 1
 
